@@ -381,13 +381,17 @@ export class DashboardPage {
       this.eventSubscription.unsubscribe();
     }
 
-    // Subscribe to real-time changes
+    // Subscribe to real-time changes using new Supabase syntax
     this.eventSubscription = supabase
-      .from('events')
-      .on('*', (payload) => {
-        console.log('Event updated:', payload);
-        this.loadEvents();
-      })
+      .channel('events-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events' },
+        (payload) => {
+          console.log('Event updated:', payload);
+          this.loadEvents();
+        }
+      )
       .subscribe();
   }
 
