@@ -1,8 +1,8 @@
-import { supabase, supabaseApi } from './services/supabase.js';
-import { authService } from './services/auth.js';
-import LoginPage from './pages/login.js';
-import DashboardPage from './pages/dashboard.js';
-import Navbar from './components/navbar.js';
+import { supabase, supabaseApi } from './supabase.js';
+import { authService } from './auth.js';
+import LoginPage from './login.js';
+import DashboardPage from './dashboard.js';
+import Navbar from './navbar.js';
 
 let currentUser = null;
 
