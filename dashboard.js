@@ -13,16 +13,15 @@ export class DashboardPage {
     this.eventSubscription = null;
   }
 
-  async render(currentUser, onEventSelected) {
+  async render(currentUser, onEventSelected, onLogout) {
     this.currentUser = currentUser;
     this.onEventSelected = onEventSelected;
+    this.onLogout = onLogout;
 
     const container = document.getElementById('app');
 
     // Render navbar
-    const navbar = new Navbar(currentUser, () => {
-      // Logout handler - already handled by auth service
-    });
+    const navbar = new Navbar(currentUser, onLogout);
 
     const navbarHtml = navbar.render();
 
