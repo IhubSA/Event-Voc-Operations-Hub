@@ -6,6 +6,15 @@ export class AddEventModal {
     this.isLoading = false;
   }
 
+  generateEventCode(eventType, date) {
+    // Format: First letter of type + month + day (e.g., S0825 for Sports on Aug 25)
+    const typePrefix = eventType ? eventType.substring(0, 1).toUpperCase() : 'E';
+    const dateObj = new Date(date);
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${typePrefix}${month}${day}`;
+  }
+
   render(onEventCreated, onCancel) {
     const modalHtml = `
       <div class="add-event-overlay" id="add-event-overlay">
@@ -353,6 +362,9 @@ export class AddEventModal {
         btnText.style.display = 'none';
         btnSpinner.style.display = 'inline-block';
 
+        // Generate event code
+        const eventCode = this.generateEventCode(eventType, eventDate);
+
         // Insert event into Supabase
         const { data, error } = await supabase
           .from('events')
@@ -361,6 +373,7 @@ export class AddEventModal {
               name: eventName,
               venue: venue,
               date: eventDate,
+              code: eventCode,
               event_type: eventType,
               description: description,
               status: 'active',
