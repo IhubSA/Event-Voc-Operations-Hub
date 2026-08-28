@@ -82,14 +82,14 @@ export class MedicalPage {
           </div>
         </div>
 
-        <div class="incident-detail-modal" id="incident-modal" style="display: none;">
+        <div class="incident-detail-modal" id="incident-modal" style="display: none !important;">
           <div class="modal-content">
             <button class="modal-close" id="close-modal">&times;</button>
             <div id="detail-container"></div>
           </div>
         </div>
 
-        <div class="new-incident-modal" id="new-incident-modal" style="display: none;">
+        <div class="new-incident-modal" id="new-incident-modal" style="display: none !important;">
           <div class="modal-content">
             <button class="modal-close" id="close-new-modal">&times;</button>
             <h2>Report Medical Incident</h2>
