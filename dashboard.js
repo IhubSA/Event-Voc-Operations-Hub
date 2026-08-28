@@ -1,14 +1,16 @@
-// Dashboard Page Component - Improved UI/UX
+// Dashboard Page Component
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
+import { AddEventModal } from './add-event.js';
 
 export class DashboardPage {
   constructor() {
+    this.currentUser = null;
     this.events = [];
     this.filteredEvents = [];
-    this.selectedEvent = null;
-    this.currentUser = null;
-    this.searchTerm = '';
+    this.filter = 'all';
+    this.searchQuery = '';
+    this.eventSubscription = null;
   }
 
   async render(currentUser, onEventSelected) {
@@ -19,81 +21,85 @@ export class DashboardPage {
 
     // Render navbar
     const navbar = new Navbar(currentUser, () => {
-      supabase.auth.signOut();
+      // Logout handler - already handled by auth service
     });
+
     const navbarHtml = navbar.render();
 
-    // Initial loading state
-    container.innerHTML = navbarHtml + `
-      <div class="dashboard-wrapper">
-        <div class="dashboard-loading">
-          <div class="loading-spinner"></div>
-          <p>Loading events...</p>
+    const dashboardHtml = `
+      ${navbarHtml}
+      <div class="dashboard-container">
+        <div class="dashboard-header">
+          <div class="header-content">
+            <h1>Events Management</h1>
+            <p>Manage and monitor your venue events</p>
+          </div>
+          <button class="btn btn-primary" id="add-event-btn">
+            <span>+ Add Event</span>
+          </button>
+        </div>
+
+        <div class="dashboard-controls">
+          <div class="search-box">
+            <input
+              type="text"
+              id="search-input"
+              placeholder="Search events..."
+              class="search-input"
+            />
+          </div>
+          <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All Events</button>
+            <button class="filter-btn" data-filter="active">Active</button>
+            <button class="filter-btn" data-filter="upcoming">Upcoming</button>
+          </div>
+        </div>
+
+        <div class="events-container">
+          <div id="events-list" class="events-grid"></div>
+          <div id="loading-message" class="loading-message" style="display: none;">
+            Loading events...
+          </div>
+          <div id="empty-message" class="empty-message" style="display: none;">
+            No events found. Click "Add Event" to create one.
+          </div>
         </div>
       </div>
     `;
 
+    container.innerHTML = dashboardHtml;
+
     // Add dashboard styles
-    this.addDashboardStyles();
-
-    // Load events
-    await this.loadEvents();
-  }
-
-  addDashboardStyles() {
     const style = document.createElement('style');
     style.textContent = `
-      .dashboard-wrapper {
+      .dashboard-container {
         min-height: calc(100vh - 60px);
         background: var(--bg-secondary);
         padding: 2rem;
       }
 
-      .dashboard-loading {
-        min-height: calc(100vh - 120px);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 1rem;
-        color: var(--text-secondary);
-      }
-
-      .loading-spinner {
-        width: 40px;
-        height: 40px;
-        border: 3px solid rgba(102, 126, 234, 0.2);
-        border-top-color: var(--primary);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-
       .dashboard-header {
-        margin-bottom: 3rem;
-        animation: fadeIn 0.6s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: var(--bg-primary);
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: var(--shadow-md);
       }
 
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      .dashboard-header h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
+      .header-content h1 {
         margin: 0 0 0.5rem 0;
-        color: var(--text-primary);
-        letter-spacing: -0.5px;
+        color: var(--primary);
+        font-size: 2rem;
       }
 
-      .dashboard-header p {
-        font-size: 1.1rem;
-        color: var(--text-secondary);
+      .header-content p {
         margin: 0;
+        color: var(--text-secondary);
       }
 
       .dashboard-controls {
@@ -101,18 +107,16 @@ export class DashboardPage {
         gap: 1rem;
         margin-bottom: 2rem;
         flex-wrap: wrap;
-        align-items: center;
       }
 
       .search-box {
         flex: 1;
         min-width: 250px;
-        position: relative;
       }
 
-      .search-box input {
+      .search-input {
         width: 100%;
-        padding: 0.85rem 1rem 0.85rem 2.75rem;
+        padding: 0.85rem;
         border: 2px solid var(--border-color);
         border-radius: 8px;
         background: var(--bg-primary);
@@ -121,40 +125,31 @@ export class DashboardPage {
         transition: all 0.3s ease;
       }
 
-      .search-box input::placeholder {
-        color: rgba(255, 255, 255, 0.4);
+      .search-input::placeholder {
+        color: var(--text-muted);
       }
 
-      .search-box input:focus {
+      .search-input:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-      }
-
-      .search-icon {
-        position: absolute;
-        left: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 1rem;
-        pointer-events: none;
+        box-shadow: 0 0 0 3px rgba(0, 153, 255, 0.15);
       }
 
       .filter-buttons {
         display: flex;
-        gap: 0.75rem;
+        gap: 0.5rem;
       }
 
       .filter-btn {
         padding: 0.75rem 1.25rem;
-        border: 2px solid var(--border-color);
         background: var(--bg-primary);
-        color: var(--text-primary);
+        border: 2px solid var(--border-color);
         border-radius: 8px;
+        color: var(--text-primary);
         cursor: pointer;
         font-weight: 600;
-        transition: all 0.3s ease;
         font-size: 0.9rem;
+        transition: all 0.3s ease;
         white-space: nowrap;
       }
 
@@ -164,245 +159,163 @@ export class DashboardPage {
       }
 
       .filter-btn.active {
-        background: var(--primary);
-        border-color: var(--primary);
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border-color: transparent;
         color: white;
+      }
+
+      .events-container {
+        position: relative;
       }
 
       .events-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 1.5rem;
-        margin-bottom: 2rem;
       }
 
       .event-card {
         background: var(--bg-primary);
         border: 2px solid var(--border-color);
         border-radius: 12px;
-        overflow: hidden;
-        transition: all 0.3s ease;
+        padding: 1.5rem;
         cursor: pointer;
+        transition: all 0.3s ease;
         display: flex;
         flex-direction: column;
-        height: 100%;
-        animation: slideUp 0.5s ease;
-      }
-
-      @keyframes slideUp {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        gap: 1rem;
       }
 
       .event-card:hover {
         border-color: var(--primary);
-        box-shadow: 0 12px 32px rgba(102, 126, 234, 0.15);
+        box-shadow: var(--shadow-lg);
         transform: translateY(-4px);
       }
 
-      .event-header {
-        padding: 1.5rem;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
-        border-bottom: 1px solid var(--border-color);
+      .event-card-header {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: start;
         gap: 1rem;
       }
 
-      .event-header h3 {
-        margin: 0;
+      .event-title {
+        flex: 1;
+      }
+
+      .event-title h3 {
+        margin: 0 0 0.25rem 0;
         font-size: 1.25rem;
         color: var(--text-primary);
-        flex: 1;
-        line-height: 1.3;
       }
 
       .event-code {
-        display: inline-block;
-        padding: 0.4rem 0.8rem;
-        background: var(--bg-secondary);
-        border-radius: 6px;
-        font-size: 0.8rem;
-        font-weight: 700;
+        background: rgba(0, 153, 255, 0.2);
         color: var(--primary);
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
         letter-spacing: 0.5px;
-        flex-shrink: 0;
+        white-space: nowrap;
       }
 
-      .event-body {
-        flex: 1;
-        padding: 1.5rem;
+      .event-details {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: rgba(0, 153, 255, 0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
       }
 
       .event-detail {
-        display: grid;
-        grid-template-columns: 120px 1fr;
-        gap: 1rem;
-        align-items: center;
-      }
-
-      .event-detail .label {
-        font-size: 0.85rem;
-        font-weight: 600;
+        display: flex;
+        gap: 0.75rem;
+        font-size: 0.9rem;
         color: var(--text-secondary);
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
       }
 
-      .event-detail .value {
-        font-size: 0.95rem;
-        color: var(--text-primary);
-        word-break: break-word;
+      .event-detail-icon {
+        font-size: 1.1rem;
+        min-width: 20px;
       }
 
-      .event-detail .value.status-active {
-        color: #4CAF50;
-        font-weight: 600;
-      }
-
-      .event-detail .value.status-upcoming {
-        color: #FFC107;
-        font-weight: 600;
-      }
-
-      .event-detail .value.status-completed {
-        color: #90A4AE;
-        font-weight: 600;
-      }
-
-      .event-detail .value.status-paused {
-        color: #FF9800;
-        font-weight: 600;
+      .event-detail-text {
+        flex: 1;
       }
 
       .event-stats {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        padding: 1rem;
-        background: rgba(102, 126, 234, 0.05);
-        border-radius: 8px;
-        margin-top: 0.5rem;
+        display: flex;
+        justify-content: space-around;
+        padding: 1rem 0;
+        border-top: 1px solid var(--border-color);
       }
 
       .stat {
         text-align: center;
       }
 
-      .stat-value {
-        font-size: 1.25rem;
+      .stat-number {
+        display: block;
+        font-size: 1.5rem;
         font-weight: 700;
         color: var(--primary);
       }
 
       .stat-label {
+        display: block;
         font-size: 0.75rem;
-        color: var(--text-secondary);
+        color: var(--text-muted);
         text-transform: uppercase;
         letter-spacing: 0.3px;
         margin-top: 0.25rem;
       }
 
       .event-actions {
-        padding: 1.5rem;
-        border-top: 1px solid var(--border-color);
         display: flex;
-        gap: 0.75rem;
+        gap: 0.5rem;
       }
 
-      .select-event {
+      .event-actions .btn {
         flex: 1;
-        padding: 0.85rem;
-        background: var(--primary);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
       }
 
-      .select-event:hover {
-        background: #0052a3;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
-      }
-
-      .select-event:active {
-        transform: translateY(0);
-      }
-
-      .empty-state {
-        grid-column: 1 / -1;
+      .loading-message,
+      .empty-message {
         text-align: center;
-        padding: 4rem 2rem;
-        background: var(--bg-primary);
-        border: 2px dashed var(--border-color);
-        border-radius: 12px;
-      }
-
-      .empty-state-icon {
-        font-size: 3.5rem;
-        margin-bottom: 1rem;
-        opacity: 0.5;
-      }
-
-      .empty-state h3 {
-        margin: 0 0 0.5rem 0;
-        color: var(--text-primary);
-        font-size: 1.3rem;
-      }
-
-      .empty-state p {
-        margin: 0;
+        padding: 3rem 1rem;
         color: var(--text-secondary);
-        font-size: 0.95rem;
-        line-height: 1.5;
+        font-size: 1.1rem;
       }
 
-      .no-results {
-        grid-column: 1 / -1;
-        text-align: center;
-        padding: 3rem 2rem;
-      }
-
-      .no-results p {
-        color: var(--text-secondary);
-        font-size: 1rem;
-      }
-
-      /* Responsive Design */
       @media (max-width: 768px) {
-        .dashboard-wrapper {
+        .dashboard-container {
           padding: 1rem;
         }
 
+        .dashboard-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
         .dashboard-header h1 {
-          font-size: 1.75rem;
+          font-size: 1.5rem;
         }
 
         .dashboard-controls {
           flex-direction: column;
-          gap: 1rem;
         }
 
         .search-box {
-          min-width: 100%;
+          min-width: unset;
         }
 
         .filter-buttons {
-          width: 100%;
           flex-wrap: wrap;
         }
 
@@ -410,312 +323,220 @@ export class DashboardPage {
           grid-template-columns: 1fr;
         }
 
-        .event-detail {
-          grid-template-columns: 1fr;
-        }
-
-        .event-detail .label {
-          font-size: 0.8rem;
-          margin-bottom: -0.5rem;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .dashboard-wrapper {
-          padding: 0.75rem;
-        }
-
-        .dashboard-header h1 {
-          font-size: 1.4rem;
-          margin-bottom: 0.25rem;
-        }
-
-        .dashboard-header p {
-          font-size: 0.9rem;
-        }
-
-        .event-header {
-          padding: 1rem;
-        }
-
-        .event-body {
-          padding: 1rem;
-          gap: 0.75rem;
-        }
-
-        .event-actions {
-          padding: 1rem;
+        .event-stats {
+          flex-wrap: wrap;
+          gap: 1rem;
         }
       }
     `;
     document.head.appendChild(style);
-  }
 
-  async loadEvents() {
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select(`
-          id,
-          name,
-          code,
-          status,
-          start_date,
-          end_date,
-          location,
-          expected_attendance,
-          organisation_id
-        `)
-        .order('start_date', { ascending: false });
-
-      if (error) throw error;
-
-      this.events = data || [];
-      this.filteredEvents = this.events;
-      this.renderDashboard();
-    } catch (error) {
-      console.error('Error loading events:', error);
-      const container = document.getElementById('app');
-      const wrapper = container.querySelector('.dashboard-wrapper');
-      if (wrapper) {
-        wrapper.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-icon">⚠️</div>
-            <h3>Failed to Load Events</h3>
-            <p>${error.message}</p>
-          </div>
-        `;
-      }
-    }
-  }
-
-  renderDashboard() {
-    const container = document.getElementById('app');
-    const wrapper = container.querySelector('.dashboard-wrapper');
-
-    if (this.events.length === 0) {
-      wrapper.innerHTML = `
-        <div class="dashboard-header">
-          <h1>Events</h1>
-          <p>No events available</p>
-        </div>
-        <div class="events-grid">
-          <div class="empty-state">
-            <div class="empty-state-icon">📅</div>
-            <h3>No Events Yet</h3>
-            <p>There are currently no events to manage. Please contact your administrator.</p>
-          </div>
-        </div>
-      `;
-      return;
-    }
-
-    wrapper.innerHTML = `
-      <div class="dashboard-header">
-        <h1>Events</h1>
-        <p>Select an event to access operational modules</p>
-      </div>
-
-      <div class="dashboard-controls">
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input
-            type="text"
-            id="search-input"
-            placeholder="Search events by name, code, or location..."
-            autocomplete="off"
-          />
-        </div>
-        <div class="filter-buttons">
-          <button class="filter-btn active" data-filter="all">All Events</button>
-          <button class="filter-btn" data-filter="active">Active</button>
-          <button class="filter-btn" data-filter="upcoming">Upcoming</button>
-        </div>
-      </div>
-
-      <div class="events-grid" id="events-container">
-        ${this.events.map(event => {
-          const days = this.getEventDays(event.start_date, event.end_date);
-          return `
-            <div class="event-card" data-event-id="${event.id}">
-              <div class="event-header">
-                <div>
-                  <h3>${event.name}</h3>
-                </div>
-                <span class="event-code">${event.code}</span>
-              </div>
-
-              <div class="event-body">
-                <div class="event-detail">
-                  <span class="label">📍 Location</span>
-                  <span class="value">${event.location || 'N/A'}</span>
-                </div>
-
-                <div class="event-detail">
-                  <span class="label">👥 Attendance</span>
-                  <span class="value">${event.expected_attendance ? event.expected_attendance.toLocaleString() : 'N/A'}</span>
-                </div>
-
-                <div class="event-detail">
-                  <span class="label">📅 Duration</span>
-                  <span class="value">${event.start_date} → ${event.end_date}</span>
-                </div>
-
-                <div class="event-detail">
-                  <span class="label">Status</span>
-                  <span class="value status-${event.status}">${event.status.toUpperCase()}</span>
-                </div>
-
-                <div class="event-stats">
-                  <div class="stat">
-                    <div class="stat-value">${days}</div>
-                    <div class="stat-label">Days</div>
-                  </div>
-                  <div class="stat">
-                    <div class="stat-value">4</div>
-                    <div class="stat-label">Modules</div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="event-actions">
-                <button class="select-event">Select Event →</button>
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    `;
-
-    // Add event listeners
+    // Load events and setup event listeners
+    await this.loadEvents();
     this.setupEventListeners();
   }
 
+  async loadEvents() {
+    const loading = document.getElementById('loading-message');
+    const empty = document.getElementById('empty-message');
+    const eventsList = document.getElementById('events-list');
+
+    loading.style.display = 'block';
+    eventsList.innerHTML = '';
+
+    try {
+      // Fetch events from Supabase
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      this.events = data || [];
+      this.filterAndRenderEvents();
+      loading.style.display = 'none';
+
+      // Show empty message if no events
+      if (this.events.length === 0) {
+        empty.style.display = 'block';
+      } else {
+        empty.style.display = 'none';
+      }
+
+      // Setup real-time subscription
+      this.subscribeToEvents();
+    } catch (error) {
+      console.error('Error loading events:', error);
+      loading.style.display = 'none';
+      loading.textContent = 'Error loading events. Please refresh.';
+    }
+  }
+
+  subscribeToEvents() {
+    // Unsubscribe from previous subscription if exists
+    if (this.eventSubscription) {
+      this.eventSubscription.unsubscribe();
+    }
+
+    // Subscribe to real-time changes
+    this.eventSubscription = supabase
+      .from('events')
+      .on('*', (payload) => {
+        console.log('Event updated:', payload);
+        this.loadEvents();
+      })
+      .subscribe();
+  }
+
+  filterAndRenderEvents() {
+    const eventsList = document.getElementById('events-list');
+    const empty = document.getElementById('empty-message');
+
+    // Filter by status
+    let filtered = this.events;
+
+    if (this.filter === 'active') {
+      const today = new Date();
+      filtered = filtered.filter(event => new Date(event.date) <= today);
+    } else if (this.filter === 'upcoming') {
+      const today = new Date();
+      filtered = filtered.filter(event => new Date(event.date) > today);
+    }
+
+    // Filter by search query
+    if (this.searchQuery) {
+      const query = this.searchQuery.toLowerCase();
+      filtered = filtered.filter(event =>
+        event.name.toLowerCase().includes(query) ||
+        event.venue.toLowerCase().includes(query)
+      );
+    }
+
+    this.filteredEvents = filtered;
+
+    // Render events
+    if (filtered.length === 0) {
+      eventsList.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+
+    empty.style.display = 'none';
+    eventsList.innerHTML = filtered.map(event => this.createEventCardHtml(event)).join('');
+
+    // Add click listeners to event cards
+    document.querySelectorAll('.event-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const eventId = card.dataset.eventId;
+        const event = this.events.find(e => e.id === eventId);
+        if (event) {
+          this.onEventSelected(event);
+        }
+      });
+    });
+  }
+
+  createEventCardHtml(event) {
+    const eventDate = new Date(event.date);
+    const formattedDate = eventDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+
+    // Generate event code
+    const eventCode = event.event_type ? event.event_type.substring(0, 1).toUpperCase() + event.date.substring(5, 7) + event.date.substring(8, 10) : 'EVENT';
+
+    return `
+      <div class="event-card" data-event-id="${event.id}">
+        <div class="event-card-header">
+          <div class="event-title">
+            <h3>${event.name}</h3>
+          </div>
+          <span class="event-code">${eventCode}</span>
+        </div>
+
+        <div class="event-details">
+          <div class="event-detail">
+            <span class="event-detail-icon">📍</span>
+            <span class="event-detail-text">${event.venue}</span>
+          </div>
+          <div class="event-detail">
+            <span class="event-detail-icon">📅</span>
+            <span class="event-detail-text">${formattedDate}</span>
+          </div>
+          ${event.event_type ? `
+            <div class="event-detail">
+              <span class="event-detail-icon">🏷️</span>
+              <span class="event-detail-text">${event.event_type}</span>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="event-stats">
+          <div class="stat">
+            <span class="stat-number">0</span>
+            <span class="stat-label">Medical</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number">0</span>
+            <span class="stat-label">Security</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number">0</span>
+            <span class="stat-label">Safety</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   setupEventListeners() {
-    // Search functionality
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        this.searchTerm = e.target.value.toLowerCase();
-        this.filterEvents();
+    // Add Event button
+    const addEventBtn = document.getElementById('add-event-btn');
+    if (addEventBtn) {
+      addEventBtn.addEventListener('click', () => {
+        const modal = new AddEventModal();
+        modal.render(
+          (newEvent) => {
+            // Refresh events list after creation
+            this.loadEvents();
+          },
+          () => {
+            // Modal cancelled
+            console.log('Event creation cancelled');
+          }
+        );
       });
     }
 
     // Filter buttons
     document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        this.filterEvents(e.target.dataset.filter);
+        btn.classList.add('active');
+        this.filter = btn.dataset.filter;
+        this.filterAndRenderEvents();
       });
     });
 
-    // Event card selection
-    document.querySelectorAll('.event-card').forEach(card => {
-      card.querySelector('.select-event').addEventListener('click', () => {
-        const eventId = card.dataset.eventId;
-        this.onEventSelected(eventId);
+    // Search input
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        this.searchQuery = e.target.value;
+        this.filterAndRenderEvents();
       });
-    });
+    }
   }
 
-  filterEvents(filter = 'all') {
-    let filtered = this.events;
-
-    // Apply status filter
-    if (filter !== 'all') {
-      filtered = filtered.filter(e => e.status.toLowerCase() === filter);
+  destroy() {
+    // Cleanup
+    if (this.eventSubscription) {
+      this.eventSubscription.unsubscribe();
     }
-
-    // Apply search filter
-    if (this.searchTerm) {
-      filtered = filtered.filter(e =>
-        e.name.toLowerCase().includes(this.searchTerm) ||
-        e.code.toLowerCase().includes(this.searchTerm) ||
-        (e.location && e.location.toLowerCase().includes(this.searchTerm))
-      );
-    }
-
-    this.filteredEvents = filtered;
-    this.renderFilteredEvents();
-  }
-
-  renderFilteredEvents() {
-    const container = document.getElementById('events-container');
-
-    if (this.filteredEvents.length === 0) {
-      container.innerHTML = `
-        <div class="no-results">
-          <p>No events match your search criteria.</p>
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML = this.filteredEvents.map(event => {
-      const days = this.getEventDays(event.start_date, event.end_date);
-      return `
-        <div class="event-card" data-event-id="${event.id}">
-          <div class="event-header">
-            <div>
-              <h3>${event.name}</h3>
-            </div>
-            <span class="event-code">${event.code}</span>
-          </div>
-
-          <div class="event-body">
-            <div class="event-detail">
-              <span class="label">📍 Location</span>
-              <span class="value">${event.location || 'N/A'}</span>
-            </div>
-
-            <div class="event-detail">
-              <span class="label">👥 Attendance</span>
-              <span class="value">${event.expected_attendance ? event.expected_attendance.toLocaleString() : 'N/A'}</span>
-            </div>
-
-            <div class="event-detail">
-              <span class="label">📅 Duration</span>
-              <span class="value">${event.start_date} → ${event.end_date}</span>
-            </div>
-
-            <div class="event-detail">
-              <span class="label">Status</span>
-              <span class="value status-${event.status}">${event.status.toUpperCase()}</span>
-            </div>
-
-            <div class="event-stats">
-              <div class="stat">
-                <div class="stat-value">${days}</div>
-                <div class="stat-label">Days</div>
-              </div>
-              <div class="stat">
-                <div class="stat-value">4</div>
-                <div class="stat-label">Modules</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="event-actions">
-            <button class="select-event">Select Event →</button>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    // Re-add event listeners
-    document.querySelectorAll('.event-card').forEach(card => {
-      card.querySelector('.select-event').addEventListener('click', () => {
-        const eventId = card.dataset.eventId;
-        this.onEventSelected(eventId);
-      });
-    });
-  }
-
-  getEventDays(startDate, endDate) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    return Math.max(1, days);
   }
 }
