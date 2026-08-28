@@ -1,4 +1,4 @@
-import { supabase, supabaseApi } from './supabase.js';
+import { supabase, supabaseApi } from './supabase.js'; 
 
 class AuthService {
   constructor() {
