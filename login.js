@@ -1,4 +1,4 @@
-// Login Page Component - Improved UI/UX
+// Login Page Component - VOC Branded
 import { AuthService } from './auth.js';
 
 export class LoginPage {
@@ -24,11 +24,19 @@ export class LoginPage {
         <div class="login-container">
           <div class="login-left">
             <div class="login-branding">
-              <div class="login-logo">🎯</div>
-              <h1>JOC Command Centre</h1>
-              <p>Joint Operations Centre Event Management System</p>
+              <img src="./voc-logo.png" alt="VOC Logo" class="login-logo-image" />
+              <h1>Venue Operations Centre</h1>
+              <p class="tagline">Connect | Manage | Protect | Deliver</p>
             </div>
+
             <div class="login-features">
+              <div class="feature-item">
+                <span class="feature-icon">🔒</span>
+                <div>
+                  <h4>Security</h4>
+                  <p>Enterprise-grade security for large-scale events</p>
+                </div>
+              </div>
               <div class="feature-item">
                 <span class="feature-icon">📊</span>
                 <div>
@@ -40,14 +48,7 @@ export class LoginPage {
                 <span class="feature-icon">👥</span>
                 <div>
                   <h4>Multi-Module Control</h4>
-                  <p>Medical, Security, Safety & more in one place</p>
-                </div>
-              </div>
-              <div class="feature-item">
-                <span class="feature-icon">🔒</span>
-                <div>
-                  <h4>Secure & Scalable</h4>
-                  <p>Enterprise-grade security for large events</p>
+                  <p>Medical, Security, Safety & Communications</p>
                 </div>
               </div>
             </div>
@@ -111,7 +112,7 @@ export class LoginPage {
                 <div class="divider">
                   <span>Demo Access</span>
                 </div>
-                <p class="demo-text">Demo credentials available for testing the system</p>
+                <p class="demo-text">Demo credentials available for testing</p>
               </div>
             </div>
           </div>
@@ -119,7 +120,7 @@ export class LoginPage {
       </div>
     `;
 
-    // Add improved login styles
+    // Add branded login styles
     const style = document.createElement('style');
     style.textContent = `
       .login-wrapper {
@@ -127,7 +128,7 @@ export class LoginPage {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #1F5B7C;
+        background: linear-gradient(135deg, #003D7A 0%, #0F1419 100%);
         padding: 1rem;
         position: relative;
         overflow: hidden;
@@ -148,7 +149,8 @@ export class LoginPage {
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.1) 100%);
+        background: radial-gradient(circle at 20% 50%, rgba(0, 153, 255, 0.15) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 50%, rgba(255, 152, 0, 0.1) 0%, transparent 50%);
       }
 
       .login-bg-shapes {
@@ -162,13 +164,13 @@ export class LoginPage {
       .shape {
         position: absolute;
         border-radius: 50%;
-        opacity: 0.05;
+        opacity: 0.08;
       }
 
       .shape-1 {
         width: 400px;
         height: 400px;
-        background: rgba(255, 255, 255, 0.08);
+        background: #0099FF;
         top: -100px;
         right: -100px;
       }
@@ -176,7 +178,7 @@ export class LoginPage {
       .shape-2 {
         width: 300px;
         height: 300px;
-        background: rgba(255, 255, 255, 0.08);
+        background: #FF9800;
         bottom: -50px;
         left: -50px;
       }
@@ -184,7 +186,7 @@ export class LoginPage {
       .shape-3 {
         width: 250px;
         height: 250px;
-        background: rgba(255, 255, 255, 0.08);
+        background: #0099FF;
         top: 50%;
         right: 10%;
       }
@@ -194,7 +196,7 @@ export class LoginPage {
         grid-template-columns: 1fr 1fr;
         gap: 3rem;
         width: 100%;
-        max-width: 1000px;
+        max-width: 1100px;
         position: relative;
         z-index: 1;
         align-items: center;
@@ -203,23 +205,26 @@ export class LoginPage {
       .login-left {
         display: flex;
         flex-direction: column;
-        gap: 2rem;
+        gap: 2.5rem;
       }
 
       .login-branding {
         text-align: left;
       }
 
-      .login-logo {
-        font-size: 3rem;
-        margin-bottom: 1rem;
+      .login-logo-image {
+        max-width: 300px;
+        width: 100%;
+        height: auto;
+        margin-bottom: 1.5rem;
+        filter: drop-shadow(0 4px 16px rgba(0, 153, 255, 0.3));
       }
 
       .login-left h1 {
         font-size: 2.25rem;
         font-weight: 700;
         margin: 0 0 0.5rem 0;
-        color: #ffffff;
+        color: #FFFFFF;
         letter-spacing: -0.5px;
       }
 
@@ -228,6 +233,13 @@ export class LoginPage {
         color: rgba(255, 255, 255, 0.85);
         margin: 0;
         line-height: 1.5;
+      }
+
+      .tagline {
+        font-size: 0.95rem;
+        color: #FF9800;
+        font-weight: 600;
+        letter-spacing: 1px;
       }
 
       .login-features {
@@ -240,15 +252,16 @@ export class LoginPage {
         display: flex;
         gap: 1rem;
         padding: 1.25rem;
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(0, 153, 255, 0.1);
         border-radius: 8px;
         border-left: 3px solid #FF9800;
         transition: all 0.3s ease;
       }
 
       .feature-item:hover {
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(0, 153, 255, 0.15);
         transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(0, 153, 255, 0.2);
       }
 
       .feature-icon {
@@ -259,7 +272,7 @@ export class LoginPage {
       .feature-item h4 {
         margin: 0 0 0.25rem 0;
         font-size: 0.95rem;
-        color: #ffffff;
+        color: #FFFFFF;
         font-weight: 600;
       }
 
@@ -277,17 +290,17 @@ export class LoginPage {
       }
 
       .login-form-container {
-        background: rgba(20, 40, 60, 0.95);
+        background: rgba(26, 35, 50, 0.95);
         border-radius: 12px;
         padding: 2.5rem;
         width: 100%;
         max-width: 420px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        animation: fadeInUp 0.6s ease;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        animation: slideUp 0.6s ease;
+        border: 2px solid rgba(0, 153, 255, 0.2);
       }
 
-      @keyframes fadeInUp {
+      @keyframes slideUp {
         from {
           opacity: 0;
           transform: translateY(20px);
@@ -306,13 +319,13 @@ export class LoginPage {
       .login-form-header h2 {
         font-size: 1.75rem;
         margin: 0 0 0.5rem 0;
-        color: #1a2a3a;
+        color: #0099FF;
         font-weight: 700;
       }
 
       .login-form-header p {
         font-size: 0.95rem;
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(255, 255, 255, 0.7);
         margin: 0;
       }
 
@@ -330,9 +343,10 @@ export class LoginPage {
 
       .form-group label {
         font-weight: 600;
-        color: #ffffff;
+        color: #FFFFFF;
         font-size: 0.9rem;
         letter-spacing: 0.3px;
+        text-transform: uppercase;
       }
 
       .input-wrapper {
@@ -351,10 +365,10 @@ export class LoginPage {
       .form-group input {
         width: 100%;
         padding: 0.85rem 0.85rem 0.85rem 2.75rem;
-        border: 2px solid rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(0, 153, 255, 0.2);
         border-radius: 8px;
-        background: rgba(255, 255, 255, 0.1);
-        color: #ffffff;
+        background: rgba(255, 255, 255, 0.08);
+        color: #FFFFFF;
         font-family: inherit;
         font-size: 0.95rem;
         transition: all 0.3s ease;
@@ -365,15 +379,15 @@ export class LoginPage {
       }
 
       .form-group input:hover {
-        border-color: rgba(255, 255, 255, 0.3);
+        border-color: rgba(0, 153, 255, 0.4);
         background: rgba(255, 255, 255, 0.12);
       }
 
       .form-group input:focus {
         outline: none;
-        border-color: #FF9800;
+        border-color: #0099FF;
         background: rgba(255, 255, 255, 0.15);
-        box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+        box-shadow: 0 0 0 3px rgba(0, 153, 255, 0.2);
       }
 
       .input-toggle {
@@ -409,7 +423,7 @@ export class LoginPage {
       }
 
       .checkbox-label:hover {
-        color: #ffffff;
+        color: #FFFFFF;
       }
 
       .checkbox-label input[type="checkbox"] {
@@ -429,21 +443,23 @@ export class LoginPage {
         gap: 0.6rem;
         font-size: 1rem;
         font-weight: 600;
-        background: #FF9800;
+        background: linear-gradient(135deg, #0099FF, #00A8E8);
         color: white;
         border: none;
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
 
-      .btn-full:hover {
-        background: #E68900;
+      .btn-full:hover:not(:disabled) {
+        background: linear-gradient(135deg, #003D7A, #0099FF);
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(255, 152, 0, 0.4);
+        box-shadow: 0 8px 24px rgba(0, 153, 255, 0.4);
       }
 
-      .btn-full:active {
+      .btn-full:active:not(:disabled) {
         transform: translateY(0);
       }
 
@@ -461,11 +477,11 @@ export class LoginPage {
       }
 
       .error-message {
-        color: #ff6b6b;
+        color: #FF5252;
         font-size: 0.9rem;
         padding: 1rem;
-        background: rgba(255, 107, 107, 0.1);
-        border: 1px solid rgba(255, 107, 107, 0.3);
+        background: rgba(255, 82, 82, 0.15);
+        border: 1px solid rgba(255, 82, 82, 0.3);
         border-radius: 8px;
         display: none;
         animation: slideDown 0.3s ease;
@@ -510,13 +526,14 @@ export class LoginPage {
 
       .divider span {
         font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(255, 255, 255, 0.7);
         font-weight: 600;
+        text-transform: uppercase;
       }
 
       .demo-text {
         font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.7);
+        color: rgba(255, 255, 255, 0.6);
         margin: 0;
       }
 
