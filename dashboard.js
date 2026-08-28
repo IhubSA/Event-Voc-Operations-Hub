@@ -1,218 +1,126 @@
-import { supabaseApi } from './supabase.js';
+// Dashboard Page Component
+import { supabase } from './supabase.js';
+import { Navbar } from './navbar.js';
 
-export default class DashboardPage {
+export class DashboardPage {
   constructor() {
-    this.selectedEvent = null;
     this.events = [];
-    this.incidents = [];
-    this.venues = [];
+    this.selectedEvent = null;
+    this.currentUser = null;
+  }
+
+  async render(currentUser, onEventSelected) {
+    this.currentUser = currentUser;
+    this.onEventSelected = onEventSelected;
+
+    const container = document.getElementById('app');
+
+    // Render navbar
+    const navbar = new Navbar(currentUser, () => {
+      supabase.auth.signOut();
+    });
+    const navbarHtml = navbar.render();
+
+    // Initial loading state
+    container.innerHTML = navbarHtml + `
+      <div class="dashboard-wrapper">
+        <div class="dashboard-content">
+          <h2>Loading events...</h2>
+        </div>
+      </div>
+    `;
+
+    // Load events
+    await this.loadEvents();
   }
 
   async loadEvents() {
-    this.events = await supabaseApi.getEvents();
-    return this.events;
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          id,
+          name,
+          code,
+          status,
+          start_date,
+          end_date,
+          location,
+          expected_attendance,
+          organisation_id
+        `)
+        .order('start_date', { ascending: false });
+
+      if (error) throw error;
+
+      this.events = data || [];
+      this.renderDashboard();
+    } catch (error) {
+      console.error('Error loading events:', error);
+      document.querySelector('.dashboard-content').innerHTML = `
+        <div class="error">Failed to load events: ${error.message}</div>
+      `;
+    }
   }
 
-  async loadEventDetails(eventId) {
-    this.selectedEvent = await supabaseApi.getEventById(eventId);
-    this.incidents = await supabaseApi.getIncidentsByEvent(eventId);
-    this.venues = await supabaseApi.getVenuesByEvent(eventId);
-  }
+  renderDashboard() {
+    const container = document.getElementById('app');
+    const dashboardContent = container.querySelector('.dashboard-content');
 
-  getSeverityColor(severity) {
-    const colors = {
-      'critical': '#b31b1b',
-      'high': '#ff8c00',
-      'medium': '#ffc107',
-      'low': '#0066cc'
-    };
-    return colors[severity] || '#666';
-  }
-
-  render() {
-    const container = document.createElement('div');
-    container.className = 'dashboard-container';
-
-    const contentArea = document.createElement('div');
-    contentArea.className = 'dashboard-content';
-
-    // Loading message
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'loading-message';
-    loadingDiv.textContent = 'Loading events...';
-    contentArea.appendChild(loadingDiv);
-
-    // Load events and render
-    this.loadEvents().then(() => {
-      loadingDiv.remove();
-
-      if (this.events.length === 0) {
-        const noEventsDiv = document.createElement('div');
-        noEventsDiv.className = 'empty-state';
-        noEventsDiv.innerHTML = '<p>No events found. Create your first event in Supabase.</p>';
-        contentArea.appendChild(noEventsDiv);
-        return;
-      }
-
-      // Event selection grid
-      const eventsSection = document.createElement('section');
-      eventsSection.className = 'section';
-
-      const eventsTitle = document.createElement('h2');
-      eventsTitle.textContent = 'Available Events';
-      eventsSection.appendChild(eventsTitle);
-
-      const eventsGrid = document.createElement('div');
-      eventsGrid.className = 'events-grid';
-
-      this.events.forEach(event => {
-        const eventCard = document.createElement('div');
-        eventCard.className = 'event-card';
-        eventCard.style.cursor = 'pointer';
-
-        const eventName = document.createElement('h3');
-        eventName.textContent = event.name;
-
-        const eventCode = document.createElement('p');
-        eventCode.className = 'text-muted';
-        eventCode.textContent = `Code: ${event.code}`;
-
-        const eventDate = document.createElement('p');
-        eventDate.className = 'text-muted';
-        const startDate = new Date(event.start_date).toLocaleDateString();
-        eventDate.textContent = `Start: ${startDate}`;
-
-        eventCard.appendChild(eventName);
-        eventCard.appendChild(eventCode);
-        eventCard.appendChild(eventDate);
-
-        eventCard.addEventListener('click', async () => {
-          await this.loadEventDetails(event.id);
-          this.renderEventDetails(contentArea);
-        });
-
-        eventsGrid.appendChild(eventCard);
-      });
-
-      eventsSection.appendChild(eventsGrid);
-      contentArea.appendChild(eventsSection);
-    });
-
-    container.appendChild(contentArea);
-    return container;
-  }
-
-  renderEventDetails(container) {
-    // Clear and rebuild
-    container.innerHTML = '';
-
-    const backBtn = document.createElement('button');
-    backBtn.className = 'btn btn-secondary';
-    backBtn.textContent = '← Back to Events';
-    backBtn.style.marginBottom = '20px';
-    backBtn.addEventListener('click', () => {
-      container.innerHTML = '';
-      this.render().childNodes.forEach(node => container.appendChild(node.cloneNode(true)));
-    });
-    container.appendChild(backBtn);
-
-    // Event header
-    const eventHeader = document.createElement('section');
-    eventHeader.className = 'section';
-
-    const eventTitle = document.createElement('h1');
-    eventTitle.textContent = this.selectedEvent.name;
-    eventHeader.appendChild(eventTitle);
-
-    const eventStats = document.createElement('div');
-    eventStats.className = 'stats-grid';
-
-    const statCards = [
-      { label: 'Status', value: this.selectedEvent.status || 'N/A' },
-      { label: 'Venues', value: this.venues.length },
-      { label: 'Incidents', value: this.incidents.length }
-    ];
-
-    statCards.forEach(stat => {
-      const card = document.createElement('div');
-      card.className = 'stat-card';
-      card.innerHTML = `<div class="stat-value">${stat.value}</div><div class="stat-label">${stat.label}</div>`;
-      eventStats.appendChild(card);
-    });
-
-    eventHeader.appendChild(eventStats);
-    container.appendChild(eventHeader);
-
-    // Venues section
-    if (this.venues.length > 0) {
-      const venuesSection = document.createElement('section');
-      venuesSection.className = 'section';
-
-      const venuesTitle = document.createElement('h2');
-      venuesTitle.textContent = 'Venues';
-      venuesSection.appendChild(venuesTitle);
-
-      const venuesGrid = document.createElement('div');
-      venuesGrid.className = 'venues-grid';
-
-      this.venues.forEach(venue => {
-        const venueCard = document.createElement('div');
-        venueCard.className = 'venue-card';
-        venueCard.innerHTML = `
-          <h3>${venue.name}</h3>
-          <p class="text-muted">Capacity: ${venue.capacity}</p>
-          <p class="text-muted">Status: ${venue.status}</p>
-        `;
-        venuesGrid.appendChild(venueCard);
-      });
-
-      venuesSection.appendChild(venuesGrid);
-      container.appendChild(venuesSection);
+    if (this.events.length === 0) {
+      dashboardContent.innerHTML = `
+        <div class="empty-state">
+          <p>No events available</p>
+        </div>
+      `;
+      return;
     }
 
-    // Incidents section
-    if (this.incidents.length > 0) {
-      const incidentsSection = document.createElement('section');
-      incidentsSection.className = 'section';
+    dashboardContent.innerHTML = `
+      <div class="dashboard-header">
+        <h1>Events</h1>
+        <p>Select an event to manage</p>
+      </div>
 
-      const incidentsTitle = document.createElement('h2');
-      incidentsTitle.textContent = 'Recent Incidents';
-      incidentsSection.appendChild(incidentsTitle);
+      <div class="events-grid">
+        ${this.events.map(event => `
+          <div class="event-card" data-event-id="${event.id}">
+            <div class="event-header">
+              <h3>${event.name}</h3>
+              <span class="event-code">${event.code}</span>
+            </div>
+            <div class="event-body">
+              <div class="event-detail">
+                <span class="label">Location:</span>
+                <span class="value">${event.location || 'N/A'}</span>
+              </div>
+              <div class="event-detail">
+                <span class="label">Expected Attendance:</span>
+                <span class="value">${event.expected_attendance ? event.expected_attendance.toLocaleString() : 'N/A'}</span>
+              </div>
+              <div class="event-detail">
+                <span class="label">Dates:</span>
+                <span class="value">${event.start_date} to ${event.end_date}</span>
+              </div>
+              <div class="event-detail">
+                <span class="label">Status:</span>
+                <span class="value status-${event.status}">${event.status.toUpperCase()}</span>
+              </div>
+            </div>
+            <div class="event-actions">
+              <button class="btn btn-primary select-event">Select Event</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
 
-      const incidentsList = document.createElement('div');
-      incidentsList.className = 'incidents-list';
-
-      this.incidents.slice(0, 10).forEach(incident => {
-        const incidentItem = document.createElement('div');
-        incidentItem.className = 'incident-item';
-
-        const severityBadge = document.createElement('span');
-        severityBadge.className = 'severity-badge';
-        severityBadge.textContent = (incident.severity || 'low').toUpperCase();
-        severityBadge.style.backgroundColor = this.getSeverityColor(incident.severity);
-
-        const incidentTitle = document.createElement('h4');
-        incidentTitle.textContent = incident.title || 'Untitled Incident';
-
-        const incidentCategory = document.createElement('p');
-        incidentCategory.className = 'text-muted';
-        incidentCategory.textContent = incident.incident_category?.name || 'Uncategorized';
-
-        const incidentTime = document.createElement('p');
-        incidentTime.className = 'text-muted';
-        const time = new Date(incident.created_at).toLocaleString();
-        incidentTime.textContent = time;
-
-        incidentItem.appendChild(severityBadge);
-        incidentItem.appendChild(incidentTitle);
-        incidentItem.appendChild(incidentCategory);
-        incidentItem.appendChild(incidentTime);
-
-        incidentsList.appendChild(incidentItem);
+    // Add event listeners
+    document.querySelectorAll('.event-card').forEach(card => {
+      card.querySelector('.select-event').addEventListener('click', () => {
+        const eventId = card.dataset.eventId;
+        this.onEventSelected(eventId);
       });
-
-      incidentsSection.appendChild(incidentsList);
-      container.appendChild(incidentsSection);
-    }
+    });
   }
 }
