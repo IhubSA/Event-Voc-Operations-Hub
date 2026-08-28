@@ -4,7 +4,8 @@ import { AuthService } from './auth.js';
 import { LoginPage } from './login.js';
 import { DashboardPage } from './dashboard.js';
 import { MedicalPage } from './medical.js';
-import { SecurityPage } from './security.js';  // ADD THIS
+import { SecurityPage } from './security.js';
+import { SafetyPage } from './safety.js';  // ADD THIS
 
 const authService = new AuthService();
 let currentUser = null;
@@ -83,7 +84,6 @@ function showModuleMenu() {
           <div class="module-icon">⚠️</div>
           <h3>Safety Compliance</h3>
           <p>Inspections & Hazard Tracking</p>
-          <span class="badge-coming">Coming Soon</span>
         </button>
       </div>
 
@@ -148,15 +148,10 @@ function showModuleMenu() {
       min-height: 240px;
     }
 
-    .module-card:hover:not([data-module="safety"]) {
+    .module-card:hover {
       border-color: var(--primary);
       box-shadow: 0 8px 24px rgba(0, 102, 204, 0.2);
       transform: translateY(-4px);
-    }
-
-    .module-card[data-module="safety"] {
-      opacity: 0.7;
-      cursor: not-allowed;
     }
 
     .module-icon {
@@ -175,18 +170,6 @@ function showModuleMenu() {
       color: var(--text-secondary);
       margin: 0 0 1rem 0;
       flex: 1;
-    }
-
-    .badge-coming {
-      display: inline-block;
-      background: var(--warning);
-      color: white;
-      padding: 0.4rem 0.8rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      margin-top: auto;
     }
 
     .btn-back {
@@ -219,9 +202,7 @@ function showModuleMenu() {
   document.querySelectorAll('.module-card').forEach(card => {
     card.addEventListener('click', (e) => {
       const module = e.currentTarget.dataset.module;
-      if (module !== 'safety') {
-        loadModule(module);
-      }
+      loadModule(module);
     });
   });
 
@@ -245,7 +226,7 @@ function loadModule(moduleName) {
 
     medicalPage.render(currentEvent);
     currentPage = medicalPage;
-  } else if (moduleName === 'security') {  // ADD THIS
+  } else if (moduleName === 'security') {
     const container = document.getElementById('app');
     const securityPage = new SecurityPage();
 
@@ -255,6 +236,16 @@ function loadModule(moduleName) {
 
     securityPage.render(currentEvent);
     currentPage = securityPage;
+  } else if (moduleName === 'safety') {  // ADD THIS
+    const container = document.getElementById('app');
+    const safetyPage = new SafetyPage();
+
+    if (currentPage) {
+      currentPage.destroy?.();
+    }
+
+    safetyPage.render(currentEvent);
+    currentPage = safetyPage;
   } else {
     alert(`${moduleName} module coming soon!`);
   }
