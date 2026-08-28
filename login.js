@@ -127,7 +127,7 @@ export class LoginPage {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--bg-secondary);
+        background: #1F5B7C;
         padding: 1rem;
         position: relative;
         overflow: hidden;
@@ -148,7 +148,7 @@ export class LoginPage {
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(135deg, rgba(31, 91, 124, 0.1) 0%, rgba(15, 52, 96, 0.1) 100%);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.1) 100%);
       }
 
       .login-bg-shapes {
@@ -168,7 +168,7 @@ export class LoginPage {
       .shape-1 {
         width: 400px;
         height: 400px;
-        background: #1F5B7C;
+        background: rgba(255, 255, 255, 0.08);
         top: -100px;
         right: -100px;
       }
@@ -176,7 +176,7 @@ export class LoginPage {
       .shape-2 {
         width: 300px;
         height: 300px;
-        background: #1F5B7C;
+        background: rgba(255, 255, 255, 0.08);
         bottom: -50px;
         left: -50px;
       }
@@ -184,7 +184,7 @@ export class LoginPage {
       .shape-3 {
         width: 250px;
         height: 250px;
-        background: #1F5B7C;
+        background: rgba(255, 255, 255, 0.08);
         top: 50%;
         right: 10%;
       }
@@ -219,13 +219,13 @@ export class LoginPage {
         font-size: 2.25rem;
         font-weight: 700;
         margin: 0 0 0.5rem 0;
-        color: var(--text-primary);
+        color: #ffffff;
         letter-spacing: -0.5px;
       }
 
       .login-left p {
         font-size: 1rem;
-        color: var(--text-secondary);
+        color: rgba(255, 255, 255, 0.85);
         margin: 0;
         line-height: 1.5;
       }
@@ -240,14 +240,14 @@ export class LoginPage {
         display: flex;
         gap: 1rem;
         padding: 1.25rem;
-        background: rgba(31, 91, 124, 0.08);
+        background: rgba(255, 255, 255, 0.1);
         border-radius: 8px;
-        border-left: 3px solid #1F5B7C;
+        border-left: 3px solid #FF9800;
         transition: all 0.3s ease;
       }
 
       .feature-item:hover {
-        background: rgba(31, 91, 124, 0.12);
+        background: rgba(255, 255, 255, 0.15);
         transform: translateX(4px);
       }
 
@@ -259,14 +259,14 @@ export class LoginPage {
       .feature-item h4 {
         margin: 0 0 0.25rem 0;
         font-size: 0.95rem;
-        color: var(--text-primary);
+        color: #ffffff;
         font-weight: 600;
       }
 
       .feature-item p {
         margin: 0;
         font-size: 0.85rem;
-        color: var(--text-secondary);
+        color: rgba(255, 255, 255, 0.8);
         line-height: 1.4;
       }
 
@@ -277,13 +277,14 @@ export class LoginPage {
       }
 
       .login-form-container {
-        background: var(--bg-primary);
+        background: rgba(20, 40, 60, 0.95);
         border-radius: 12px;
         padding: 2.5rem;
         width: 100%;
         max-width: 420px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         animation: fadeInUp 0.6s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
       }
 
       @keyframes fadeInUp {
@@ -305,13 +306,13 @@ export class LoginPage {
       .login-form-header h2 {
         font-size: 1.75rem;
         margin: 0 0 0.5rem 0;
-        color: var(--text-primary);
+        color: #1a2a3a;
         font-weight: 700;
       }
 
       .login-form-header p {
         font-size: 0.95rem;
-        color: var(--text-secondary);
+        color: rgba(255, 255, 255, 0.8);
         margin: 0;
       }
 
@@ -329,7 +330,7 @@ export class LoginPage {
 
       .form-group label {
         font-weight: 600;
-        color: var(--text-primary);
+        color: #ffffff;
         font-size: 0.9rem;
         letter-spacing: 0.3px;
       }
@@ -350,27 +351,29 @@ export class LoginPage {
       .form-group input {
         width: 100%;
         padding: 0.85rem 0.85rem 0.85rem 2.75rem;
-        border: 2px solid var(--border-color);
+        border: 2px solid rgba(255, 255, 255, 0.2);
         border-radius: 8px;
-        background: var(--bg-secondary);
-        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
         font-family: inherit;
         font-size: 0.95rem;
         transition: all 0.3s ease;
       }
 
       .form-group input::placeholder {
-        color: rgba(255, 255, 255, 0.4);
+        color: rgba(255, 255, 255, 0.5);
       }
 
       .form-group input:hover {
-        border-color: rgba(31, 91, 124, 0.5);
+        border-color: rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.12);
       }
 
       .form-group input:focus {
         outline: none;
-        border-color: #1F5B7C;
-        box-shadow: 0 0 0 3px rgba(31, 91, 124, 0.1);
+        border-color: #FF9800;
+        background: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
       }
 
       .input-toggle {
@@ -401,19 +404,19 @@ export class LoginPage {
         gap: 0.6rem;
         cursor: pointer;
         font-size: 0.9rem;
-        color: var(--text-secondary);
+        color: rgba(255, 255, 255, 0.8);
         transition: color 0.2s ease;
       }
 
       .checkbox-label:hover {
-        color: var(--text-primary);
+        color: #ffffff;
       }
 
       .checkbox-label input[type="checkbox"] {
         width: 18px;
         height: 18px;
         cursor: pointer;
-        accent-color: #1F5B7C;
+        accent-color: #FF9800;
       }
 
       .btn-full {
@@ -426,7 +429,7 @@ export class LoginPage {
         gap: 0.6rem;
         font-size: 1rem;
         font-weight: 600;
-        background: #1F5B7C;
+        background: #FF9800;
         color: white;
         border: none;
         border-radius: 8px;
@@ -435,9 +438,9 @@ export class LoginPage {
       }
 
       .btn-full:hover {
-        background: #164258;
+        background: #E68900;
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(31, 91, 124, 0.3);
+        box-shadow: 0 6px 16px rgba(255, 152, 0, 0.4);
       }
 
       .btn-full:active {
@@ -487,7 +490,7 @@ export class LoginPage {
         margin-top: 1.5rem;
         text-align: center;
         padding-top: 1.5rem;
-        border-top: 1px solid var(--border-color);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
       }
 
       .divider {
@@ -502,18 +505,18 @@ export class LoginPage {
         content: '';
         flex: 1;
         height: 1px;
-        background: var(--border-color);
+        background: rgba(255, 255, 255, 0.1);
       }
 
       .divider span {
         font-size: 0.85rem;
-        color: var(--text-secondary);
+        color: rgba(255, 255, 255, 0.8);
         font-weight: 600;
       }
 
       .demo-text {
         font-size: 0.85rem;
-        color: var(--text-secondary);
+        color: rgba(255, 255, 255, 0.7);
         margin: 0;
       }
 
