@@ -1,4 +1,4 @@
-import { supabaseApi } from '../services/supabase.js';
+import { supabaseApi } from './supabase.js';
 
 export default class DashboardPage {
   constructor() {
