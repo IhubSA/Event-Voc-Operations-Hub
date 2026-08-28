@@ -37,8 +37,19 @@ function renderDashboard() {
     currentPage.destroy?.();
   }
 
-  dashboardPage.render(currentUser, onEventSelected);
+  dashboardPage.render(currentUser, onEventSelected, onLogout);
   currentPage = dashboardPage;
+}
+
+async function onLogout() {
+  try {
+    await authService.logout();
+    currentUser = null;
+    currentEvent = null;
+    renderLogin();
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
 }
 
 function onLoginSuccess(user) {
