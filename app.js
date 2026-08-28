@@ -56,8 +56,8 @@ function showModuleMenu() {
 
   // Format event details
   const eventName = currentEvent?.name || 'Event';
-  const eventVenue = currentEvent?.venue || 'Venue TBA';
-  const eventDate = currentEvent?.date ? new Date(currentEvent.date).toLocaleDateString('en-US', {
+  const eventLocation = currentEvent?.location || 'Location TBA';
+  const eventDate = currentEvent?.start_date ? new Date(currentEvent.start_date).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -76,8 +76,8 @@ function showModuleMenu() {
             <span class="detail-value">${eventName}</span>
           </div>
           <div class="event-detail-item">
-            <span class="detail-label">Venue:</span>
-            <span class="detail-value">${eventVenue}</span>
+            <span class="detail-label">Location:</span>
+            <span class="detail-value">${eventLocation}</span>
           </div>
           <div class="event-detail-item">
             <span class="detail-label">Date:</span>
