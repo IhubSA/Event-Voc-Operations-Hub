@@ -8,11 +8,15 @@ export class MedicalPage {
     this.medicalResources = [];
     this.selectedIncident = null;
     this.unsubscribe = null;
+    this.medicalCategoryId = null;
   }
 
   async render(eventId) {
     this.currentEvent = eventId;
     const container = document.getElementById('app');
+
+    // Fetch the Medical incident category ID
+    await this.fetchMedicalCategoryId();
 
     container.innerHTML = `
       <div class="medical-dashboard">
@@ -140,6 +144,35 @@ export class MedicalPage {
 
     // Subscribe to real-time updates
     this.subscribeToIncidents();
+  }
+
+  async fetchMedicalCategoryId() {
+    try {
+      const { data, error } = await supabase
+        .from('incident_categories')
+        .select('id')
+        .ilike('name', '%medical%')
+        .limit(1)
+        .single();
+
+      if (data) {
+        this.medicalCategoryId = data.id;
+      } else {
+        // If no Medical category found, get the first category as fallback
+        const { data: allCategories, error: allError } = await supabase
+          .from('incident_categories')
+          .select('id')
+          .limit(1)
+          .single();
+
+        if (allCategories) {
+          this.medicalCategoryId = allCategories.id;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching medical category:', error);
+      // Continue anyway - will show error when trying to create incident
+    }
   }
 
   async loadMedicalIncidents() {
@@ -466,13 +499,18 @@ export class MedicalPage {
     const assignedStaffId = document.getElementById('assigned-staff').value;
 
     try {
+      // Check if we have the medical category ID
+      if (!this.medicalCategoryId) {
+        throw new Error('Medical incident category not found. Please contact administrator.');
+      }
+
       // First create the incident
       const { data: incident, error: incidentError } = await supabase
         .from('incidents')
         .insert([
           {
             event_id: this.currentEvent,
-            incident_category_id: '00000000-0000-0000-0000-000000000001', // Medical category
+            incident_category_id: this.medicalCategoryId,
             title: `Medical: ${patientName}`,
             description: symptoms,
             severity: triageLevel,
