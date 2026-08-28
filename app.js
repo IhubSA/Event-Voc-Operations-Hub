@@ -46,13 +46,22 @@ function onLoginSuccess(user) {
   renderDashboard();
 }
 
-function onEventSelected(eventId) {
-  currentEvent = eventId;
+function onEventSelected(event) {
+  currentEvent = event;
   showModuleMenu();
 }
 
 function showModuleMenu() {
   const container = document.getElementById('app');
+
+  // Format event details
+  const eventName = currentEvent?.name || 'Event';
+  const eventVenue = currentEvent?.venue || 'Venue TBA';
+  const eventDate = currentEvent?.date ? new Date(currentEvent.date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }) : 'Date TBA';
 
   const menuHtml = `
     <div class="module-menu-wrapper">
@@ -60,6 +69,21 @@ function showModuleMenu() {
         <img src="/voc-logo.png" alt="VOC Logo" class="module-menu-logo" />
         <h1>Operations Centre</h1>
         <p>Select an operational module</p>
+
+        <div class="event-details">
+          <div class="event-detail-item">
+            <span class="detail-label">Event:</span>
+            <span class="detail-value">${eventName}</span>
+          </div>
+          <div class="event-detail-item">
+            <span class="detail-label">Venue:</span>
+            <span class="detail-value">${eventVenue}</span>
+          </div>
+          <div class="event-detail-item">
+            <span class="detail-label">Date:</span>
+            <span class="detail-value">${eventDate}</span>
+          </div>
+        </div>
       </div>
 
       <div class="module-grid">
@@ -127,7 +151,41 @@ function showModuleMenu() {
     .module-menu-header p {
       font-size: 1.1rem;
       color: var(--text-secondary);
-      margin: 0;
+      margin: 0 0 2rem 0;
+    }
+
+    .event-details {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 1.5rem;
+      background: rgba(0, 153, 255, 0.1);
+      border: 2px solid rgba(0, 153, 255, 0.3);
+      border-radius: 8px;
+      margin-top: 1.5rem;
+      max-width: 600px;
+    }
+
+    .event-detail-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .detail-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-value {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text-primary);
     }
 
     .module-grid {
@@ -202,6 +260,16 @@ function showModuleMenu() {
         min-height: auto;
         padding: 1.5rem;
       }
+
+      .event-details {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      .event-detail-item {
+        width: 100%;
+      }
     }
   `;
   document.head.appendChild(style);
@@ -215,10 +283,13 @@ function showModuleMenu() {
   });
 
   // Back button
-  document.getElementById('back-btn').addEventListener('click', () => {
-    currentEvent = null;
-    renderDashboard();
-  });
+  const backBtn = document.getElementById('back-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      currentEvent = null;
+      renderDashboard();
+    });
+  }
 }
 
 function loadModule(moduleName) {
@@ -232,7 +303,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    medicalPage.render(currentEvent);
+    medicalPage.render(currentEvent?.id || currentEvent);
     currentPage = medicalPage;
   } else if (moduleName === 'security') {
     const container = document.getElementById('app');
@@ -242,7 +313,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    securityPage.render(currentEvent);
+    securityPage.render(currentEvent?.id || currentEvent);
     currentPage = securityPage;
   } else if (moduleName === 'safety') {
     const container = document.getElementById('app');
@@ -252,7 +323,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    safetyPage.render(currentEvent);
+    safetyPage.render(currentEvent?.id || currentEvent);
     currentPage = safetyPage;
   } else {
     alert(`${moduleName} module coming soon!`);
