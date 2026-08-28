@@ -148,7 +148,7 @@ export class LoginPage {
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        background: linear-gradient(135deg, rgba(31, 91, 124, 0.1) 0%, rgba(15, 52, 96, 0.1) 100%);
       }
 
       .login-bg-shapes {
@@ -168,7 +168,7 @@ export class LoginPage {
       .shape-1 {
         width: 400px;
         height: 400px;
-        background: var(--primary);
+        background: #1F5B7C;
         top: -100px;
         right: -100px;
       }
@@ -176,7 +176,7 @@ export class LoginPage {
       .shape-2 {
         width: 300px;
         height: 300px;
-        background: var(--primary);
+        background: #1F5B7C;
         bottom: -50px;
         left: -50px;
       }
@@ -184,7 +184,7 @@ export class LoginPage {
       .shape-3 {
         width: 250px;
         height: 250px;
-        background: var(--primary);
+        background: #1F5B7C;
         top: 50%;
         right: 10%;
       }
@@ -240,14 +240,14 @@ export class LoginPage {
         display: flex;
         gap: 1rem;
         padding: 1.25rem;
-        background: rgba(102, 126, 234, 0.08);
+        background: rgba(31, 91, 124, 0.08);
         border-radius: 8px;
-        border-left: 3px solid var(--primary);
+        border-left: 3px solid #1F5B7C;
         transition: all 0.3s ease;
       }
 
       .feature-item:hover {
-        background: rgba(102, 126, 234, 0.12);
+        background: rgba(31, 91, 124, 0.12);
         transform: translateX(4px);
       }
 
@@ -364,13 +364,13 @@ export class LoginPage {
       }
 
       .form-group input:hover {
-        border-color: rgba(102, 126, 234, 0.5);
+        border-color: rgba(31, 91, 124, 0.5);
       }
 
       .form-group input:focus {
         outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: #1F5B7C;
+        box-shadow: 0 0 0 3px rgba(31, 91, 124, 0.1);
       }
 
       .input-toggle {
@@ -413,7 +413,7 @@ export class LoginPage {
         width: 18px;
         height: 18px;
         cursor: pointer;
-        accent-color: var(--primary);
+        accent-color: #1F5B7C;
       }
 
       .btn-full {
@@ -426,6 +426,27 @@ export class LoginPage {
         gap: 0.6rem;
         font-size: 1rem;
         font-weight: 600;
+        background: #1F5B7C;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-full:hover {
+        background: #164258;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(31, 91, 124, 0.3);
+      }
+
+      .btn-full:active {
+        transform: translateY(0);
+      }
+
+      .btn-full:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
       }
 
       .btn-spinner {
