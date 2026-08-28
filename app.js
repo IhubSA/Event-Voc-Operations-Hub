@@ -1,9 +1,9 @@
 // Main Application Controller
 import { supabase } from './supabase.js';
 import { AuthService } from './auth.js';
-import { LoginPage } from './pages/login.js';
-import { DashboardPage } from './pages/dashboard.js';
-import { MedicalPage } from './medical.js';  // ADD THIS
+import { LoginPage } from './login.js';  // FIXED: removed pages/
+import { DashboardPage } from './dashboard.js';  // FIXED: removed pages/
+import { MedicalPage } from './medical.js';
 
 const authService = new AuthService();
 let currentUser = null;
