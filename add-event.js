@@ -37,11 +37,11 @@ export class AddEventModal {
             </div>
 
             <div class="form-group">
-              <label for="venue">Venue *</label>
+              <label for="location">Location *</label>
               <input
                 type="text"
-                id="venue"
-                name="venue"
+                id="location"
+                name="location"
                 required
                 placeholder="e.g., Cape Town, South Africa"
               />
@@ -350,7 +350,7 @@ export class AddEventModal {
       if (this.isLoading) return;
 
       const eventName = document.getElementById('event-name').value;
-      const venue = document.getElementById('venue').value;
+      const location = document.getElementById('location').value;
       const eventDate = document.getElementById('event-date').value;
       const eventType = document.getElementById('event-type').value;
       const description = document.getElementById('event-description').value;
@@ -371,12 +371,12 @@ export class AddEventModal {
           .insert([
             {
               name: eventName,
-              venue: venue,
+              location: location,
               start_date: eventDate,
+              end_date: eventDate,
               code: eventCode,
               event_type: eventType,
               description: description,
-              status: 'active',
               created_at: new Date().toISOString()
             }
           ])
