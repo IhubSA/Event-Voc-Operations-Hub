@@ -1,9 +1,10 @@
 // Main Application Controller
 import { supabase } from './supabase.js';
 import { AuthService } from './auth.js';
-import { LoginPage } from './login.js';  // FIXED: removed pages/
-import { DashboardPage } from './dashboard.js';  // FIXED: removed pages/
+import { LoginPage } from './login.js';
+import { DashboardPage } from './dashboard.js';
 import { MedicalPage } from './medical.js';
+import { SecurityPage } from './security.js';  // ADD THIS
 
 const authService = new AuthService();
 let currentUser = null;
@@ -76,7 +77,6 @@ function showModuleMenu() {
           <div class="module-icon">🔒</div>
           <h3>Security</h3>
           <p>Threat Assessment & Investigation</p>
-          <span class="badge-coming">Coming Soon</span>
         </button>
 
         <button class="module-card" data-module="safety">
@@ -148,13 +148,12 @@ function showModuleMenu() {
       min-height: 240px;
     }
 
-    .module-card:hover:not([data-module="security"]):not([data-module="safety"]) {
+    .module-card:hover:not([data-module="safety"]) {
       border-color: var(--primary);
       box-shadow: 0 8px 24px rgba(0, 102, 204, 0.2);
       transform: translateY(-4px);
     }
 
-    .module-card[data-module="security"],
     .module-card[data-module="safety"] {
       opacity: 0.7;
       cursor: not-allowed;
@@ -220,7 +219,7 @@ function showModuleMenu() {
   document.querySelectorAll('.module-card').forEach(card => {
     card.addEventListener('click', (e) => {
       const module = e.currentTarget.dataset.module;
-      if (module !== 'security' && module !== 'safety') {
+      if (module !== 'safety') {
         loadModule(module);
       }
     });
@@ -246,6 +245,16 @@ function loadModule(moduleName) {
 
     medicalPage.render(currentEvent);
     currentPage = medicalPage;
+  } else if (moduleName === 'security') {  // ADD THIS
+    const container = document.getElementById('app');
+    const securityPage = new SecurityPage();
+
+    if (currentPage) {
+      currentPage.destroy?.();
+    }
+
+    securityPage.render(currentEvent);
+    currentPage = securityPage;
   } else {
     alert(`${moduleName} module coming soon!`);
   }
