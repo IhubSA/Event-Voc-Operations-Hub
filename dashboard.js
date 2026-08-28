@@ -349,7 +349,7 @@ export class DashboardPage {
       const { data, error } = await supabase
         .from('events')
         .select('*')
-        .order('date', { ascending: false });
+        .order('start_date', { ascending: false });
 
       if (error) {
         throw error;
@@ -400,10 +400,10 @@ export class DashboardPage {
 
     if (this.filter === 'active') {
       const today = new Date();
-      filtered = filtered.filter(event => new Date(event.date) <= today);
+      filtered = filtered.filter(event => new Date(event.start_date) <= today);
     } else if (this.filter === 'upcoming') {
       const today = new Date();
-      filtered = filtered.filter(event => new Date(event.date) > today);
+      filtered = filtered.filter(event => new Date(event.start_date) > today);
     }
 
     // Filter by search query
@@ -440,7 +440,7 @@ export class DashboardPage {
   }
 
   createEventCardHtml(event) {
-    const eventDate = new Date(event.date);
+    const eventDate = new Date(event.start_date);
     const formattedDate = eventDate.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -448,7 +448,7 @@ export class DashboardPage {
     });
 
     // Generate event code
-    const eventCode = event.event_type ? event.event_type.substring(0, 1).toUpperCase() + event.date.substring(5, 7) + event.date.substring(8, 10) : 'EVENT';
+    const eventCode = event.code || (event.event_type ? event.event_type.substring(0, 1).toUpperCase() + event.start_date.substring(5, 7) + event.start_date.substring(8, 10) : 'EVENT');
 
     return `
       <div class="event-card" data-event-id="${event.id}">
