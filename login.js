@@ -24,7 +24,7 @@ export class LoginPage {
         <div class="login-container">
           <div class="login-left">
             <div class="login-branding">
-              <img src="./voc-logo.png" alt="VOC Logo" class="login-logo-image" />
+              <img src="/voc-logo.png" alt="VOC Logo" class="login-logo-image" />
               <h1>Venue Operations Centre</h1>
               <p class="tagline">Connect | Manage | Protect | Deliver</p>
             </div>
