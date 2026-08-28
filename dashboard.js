@@ -411,7 +411,7 @@ export class DashboardPage {
       const query = this.searchQuery.toLowerCase();
       filtered = filtered.filter(event =>
         event.name.toLowerCase().includes(query) ||
-        event.venue.toLowerCase().includes(query)
+        event.location.toLowerCase().includes(query)
       );
     }
 
@@ -462,7 +462,7 @@ export class DashboardPage {
         <div class="event-details">
           <div class="event-detail">
             <span class="event-detail-icon">📍</span>
-            <span class="event-detail-text">${event.venue}</span>
+            <span class="event-detail-text">${event.location}</span>
           </div>
           <div class="event-detail">
             <span class="event-detail-icon">📅</span>
