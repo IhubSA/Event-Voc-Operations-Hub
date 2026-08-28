@@ -11,7 +11,7 @@ export class Navbar {
     const html = `
       <nav class="navbar">
         <div class="navbar-brand">
-          🎯 JOC Command Centre
+      <img src="/voc-logo.png" alt="VOC Logo" class="navbar-logo" />
         </div>
         <div class="navbar-end">
           <span class="user-info">${userEmail}</span>
