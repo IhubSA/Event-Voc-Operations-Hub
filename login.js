@@ -1,4 +1,4 @@
-import { authService } from '../services/auth.js';
+import { authService } from './auth.js';
 
 export default class LoginPage {
   constructor(options = {}) {
