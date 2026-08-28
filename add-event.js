@@ -372,7 +372,7 @@ export class AddEventModal {
             {
               name: eventName,
               venue: venue,
-              date: eventDate,
+              start_date: eventDate,
               code: eventCode,
               event_type: eventType,
               description: description,
