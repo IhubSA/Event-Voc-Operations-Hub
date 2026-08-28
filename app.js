@@ -5,7 +5,7 @@ import { LoginPage } from './login.js';
 import { DashboardPage } from './dashboard.js';
 import { MedicalPage } from './medical.js';
 import { SecurityPage } from './security.js';
-import { SafetyPage } from './safety.js';  // ADD THIS
+import { SafetyPage } from './safety.js';
 
 const authService = new AuthService();
 let currentUser = null;
@@ -57,7 +57,8 @@ function showModuleMenu() {
   const menuHtml = `
     <div class="module-menu-wrapper">
       <div class="module-menu-header">
-        <h1>📊 Operations Centre</h1>
+        <img src="/voc-logo.png" alt="VOC Logo" class="module-menu-logo" />
+        <h1>Operations Centre</h1>
         <p>Select an operational module</p>
       </div>
 
@@ -108,6 +109,13 @@ function showModuleMenu() {
     .module-menu-header {
       text-align: center;
       margin-bottom: 3rem;
+    }
+
+    .module-menu-logo {
+      max-width: 150px;
+      width: 100%;
+      height: auto;
+      margin-bottom: 1.5rem;
     }
 
     .module-menu-header h1 {
@@ -236,7 +244,7 @@ function loadModule(moduleName) {
 
     securityPage.render(currentEvent);
     currentPage = securityPage;
-  } else if (moduleName === 'safety') {  // ADD THIS
+  } else if (moduleName === 'safety') {
     const container = document.getElementById('app');
     const safetyPage = new SafetyPage();
 
