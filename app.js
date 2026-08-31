@@ -88,6 +88,10 @@ function showIntegratedDashboard() {
 }
 
 function loadModule(moduleName) {
+  const backToIntegratedDashboard = () => {
+    showIntegratedDashboard();
+  };
+
   if (moduleName === 'dashboard') {
     renderDashboard();
   } else if (moduleName === 'medical') {
@@ -98,7 +102,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    medicalPage.render(currentEvent?.id || currentEvent);
+    medicalPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard);
     currentPage = medicalPage;
   } else if (moduleName === 'security') {
     const container = document.getElementById('app');
@@ -108,7 +112,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    securityPage.render(currentEvent?.id || currentEvent);
+    securityPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard);
     currentPage = securityPage;
   } else if (moduleName === 'safety') {
     const container = document.getElementById('app');
@@ -118,7 +122,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    safetyPage.render(currentEvent?.id || currentEvent);
+    safetyPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard);
     currentPage = safetyPage;
   } else {
     alert(`${moduleName} module coming soon!`);
