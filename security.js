@@ -12,8 +12,9 @@ export class SecurityPage {
     this.overallThreatLevel = 'green';
   }
 
-  async render(eventId) {
+  async render(eventId, onBack) {
     this.currentEvent = eventId;
+    this.onBack = onBack;
     const container = document.getElementById('app');
 
     // Fetch the Security incident category ID
@@ -22,7 +23,10 @@ export class SecurityPage {
     container.innerHTML = `
       <div class="security-dashboard">
         <div class="security-header">
-          <h1>Security Operations</h1>
+          <div class="security-header-top">
+            <h1>Security Operations</h1>
+            <button class="btn btn-secondary btn-small" id="back-btn-security">← Back to Dashboard</button>
+          </div>
           <div class="threat-level-indicator" id="threat-indicator">
             <div class="threat-badge threat-green">🟢 GREEN</div>
             <span>Overall Threat Level</span>
@@ -484,6 +488,14 @@ export class SecurityPage {
   }
 
   setupEventListeners() {
+    // Back button
+    const backBtn = document.getElementById('back-btn-security');
+    if (backBtn && this.onBack) {
+      backBtn.addEventListener('click', () => {
+        this.onBack();
+      });
+    }
+
     document.getElementById('new-incident-btn').addEventListener('click', () => {
       document.getElementById('new-incident-modal').style.display = 'flex';
     });
