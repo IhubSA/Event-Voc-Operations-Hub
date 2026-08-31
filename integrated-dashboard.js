@@ -10,6 +10,7 @@ export class IntegratedDashboard {
     this.securityIncidents = [];
     this.safetyHazards = [];
     this.staffList = [];
+    this.participantsList = [];
     this.subscriptions = [];
   }
 
@@ -147,6 +148,28 @@ export class IntegratedDashboard {
             </div>
             <button class="btn btn-sm btn-primary" data-module="staff">Manage Staff</button>
           </div>
+
+          <div class="metric-card participants-card">
+            <div class="metric-header">
+              <h3>🏃 Participants</h3>
+              <span class="metric-count" id="participants-total">0</span>
+            </div>
+            <div class="participants-breakdown">
+              <div class="participant-item">
+                <span class="participant-label">Registered</span>
+                <span class="participant-count" id="participants-registered">0</span>
+              </div>
+              <div class="participant-item">
+                <span class="participant-label">Checked In</span>
+                <span class="participant-count" id="participants-checked-in">0</span>
+              </div>
+              <div class="participant-item">
+                <span class="participant-label">Completed</span>
+                <span class="participant-count" id="participants-completed">0</span>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-primary" data-module="participants">Manage</button>
+          </div>
         </div>
 
         <div class="alerts-section" id="alerts-section" style="display: none;">
@@ -220,6 +243,38 @@ export class IntegratedDashboard {
         border-color: var(--primary);
         box-shadow: var(--shadow-lg);
         transform: translateY(-2px);
+      }
+
+      .participants-breakdown {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      .participant-item {
+        background: rgba(0, 153, 255, 0.05);
+        padding: 0.75rem;
+        border-radius: 8px;
+        border-left: 3px solid var(--primary);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .participant-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+      }
+
+      .participant-count {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
       }
 
       .metric-header {
@@ -474,7 +529,8 @@ export class IntegratedDashboard {
         this.loadMedicalIncidents(),
         this.loadSecurityIncidents(),
         this.loadSafetyHazards(),
-        this.loadStaff()
+        this.loadStaff(),
+        this.loadParticipants()
       ]);
 
       this.updateMetrics();
@@ -554,6 +610,21 @@ export class IntegratedDashboard {
     } catch (error) {
       console.error('Error loading staff:', error);
       this.staffList = [];
+    }
+  }
+
+  async loadParticipants() {
+    try {
+      const { data, error } = await supabase
+        .from('participants')
+        .select('*')
+        .eq('event_id', this.currentEvent.id);
+
+      if (error) throw error;
+      this.participantsList = data || [];
+    } catch (error) {
+      console.error('Error loading participants:', error);
+      this.participantsList = [];
     }
   }
 
@@ -654,6 +725,16 @@ export class IntegratedDashboard {
     document.getElementById('staff-officers').textContent = officers;
     document.getElementById('staff-coordinators').textContent = coordinators;
     document.getElementById('staff-checkedin').textContent = checkedIn;
+
+    // Participant metrics
+    const totalParticipants = this.participantsList.length;
+    const checkedInParticipants = this.participantsList.filter(p => p.status === 'checked_in').length;
+    const completedParticipants = this.participantsList.filter(p => p.status === 'completed').length;
+
+    document.getElementById('participants-total').textContent = totalParticipants;
+    document.getElementById('participants-registered').textContent = totalParticipants;
+    document.getElementById('participants-checked-in').textContent = checkedInParticipants;
+    document.getElementById('participants-completed').textContent = completedParticipants;
   }
 
   displayAlerts() {
