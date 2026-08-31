@@ -293,6 +293,33 @@ export class StaffPage {
       }
 
       .staff-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+      }
+
+      .staff-role-section {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 2px solid var(--border-color);
+      }
+
+      .role-section-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 3px solid var(--primary);
+      }
+
+      .role-section-header h3 {
+        margin: 0;
+        color: var(--primary);
+        font-size: 1.3rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .staff-grid-by-role {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 1.5rem;
@@ -349,15 +376,16 @@ export class StaffPage {
       }
 
       .staff-actions {
-        display: flex;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
         gap: 0.5rem;
         margin-top: 1rem;
       }
 
       .staff-actions .btn {
-        flex: 1;
-        font-size: 0.85rem;
-        padding: 0.5rem;
+        font-size: 0.8rem;
+        padding: 0.5rem 0.3rem;
+        white-space: nowrap;
       }
 
       .checkin-container, .assignments-container {
@@ -646,8 +674,25 @@ export class StaffPage {
           gap: 1rem;
         }
 
-        .staff-grid, .checkin-container, .assignments-container {
+        .staff-grid-by-role, .checkin-container, .assignments-container {
           grid-template-columns: 1fr;
+        }
+
+        .staff-role-section {
+          padding: 1rem;
+        }
+
+        .role-section-header h3 {
+          font-size: 1.1rem;
+        }
+
+        .staff-actions {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .staff-actions .btn {
+          font-size: 0.75rem;
+          padding: 0.4rem 0.2rem;
         }
 
         .staff-modal .modal-content {
@@ -725,43 +770,69 @@ export class StaffPage {
       return;
     }
 
-    let filteredStaff = this.staffList;
-    if (filterRole) {
-      filteredStaff = this.staffList.filter(staff =>
-        staff.staff_roles.some(r => r.role === filterRole)
+    const roles = [
+      'Event Director',
+      'Event Safety Officer',
+      'Event Coordinator',
+      'Operations Staff',
+      'Marshal',
+      'Volunteer'
+    ];
+
+    let html = '';
+
+    roles.forEach(role => {
+      const staffInRole = this.staffList.filter(staff =>
+        staff.staff_roles.some(r => r.role === role)
       );
-    }
 
-    grid.innerHTML = filteredStaff.map(staff => {
-      const roles = staff.staff_roles.map(r => r.role).join(', ');
-      const functionsHtml = staff.staff_roles
-        .filter(r => r.staff_functions && r.staff_functions.length > 0)
-        .map(r => r.staff_functions.map(f => `<span>${f.function_name}</span>`).join(''))
-        .join('');
+      if (staffInRole.length === 0) return; // Skip roles with no staff
 
-      return `
-        <div class="staff-card">
-          <div class="staff-name">${staff.name}</div>
-          <div class="staff-info">📧 ${staff.email}</div>
-          <div class="staff-info">📱 ${staff.phone}</div>
-          ${staff.alternate_phone ? `<div class="staff-info">📞 ${staff.alternate_phone}</div>` : ''}
-          ${staff.id_number ? `<div class="staff-info">🆔 ${staff.id_number}</div>` : ''}
+      // Check if we should display this role (based on filter)
+      if (filterRole && filterRole !== role) return;
 
-          <div class="staff-roles">
-            ${staff.staff_roles.map(r => `<span class="role-badge">${r.role}</span>`).join('')}
+      html += `
+        <div class="staff-role-section">
+          <div class="role-section-header">
+            <h3>${role} (${staffInRole.length})</h3>
           </div>
+          <div class="staff-grid-by-role">
+            ${staffInRole.map(staff => {
+              const functionsHtml = staff.staff_roles
+                .filter(r => r.role === role && r.staff_functions && r.staff_functions.length > 0)
+                .map(r => r.staff_functions.map(f => `<span>${f.function_name}</span>`).join(''))
+                .join('');
 
-          ${functionsHtml ? `<div class="staff-functions-list">${functionsHtml}</div>` : ''}
+              return `
+                <div class="staff-card">
+                  <div class="staff-name">${staff.name}</div>
+                  <div class="staff-info">📧 ${staff.email}</div>
+                  <div class="staff-info">📱 ${staff.phone}</div>
+                  ${staff.alternate_phone ? `<div class="staff-info">📞 ${staff.alternate_phone}</div>` : ''}
+                  ${staff.id_number ? `<div class="staff-info">🆔 ${staff.id_number}</div>` : ''}
 
-          <div class="staff-actions">
-            <button class="btn btn-sm btn-primary" data-edit="${staff.id}">Edit</button>
-            <button class="btn btn-sm btn-danger" data-delete="${staff.id}">Delete</button>
+                  ${functionsHtml ? `<div class="staff-functions-list">${functionsHtml}</div>` : ''}
+
+                  <div class="staff-actions">
+                    <button class="btn btn-sm btn-secondary" data-assign="${staff.id}">Assign</button>
+                    <button class="btn btn-sm btn-primary" data-edit="${staff.id}">Edit</button>
+                    <button class="btn btn-sm btn-danger" data-delete="${staff.id}">Delete</button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
           </div>
         </div>
       `;
-    }).join('');
+    });
 
-    // Add event listeners for edit/delete buttons
+    grid.innerHTML = html;
+
+    // Add event listeners for buttons
+    grid.querySelectorAll('[data-assign]').forEach(btn => {
+      btn.addEventListener('click', () => this.openAssignmentModalForStaff(btn.dataset.assign));
+    });
+
     grid.querySelectorAll('[data-edit]').forEach(btn => {
       btn.addEventListener('click', () => this.editStaff(btn.dataset.edit));
     });
@@ -1166,6 +1237,29 @@ export class StaffPage {
     document.getElementById('assignment-modal').style.display = 'flex';
     document.getElementById('assignment-modal-title').textContent = 'Create Assignment';
     document.getElementById('assignment-form').reset();
+    document.getElementById('assignment-error-message').classList.remove('show');
+    this.currentAssignmentId = null;
+  }
+
+  openAssignmentModalForStaff(staffId) {
+    // Populate staff dropdown with all staff, but pre-select the clicked one
+    const staffSelect = document.getElementById('assignment-staff');
+    staffSelect.innerHTML = '<option value="">Select a staff member</option>';
+
+    this.staffList.forEach(staff => {
+      const option = document.createElement('option');
+      option.value = staff.id;
+      option.textContent = `${staff.name} (${staff.staff_roles.map(r => r.role).join(', ')})`;
+      staffSelect.appendChild(option);
+    });
+
+    // Pre-select the staff member
+    staffSelect.value = staffId;
+
+    document.getElementById('assignment-modal').style.display = 'flex';
+    document.getElementById('assignment-modal-title').textContent = 'Create Assignment';
+    document.getElementById('assignment-form').reset();
+    staffSelect.value = staffId; // Set after reset
     document.getElementById('assignment-error-message').classList.remove('show');
     this.currentAssignmentId = null;
   }
