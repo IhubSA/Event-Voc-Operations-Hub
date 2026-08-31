@@ -133,17 +133,124 @@ export class ParticipantRegistration {
               <div class="form-section">
                 <h3>Medical Information</h3>
 
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="blood-type">Blood Type</label>
+                    <select id="blood-type" name="bloodType">
+                      <option value="">Select blood type</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div class="form-group">
-                  <label for="medical-info">Medical Information & Allergies</label>
-                  <textarea id="medical-info" name="medicalInfo" placeholder="Please let us know of any allergies, medications, or medical conditions we should be aware of..."></textarea>
+                  <label for="medical-conditions">Medical Conditions</label>
+                  <textarea id="medical-conditions" name="medicalConditions" placeholder="e.g., Asthma, Diabetes, Heart Condition, etc."></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="allergies">Allergies</label>
+                  <textarea id="allergies" name="allergies" placeholder="Food allergies, medication allergies, environmental allergies, etc."></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="medications">Current Medications</label>
+                  <textarea id="medications" name="medications" placeholder="List any medications you are currently taking..."></textarea>
                 </div>
               </div>
 
               <div class="form-section">
+                <h3>Medical Aid & Doctor Details</h3>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="medical-aid">Medical Aid Provider</label>
+                    <input type="text" id="medical-aid" name="medicalAidProvider" placeholder="e.g., Discovery, Medshield, Bonitas, etc." />
+                  </div>
+                  <div class="form-group">
+                    <label for="medical-aid-number">Medical Aid Member Number</label>
+                    <input type="text" id="medical-aid-number" name="medicalAidMemberNumber" />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="doctor-name">Doctor/GP Name</label>
+                    <input type="text" id="doctor-name" name="doctorName" />
+                  </div>
+                  <div class="form-group">
+                    <label for="doctor-phone">Doctor Phone Number</label>
+                    <input type="tel" id="doctor-phone" name="doctorPhone" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3>Emergency Contact Details</h3>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="emergency-name">Emergency Contact Name</label>
+                    <input type="text" id="emergency-name" name="emergencyContactName" />
+                  </div>
+                  <div class="form-group">
+                    <label for="emergency-relationship">Relationship</label>
+                    <select id="emergency-relationship" name="emergencyContactRelationship">
+                      <option value="">Select relationship</option>
+                      <option value="Spouse">Spouse</option>
+                      <option value="Parent">Parent</option>
+                      <option value="Sibling">Sibling</option>
+                      <option value="Child">Child</option>
+                      <option value="Friend">Friend</option>
+                      <option value="Colleague">Colleague</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="emergency-phone">Emergency Contact Phone</label>
+                    <input type="tel" id="emergency-phone" name="emergencyContactPhone" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3>Race Rules & Terms</h3>
+
+                <div class="checkbox-group">
+                  <input type="checkbox" id="rules" name="raceRules" required />
+                  <label for="rules">
+                    I have read and accept the <a href="#" onclick="event.preventDefault(); showRaceRules();">Race Rules & Safety Requirements</a>
+                  </label>
+                </div>
+
                 <div class="checkbox-group">
                   <input type="checkbox" id="terms" name="terms" required />
                   <label for="terms">
-                    I confirm that the information provided is accurate and I agree to the event terms and conditions.
+                    I confirm that the information provided is accurate and I agree to the <a href="#" onclick="event.preventDefault(); showTerms();">Event Terms and Conditions</a>
+                  </label>
+                </div>
+
+                <div class="checkbox-group">
+                  <input type="checkbox" id="privacy" name="privacy" required />
+                  <label for="privacy">
+                    I have read and accept the <a href="#" onclick="event.preventDefault(); showPrivacy();">Privacy Policy</a>
+                  </label>
+                </div>
+
+                <div class="checkbox-group">
+                  <input type="checkbox" id="waiver" name="waiver" required />
+                  <label for="waiver">
+                    I understand the risks associated with this event and assume full responsibility for my participation
                   </label>
                 </div>
               </div>
@@ -208,9 +315,25 @@ export class ParticipantRegistration {
       phone: formData.get('phone') || null,
       category: formData.get('category'),
       age_group: formData.get('ageGroup') || null,
+      // Emergency contact details
       emergency_contact_name: formData.get('emergencyContactName') || null,
       emergency_contact_phone: formData.get('emergencyContactPhone') || null,
-      medical_info: formData.get('medicalInfo') || null
+      emergency_contact_relationship: formData.get('emergencyContactRelationship') || null,
+      // Medical information
+      blood_type: formData.get('bloodType') || null,
+      medical_conditions: formData.get('medicalConditions') || null,
+      allergies: formData.get('allergies') || null,
+      medications: formData.get('medications') || null,
+      // Medical aid & doctor details
+      medical_aid_provider: formData.get('medicalAidProvider') || null,
+      medical_aid_member_number: formData.get('medicalAidMemberNumber') || null,
+      doctor_name: formData.get('doctorName') || null,
+      doctor_phone: formData.get('doctorPhone') || null,
+      // Terms & conditions acceptance
+      race_rules_accepted: formData.get('raceRules') ? true : false,
+      terms_accepted: formData.get('terms') ? true : false,
+      privacy_policy_accepted: formData.get('privacy') ? true : false,
+      accepted_at: new Date().toISOString()
     };
 
     this.isSubmitting = true;
@@ -286,6 +409,269 @@ export class ParticipantRegistration {
       e.preventDefault();
       this.handleSubmit(onSuccess);
     });
+
+    // Setup global modal functions for policy/rules display
+    this.setupPolicyModals();
+  }
+
+  setupPolicyModals() {
+    // Create modal container
+    const modalContainer = document.createElement('div');
+    modalContainer.id = 'policy-modals-container';
+    document.body.appendChild(modalContainer);
+
+    // Add modal styles
+    const modalStyle = document.createElement('style');
+    modalStyle.textContent = `
+      .policy-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .policy-modal.show {
+        display: flex;
+      }
+
+      .policy-modal-content {
+        background: var(--bg-primary);
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 2rem;
+        width: 90%;
+        max-width: 700px;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .policy-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--border-color);
+      }
+
+      .policy-modal-header h2 {
+        margin: 0;
+        color: var(--primary);
+      }
+
+      .policy-modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-secondary);
+      }
+
+      .policy-modal-body {
+        color: var(--text-primary);
+        line-height: 1.6;
+      }
+
+      .policy-modal-body h3 {
+        margin: 1.5rem 0 0.75rem 0;
+        color: var(--primary);
+      }
+
+      .policy-modal-body p {
+        margin: 0.75rem 0;
+      }
+
+      .policy-modal-body ul {
+        margin: 0.75rem 0;
+        padding-left: 1.5rem;
+      }
+
+      .policy-modal-body li {
+        margin: 0.5rem 0;
+      }
+    `;
+    document.head.appendChild(modalStyle);
+
+    // Make functions available globally
+    window.showRaceRules = () => this.showModal('race-rules');
+    window.showTerms = () => this.showModal('terms');
+    window.showPrivacy = () => this.showModal('privacy');
+    window.closeModal = (modalId) => this.closeModal(modalId);
+  }
+
+  showModal(modalType) {
+    let modal = document.getElementById(`${modalType}-modal`);
+
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = `${modalType}-modal`;
+      modal.className = 'policy-modal';
+
+      let title = '';
+      let content = '';
+
+      if (modalType === 'race-rules') {
+        title = 'Race Rules & Safety Requirements';
+        content = `
+          <div class="policy-modal-body">
+            <h3>Race Rules</h3>
+            <p>All participants must adhere to the following rules and requirements:</p>
+            <ul>
+              <li>Participants must register before the event start time</li>
+              <li>All runners must wear their bib numbers visibly at all times during the race</li>
+              <li>Follow all race marshal instructions and stay on the marked course</li>
+              <li>No mechanical assistance is permitted</li>
+              <li>Respect all safety protocols and barriers</li>
+              <li>Ensure you have adequate hydration and nutrition</li>
+            </ul>
+
+            <h3>Safety Requirements</h3>
+            <p>Your safety is our priority. Please note:</p>
+            <ul>
+              <li>Medical support will be available at designated points</li>
+              <li>Course marshals will monitor all participants</li>
+              <li>In case of emergency, immediately alert the nearest marshal or medical staff</li>
+              <li>Participants with health concerns should consult medical staff at check-in</li>
+              <li>Pace yourself and know your limits</li>
+              <li>Weather conditions may affect the race - be prepared for changes</li>
+            </ul>
+
+            <h3>Disqualification</h3>
+            <p>Participants may be disqualified for:</p>
+            <ul>
+              <li>Not displaying their bib number</li>
+              <li>Receiving external mechanical assistance</li>
+              <li>Unsafe or disruptive behavior</li>
+              <li>Leaving the marked course</li>
+              <li>Violating race rules or safety protocols</li>
+            </ul>
+          </div>
+        `;
+      } else if (modalType === 'terms') {
+        title = 'Event Terms and Conditions';
+        content = `
+          <div class="policy-modal-body">
+            <h3>Terms and Conditions</h3>
+            <p><strong>By registering for this event, you agree to the following:</strong></p>
+
+            <h3>Participation Agreement</h3>
+            <p>You confirm that:</p>
+            <ul>
+              <li>You are physically fit to participate in this event</li>
+              <li>You have disclosed all relevant medical conditions</li>
+              <li>You will follow all race rules and instructions from officials</li>
+              <li>You understand the risks involved in participation</li>
+            </ul>
+
+            <h3>Code of Conduct</h3>
+            <p>All participants must:</p>
+            <ul>
+              <li>Treat other participants, staff, and spectators with respect</li>
+              <li>Not engage in any form of harassment or discrimination</li>
+              <li>Not consume alcohol or illegal substances during the event</li>
+              <li>Respect the natural environment and leave no trace</li>
+            </ul>
+
+            <h3>Event Changes</h3>
+            <p>The organizers reserve the right to:</p>
+            <ul>
+              <li>Modify the course or event schedule if necessary</li>
+              <li>Cancel or postpone the event due to weather or safety concerns</li>
+              <li>Enforce strict rules on eligibility and participation</li>
+              <li>Disqualify participants for rule violations</li>
+            </ul>
+
+            <h3>Refund Policy</h3>
+            <p>Registration fees are non-refundable except in cases of event cancellation by organizers.</p>
+          </div>
+        `;
+      } else if (modalType === 'privacy') {
+        title = 'Privacy Policy';
+        content = `
+          <div class="policy-modal-body">
+            <h3>Privacy Policy</h3>
+            <p>We are committed to protecting your personal information.</p>
+
+            <h3>Information Collection</h3>
+            <p>We collect the following information:</p>
+            <ul>
+              <li>Personal details (name, email, phone number)</li>
+              <li>Medical information (for emergency response only)</li>
+              <li>Event-related data (participation records, results)</li>
+            </ul>
+
+            <h3>Use of Information</h3>
+            <p>Your information is used for:</p>
+            <ul>
+              <li>Event registration and management</li>
+              <li>Emergency medical response</li>
+              <li>Communication about the event</li>
+              <li>Improving future events</li>
+            </ul>
+
+            <h3>Data Protection</h3>
+            <p>We implement security measures to protect your data:</p>
+            <ul>
+              <li>Encrypted data transmission</li>
+              <li>Secure database storage</li>
+              <li>Limited access to personal information</li>
+              <li>Regular security audits</li>
+            </ul>
+
+            <h3>Third-Party Sharing</h3>
+            <p>Your information will not be shared with third parties except:</p>
+            <ul>
+              <li>Medical personnel in case of emergency</li>
+              <li>Event officials for legitimate operational purposes</li>
+              <li>Legal requirements or government agencies</li>
+            </ul>
+
+            <h3>Your Rights</h3>
+            <p>You have the right to:</p>
+            <ul>
+              <li>Access your personal data</li>
+              <li>Request corrections to inaccurate information</li>
+              <li>Request deletion of your information (subject to legal requirements)</li>
+              <li>Opt-out of communications</li>
+            </ul>
+          </div>
+        `;
+      }
+
+      modal.innerHTML = `
+        <div class="policy-modal-content">
+          <div class="policy-modal-header">
+            <h2>${title}</h2>
+            <button class="policy-modal-close" onclick="closeModal('${modalType}-modal')">&times;</button>
+          </div>
+          ${content}
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+    }
+
+    modal.classList.add('show');
+
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        this.closeModal(`${modalType}-modal`);
+      }
+    });
+  }
+
+  closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.classList.remove('show');
+    }
   }
 
   addStyles() {
