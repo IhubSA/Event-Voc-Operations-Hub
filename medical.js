@@ -603,8 +603,8 @@ export class MedicalPage {
   }
 
   destroy() {
-    if (this.unsubscribe) {
-      this.unsubscribe();
+    if (this.unsubscribe && typeof this.unsubscribe.unsubscribe === 'function') {
+      this.unsubscribe.unsubscribe();
     }
   }
 }
