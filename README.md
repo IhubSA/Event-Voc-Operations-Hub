@@ -1,169 +1,216 @@
-# JOC Command Centre
-## Event Operations Management System - Phase 1
+# VOC Event Operations Management System - Update Package
 
-A professional command centre application for managing Joint Operations Centre (JOC) and Venue Operations Centre (VOC) activities during large-scale events. Built for enterprise-grade reliability with row-level security, real-time incident management, and multi-role access control.
+This package contains all updates for Phase 3 of the VOC system, including:
+- Enhanced Participant Registration with medical/emergency contact details
+- Manual admin participant registration
+- Customizable registration and bib number sequences
+- Event Settings configuration interface
 
-### 🎯 Phase 1: Foundation (Current)
-- ✅ Authentication (Supabase Auth)
-- ✅ Event management dashboard
-- ✅ Incident reporting and tracking
-- ✅ Multi-role access control (RBAC)
-- ✅ Database with 35+ tables
-- ✅ Row-Level Security (RLS) policies
-- ✅ Responsive UI for command centre
+## 📦 Package Contents
 
-### 📋 Project Stack
+### Database Migrations
+- **event-settings-schema.sql** - NEW: Event settings table and custom number generation functions
+- **participant-schema-enhanced.sql** - NEW: Enhanced participant fields for medical/emergency info
 
-**Frontend**
-- HTML5, CSS3, Vanilla JavaScript (ES6 modules)
-- Responsive design system with CSS custom properties
-- Light/dark theme support
+### JavaScript Modules
+- **event-settings.js** - NEW: Event Settings configuration interface
+- **app.js** - UPDATED: Added EventSettings module routing
+- **participant-registration.js** - UPDATED: Enhanced with medical fields and custom number sequences
+- **participants.js** - UPDATED: Added manual registration form and bulk bib assignment
+- **integrated-dashboard.js** - UPDATED: Added Event Settings button
 
-**Backend & Database**
-- Supabase (PostgreSQL + Auth + Real-time)
-- 35+ normalized tables with proper relationships
-- Row-Level Security policies on all tables
-- 10 predefined operational roles
+## 🚀 Installation Steps
 
-**Deployment**
-- GitHub (version control)
-- Vercel (static hosting)
-- Supabase Cloud (database & authentication)
+### Step 1: Apply Database Migrations
+Execute these SQL migrations in Supabase in order:
 
-### 🚀 Quick Start
+1. **First**, apply the participant schema enhancement:
+   ```
+   Run: database-migrations/participant-schema-enhanced.sql
+   ```
+   This adds 13 new columns to the participants table for medical and emergency contact information.
 
-**Prerequisites:**
-- Supabase account with a project initialized
-- GitHub account with repository created
-- Vercel account connected to GitHub
+2. **Second**, apply the event settings schema:
+   ```
+   Run: database-migrations/event-settings-schema.sql
+   ```
+   This creates:
+   - event_settings table
+   - Custom number generation functions
+   - Bulk bib assignment function
 
-**Environment Variables:**
-Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
-```bash
-VITE_SUPABASE_URL=https://your-project-id.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
+### Step 2: Replace JavaScript Modules
+Replace your existing files with the updated versions from `javascript-modules/`:
+
+- `app.js` → Root of your project
+- `event-settings.js` → Add to project (import in app.js)
+- `participant-registration.js` → Replace existing
+- `participants.js` → Replace existing
+- `integrated-dashboard.js` → Replace existing
+
+### Step 3: Update Imports (if needed)
+Ensure your HTML or module loader includes:
+```javascript
+import { EventSettings } from './event-settings.js';
 ```
 
-**Demo Credentials:**
-After creating a user in Supabase Auth:
-- Email: your-email@example.com
-- Password: (your chosen password)
+The app.js file already includes this import.
 
-### 📁 Project Structure
+## ✨ New Features
 
-```
-Event-VOC-Operations-Hub/
-├── index.html              # Entry point
-├── main.js                 # Vite entry point
-├── package.json            # Dependencies
-├── vercel.json            # Vercel deployment config
-├── vite.config.js         # Vite configuration
-├── .env.example           # Environment variables template
-├── src/
-│   ├── app.js             # Main app controller
-│   ├── services/
-│   │   ├── supabase.js    # Supabase client & API helpers
-│   │   └── auth.js        # Authentication service
-│   ├── pages/
-│   │   ├── login.js       # Login page component
-│   │   └── dashboard.js   # Dashboard & event selection
-│   ├── components/
-│   │   └── navbar.js      # Navigation bar
-│   └── styles/
-│       └── main.css       # Complete styling
-└── docs/
-    └── ARCHITECTURE.md    # System design & data model
-```
+### 1. Enhanced Participant Registration
+- **Medical Information**: Blood type, conditions, allergies, medications
+- **Medical Aid & Doctor Details**: Provider info, doctor contact
+- **Emergency Contact Details**: Name, relationship, phone
+- **Terms & Conditions**: Race rules, terms, privacy acceptance with modals
 
-### 🔐 Security Features
+### 2. Admin Manual Registration
+- **Add Participant Button** in admin dashboard
+- Comprehensive form with all medical/emergency fields
+- Same validation as public registration
+- Auto-generates registration number
+- Optional auto-assign bib number
 
-- **Row-Level Security (RLS)**: All database queries filtered by user roles
-- **Authentication**: Supabase Auth with email/password
-- **Role-Based Access Control (RBAC)**: 10 predefined roles with specific permissions
-- **Audit Logging**: All changes tracked for compliance
-- **Data Encryption**: Supabase handles encryption at rest and in transit
+### 3. Customizable Number Sequences
+**Registration Numbers** (e.g., REG-001, REG-002):
+- Custom prefix (REG, ENTRY, RUN, etc.)
+- Custom starting number (1, 100, 1000, etc.)
+- Auto-generates for every new registration
 
-### 📊 Database Schema
+**Bib Numbers** (e.g., BIB-001, BIB-002):
+- Custom prefix (BIB, BIB#, RUNNER, etc.)
+- Custom starting number
+- Manual or auto-assignment
+- Bulk assign to unassigned participants
 
-**Core Tables:**
-- `users` - User accounts
-- `organisations` - Event organisations
-- `events` - Events with metadata
-- `venues` - Event venues with capacity
-- `zones` - Venue zones (VIP, seating, competition, medical, media)
-- `roles` - Predefined operational roles
+### 4. Event Settings Interface
+Access via **⚙️ Event Settings** button on event dashboard:
+- Configure registration number format
+- Configure bib number format
+- Toggle auto-assignment of bibs
+- Reset number counters
+- Bulk assign bibs to participants
+- Live preview of number formats
 
-**Operational Tables:**
-- `incidents` - Incident reports with severity
-- `tasks` - Task assignments
-- `communications` - Messages and notifications
-- `operational_groups` - Team structures
+## 📋 Database Functions
 
-**Specialized Tables:**
-- `medical_incidents` - Medical emergencies
-- `safety_inspections` - Safety checks
-- `risk_assessments` - Risk evaluations
+### New Functions Created
 
-**Administrative Tables:**
-- `audit_logs` - Immutable audit trail
-- `email_templates` - Notification templates
-- `emergency_contacts` - Critical contacts
+**get_next_registration_number_custom(event_id)**
+- Generates next registration number with custom format
+- Returns: "PREFIX-NNN" format
 
-### 👥 Predefined Roles
+**get_next_bib_number(event_id)**
+- Generates next bib number with custom format
+- Returns: "PREFIX-NNN" format
 
-1. **Super Administrator** - Full system access
-2. **Event Administrator** - Event configuration and team management
-3. **JOC Commander** - Incident coordination and escalation
-4. **VOC Manager** - Venue-specific operations
-5. **Safety Officer** - Safety compliance and inspections
-6. **Medical Manager** - Medical incidents and responses
-7. **Security Manager** - Security incidents and personnel
-8. **Police Liaison** - Police coordination
-9. **Communications Officer** - Internal communications
-10. **Observer (Read-Only)** - View-only access
+**bulk_assign_bibs(event_id, status)**
+- Assigns bib numbers to unassigned participants
+- Optional status filter (default: 'registered')
+- Returns: Updated participants with assigned bibs
 
-### 🔄 Typical Workflow
+## 🔄 Data Flow
 
-1. **Event Setup** - Event Administrator creates event, venues, and zones
-2. **Team Assignment** - Administrators assign personnel to roles
-3. **Operations** - Teams log in and see their event dashboard
-4. **Incident Reporting** - Any team member can report incidents
-5. **Escalation** - JOC Commander reviews and escalates incidents
-6. **Resolution** - Teams respond and update incident status
+### Public Registration
+1. Participant fills form (public-facing)
+2. System checks email uniqueness
+3. Auto-generates registration number using custom format
+4. If auto-assign enabled: assigns bib number
+5. Stores all medical/emergency/terms data
+6. Shows confirmation with registration number
 
-### 📈 Roadmap
+### Admin Registration
+1. Admin clicks "Add Participant" button
+2. Admin fills comprehensive form
+3. System validates email uniqueness
+4. Auto-generates registration number
+5. If auto-assign enabled: assigns bib number
+6. Records participant with all details
+7. Shows success message with registration number
 
-**Phase 2: Operations**
-- Real-time incident dashboards
-- Medical operations module
-- Security module
-- Safety compliance module
-- Task management system
+### Settings Configuration
+1. Admin clicks "⚙️ Event Settings"
+2. Admin configures:
+   - Registration prefix and start number
+   - Bib prefix and start number
+   - Auto-assignment toggle
+3. Settings saved to event_settings table
+4. All new registrations use these settings
 
-**Phase 3: Intelligence**
-- Analytics and reporting
-- Trend analysis
-- Predictive alerts
-- Export capabilities
+## ⚠️ Important Notes
 
-**Phase 4: Enterprise**
-- Multi-event management
-- Advanced reporting
-- API for third-party integration
-- Mobile app
+### Database Migration Order
+- Always run **participant-schema-enhanced.sql first**
+- Then run **event-settings-schema.sql**
+- This ensures proper foreign key relationships
 
-### 🤝 Contributing
+### Backwards Compatibility
+- Existing participant records will have NULL values for new fields
+- This is safe and doesn't break existing functionality
+- New registrations will populate all fields
 
-This is a project for iHub SA. For contributions and deployment questions, please contact the development team.
+### Number Generation
+- Counters start at 0 and increment for each registration
+- Numbers are padded to 3 digits: 001, 002, 100, 1000
+- Format is: PREFIX-NNN (e.g., REG-001)
+- Can reset counters anytime via Event Settings
 
-### 📄 License
+### Auto-Assignment
+- When disabled: Bibs can be assigned manually later via "Bulk Assign" button
+- When enabled: Every new registration gets automatic bib
+- Admins can always manually override individual bib assignments
 
-MIT License - See LICENSE file for details
+## 🧪 Testing Recommendations
 
-### 📞 Support
+1. **Test Public Registration**
+   - Register a participant via public form
+   - Verify custom registration number is generated
+   - Verify bib is auto-assigned if enabled
+   - Check medical/emergency fields are stored
 
-For issues and feature requests, please use the GitHub Issues tracker.
+2. **Test Admin Registration**
+   - Add participant via admin form
+   - Try with/without auto-assign enabled
+   - Test bulk assign button
+   - Verify email duplicate detection
 
----
+3. **Test Event Settings**
+   - Change registration prefix (e.g., "ENTRY")
+   - Change starting number (e.g., 100)
+   - Change bib prefix and number
+   - Toggle auto-assign and test
+   - Click "Reset Counters" and verify restart
 
-**Built with ❤️ for professional event operations management**
+4. **Test Data Display**
+   - View participant details modal
+   - Verify medical info displays correctly
+   - Verify emergency contact shows
+   - Export CSV includes all new fields
+
+## 📞 Support
+
+If you encounter issues:
+1. Check database migration order
+2. Verify all imports are correct in app.js
+3. Clear browser cache and restart app
+4. Check browser console for error messages
+5. Review Supabase logs for database errors
+
+## 📝 Version History
+
+**Phase 3 Update - Current**
+- Added customizable number sequences
+- Added event settings interface
+- Enhanced participant schema
+- Added admin manual registration
+
+**Phase 2** (Previous)
+- Staff management system
+- Participant registration system
+- Dashboard integration
+
+**Phase 1** (Previous)
+- Event management
+- Medical operations
+- Security incidents
+- Safety compliance

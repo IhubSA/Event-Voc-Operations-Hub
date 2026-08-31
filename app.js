@@ -9,6 +9,7 @@ import { SecurityPage } from './security.js';
 import { SafetyPage } from './safety.js';
 import { StaffPage } from './staff.js';
 import { ParticipantsPage } from './participants.js';
+import { EventSettings } from './event-settings.js';
 
 const authService = new AuthService();
 let currentUser = null;
@@ -146,6 +147,16 @@ function loadModule(moduleName) {
 
     participantsPage.render(currentEvent?.id || currentEvent, currentUser, backToIntegratedDashboard);
     currentPage = participantsPage;
+  } else if (moduleName === 'settings') {
+    const container = document.getElementById('app');
+    const eventSettings = new EventSettings();
+
+    if (currentPage) {
+      currentPage.destroy?.();
+    }
+
+    eventSettings.render(currentEvent?.id || currentEvent, backToIntegratedDashboard);
+    currentPage = eventSettings;
   } else {
     alert(`${moduleName} module coming soon!`);
   }

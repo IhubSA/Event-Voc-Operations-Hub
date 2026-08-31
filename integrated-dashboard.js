@@ -41,7 +41,10 @@ export class IntegratedDashboard {
               <span>📅 ${new Date(currentEvent.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
             </div>
           </div>
-          <button class="btn btn-secondary" id="back-btn">← Back to Events</button>
+          <div class="header-buttons">
+            <button class="btn btn-secondary" id="settings-btn">⚙️ Event Settings</button>
+            <button class="btn btn-secondary" id="back-btn">← Back to Events</button>
+          </div>
         </div>
 
         <div class="metrics-section">
@@ -221,6 +224,16 @@ export class IntegratedDashboard {
         gap: 1.5rem;
         font-size: 0.95rem;
         color: var(--text-secondary);
+      }
+
+      .header-buttons {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .header-buttons .btn {
+        white-space: nowrap;
       }
 
       .metrics-section {
@@ -860,6 +873,14 @@ export class IntegratedDashboard {
   }
 
   setupEventListeners() {
+    // Settings button
+    const settingsBtn = document.getElementById('settings-btn');
+    if (settingsBtn) {
+      settingsBtn.addEventListener('click', () => {
+        this.onModuleSelect('settings');
+      });
+    }
+
     // Back button
     const backBtn = document.getElementById('back-btn');
     if (backBtn) {

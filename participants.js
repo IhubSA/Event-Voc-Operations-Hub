@@ -781,13 +781,26 @@ export class ParticipantsPage {
         throw new Error('This email is already registered for this event');
       }
 
-      // Generate registration number
+      // Generate registration number using custom format
       const { data: registrationNum, error: numError } = await supabase
-        .rpc('get_next_registration_number', { p_event_id: this.currentEvent });
+        .rpc('get_next_registration_number_custom', { p_event_id: this.currentEvent });
 
       if (numError) throw numError;
 
       data.registration_number = registrationNum;
+
+      // Auto-assign bib number if enabled in settings
+      const { data: settings } = await supabase
+        .from('event_settings')
+        .select('auto_assign_bibs')
+        .eq('event_id', this.currentEvent)
+        .single();
+
+      if (settings?.auto_assign_bibs) {
+        const { data: bibNum } = await supabase
+          .rpc('get_next_bib_number', { p_event_id: this.currentEvent });
+        data.bib_number = bibNum;
+      }
 
       // Insert participant
       const { error: insertError } = await supabase
