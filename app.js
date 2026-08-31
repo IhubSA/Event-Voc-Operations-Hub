@@ -1,111 +1,35 @@
-// Main Application Controller - Updated for Staff Authentication
-// Handles both admin and staff login flows
+// Main Application Controller
 import { supabase } from './supabase.js';
 import { AuthService } from './auth.js';
 import { LoginPage } from './login.js';
-import { StaffLoginPage } from './staff-login.js';
 import { DashboardPage } from './dashboard.js';
-import { StaffDashboard } from './staff-dashboard.js';
 import { IntegratedDashboard } from './integrated-dashboard.js';
 import { MedicalPage } from './medical.js';
 import { SecurityPage } from './security.js';
 import { SafetyPage } from './safety.js';
 import { StaffPage } from './staff.js';
+import { ParticipantsPage } from './participants.js';
 
 const authService = new AuthService();
 let currentUser = null;
-let currentStaff = null;
 let currentEvent = null;
 let currentPage = null;
-let userType = null; // 'admin' or 'staff'
 
-// Initial app state: show login selection
 async function initializeApp() {
-  const session = await supabase.auth.getSession();
+  const user = await authService.getCurrentUser();
 
-  if (session.data.session) {
-    // User is logged in, determine if they're admin or staff
-    await checkUserType(session.data.session.user);
-  } else {
-    renderLoginSelection();
-  }
-}
-
-async function checkUserType(user) {
-  try {
-    // Check if this user is a staff member
-    const { data: staffAccount, error } = await supabase
-      .from('staff_accounts')
-      .select('staff_id, account_status')
-      .eq('auth_user_id', user.id)
-      .single();
-
-    if (!error && staffAccount && staffAccount.account_status === 'active') {
-      // This is a staff member
-      userType = 'staff';
-
-      // Load staff data
-      const { data: staffData, error: staffError } = await supabase
-        .from('event_staff')
-        .select('*')
-        .eq('id', staffAccount.staff_id)
-        .single();
-
-      if (!staffError && staffData) {
-        currentStaff = {
-          user: user,
-          staffData: staffData,
-          staffId: staffAccount.staff_id
-        };
-        renderStaffDashboard();
-      } else {
-        throw new Error('Could not load staff data');
-      }
-    } else {
-      // This is an admin user
-      userType = 'admin';
-      currentUser = user;
-      renderDashboard();
-    }
-  } catch (error) {
-    console.error('Error checking user type:', error);
-    // Default to admin if error
-    userType = 'admin';
+  if (user) {
     currentUser = user;
     renderDashboard();
+  } else {
+    renderLogin();
   }
 }
 
-function renderLoginSelection() {
-  // This could be a simple selection screen or just go straight to admin login
-  // For now, let's render the admin login page with option to switch to staff login
-  renderAdminLogin();
-}
-
-function renderAdminLogin() {
+function renderLogin() {
   const container = document.getElementById('app');
   const loginPage = new LoginPage();
-  loginPage.render(onAdminLoginSuccess, renderStaffLoginPage);
-}
-
-function renderStaffLoginPage() {
-  const container = document.getElementById('app');
-  const staffLoginPage = new StaffLoginPage();
-  staffLoginPage.render(onStaffLoginSuccess, renderAdminLogin);
-}
-
-function onAdminLoginSuccess(user) {
-  currentUser = user;
-  userType = 'admin';
-  currentStaff = null;
-  renderDashboard();
-}
-
-function onStaffLoginSuccess(staffInfo) {
-  currentStaff = staffInfo;
-  userType = 'staff';
-  currentUser = null;
-  renderStaffDashboard();
+  loginPage.render(onLoginSuccess);
 }
 
 function renderDashboard() {
@@ -120,42 +44,20 @@ function renderDashboard() {
   currentPage = dashboardPage;
 }
 
-function renderStaffDashboard() {
-  const container = document.getElementById('app');
-  const staffDashboard = new StaffDashboard();
-
-  if (currentPage) {
-    currentPage.destroy?.();
-  }
-
-  staffDashboard.render(currentStaff.staffId, currentStaff.staffData, onStaffLogout);
-  currentPage = staffDashboard;
-}
-
 async function onLogout() {
   try {
     await authService.logout();
     currentUser = null;
-    currentStaff = null;
     currentEvent = null;
-    userType = null;
-    renderLoginSelection();
+    renderLogin();
   } catch (error) {
     console.error('Logout error:', error);
   }
 }
 
-async function onStaffLogout() {
-  try {
-    await supabase.auth.signOut();
-    currentStaff = null;
-    currentUser = null;
-    currentEvent = null;
-    userType = null;
-    renderLoginSelection();
-  } catch (error) {
-    console.error('Logout error:', error);
-  }
+function onLoginSuccess(user) {
+  currentUser = user;
+  renderDashboard();
 }
 
 function onEventSelected(event) {
@@ -174,9 +76,11 @@ function showIntegratedDashboard() {
     currentUser,
     currentEvent,
     (module) => {
+      // Module selection callback
       loadModule(module);
     },
     () => {
+      // Back button callback
       currentEvent = null;
       renderDashboard();
     }
@@ -232,6 +136,16 @@ function loadModule(moduleName) {
 
     staffPage.render(currentEvent?.id || currentEvent, currentUser, backToIntegratedDashboard);
     currentPage = staffPage;
+  } else if (moduleName === 'participants') {
+    const container = document.getElementById('app');
+    const participantsPage = new ParticipantsPage();
+
+    if (currentPage) {
+      currentPage.destroy?.();
+    }
+
+    participantsPage.render(currentEvent?.id || currentEvent, currentUser, backToIntegratedDashboard);
+    currentPage = participantsPage;
   } else {
     alert(`${moduleName} module coming soon!`);
   }
@@ -240,18 +154,14 @@ function loadModule(moduleName) {
 // Auth state change listener
 authService.onAuthChange((user) => {
   if (user) {
-    if (!currentUser && !currentStaff) {
-      currentUser = user;
-      if (!currentPage) {
-        renderDashboard();
-      }
+    currentUser = user;
+    if (!currentPage) {
+      renderDashboard();
     }
   } else {
     currentUser = null;
-    currentStaff = null;
     currentEvent = null;
-    userType = null;
-    renderLoginSelection();
+    renderLogin();
   }
 });
 
