@@ -7,6 +7,7 @@ import { IntegratedDashboard } from './integrated-dashboard.js';
 import { MedicalPage } from './medical.js';
 import { SecurityPage } from './security.js';
 import { SafetyPage } from './safety.js';
+import { StaffPage } from './staff.js';
 
 const authService = new AuthService();
 let currentUser = null;
@@ -124,6 +125,16 @@ function loadModule(moduleName) {
 
     safetyPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard);
     currentPage = safetyPage;
+  } else if (moduleName === 'staff') {
+    const container = document.getElementById('app');
+    const staffPage = new StaffPage();
+
+    if (currentPage) {
+      currentPage.destroy?.();
+    }
+
+    staffPage.render(currentEvent?.id || currentEvent, currentUser, backToIntegratedDashboard);
+    currentPage = staffPage;
   } else {
     alert(`${moduleName} module coming soon!`);
   }
