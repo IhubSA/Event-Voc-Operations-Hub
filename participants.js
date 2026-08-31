@@ -49,6 +49,7 @@ export class ParticipantsPage {
               <option value="">All Categories</option>
             </select>
             <button class="btn btn-secondary" id="export-btn">📥 Export List</button>
+            <button class="btn btn-primary" id="add-participant-btn">➕ Add Participant</button>
           </div>
         </div>
 
@@ -107,6 +108,154 @@ export class ParticipantsPage {
               <button type="button" class="btn btn-success" id="finish-btn">Mark Finished</button>
               <button type="button" class="btn btn-danger" id="delete-btn">Delete</button>
             </div>
+          </div>
+        </div>
+
+        <!-- Add Participant Modal -->
+        <div class="participants-modal" id="add-participant-modal" style="display: none;">
+          <div class="modal-content modal-large">
+            <button class="modal-close" id="close-add-modal">&times;</button>
+            <h2>Add New Participant</h2>
+
+            <form id="add-participant-form" class="add-participant-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="add-first-name">First Name *</label>
+                  <input type="text" id="add-first-name" name="firstName" required />
+                </div>
+                <div class="form-group">
+                  <label for="add-last-name">Last Name *</label>
+                  <input type="text" id="add-last-name" name="lastName" required />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="add-email">Email *</label>
+                  <input type="email" id="add-email" name="email" required />
+                </div>
+                <div class="form-group">
+                  <label for="add-phone">Phone</label>
+                  <input type="tel" id="add-phone" name="phone" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="add-category">Category *</label>
+                  <select id="add-category" name="category" required>
+                    <option value="">Select a category</option>
+                    <option value="Adult">Adult</option>
+                    <option value="Youth">Youth</option>
+                    <option value="Junior">Junior</option>
+                    <option value="Senior">Senior</option>
+                    <option value="5K">5K</option>
+                    <option value="10K">10K</option>
+                    <option value="Half Marathon">Half Marathon</option>
+                    <option value="Marathon">Marathon</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="add-age-group">Age Group</label>
+                  <select id="add-age-group" name="ageGroup">
+                    <option value="">Select age group</option>
+                    <option value="Under 18">Under 18</option>
+                    <option value="18-25">18-25</option>
+                    <option value="26-35">26-35</option>
+                    <option value="36-45">36-45</option>
+                    <option value="46-55">46-55</option>
+                    <option value="56-65">56-65</option>
+                    <option value="65+">65+</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="add-blood-type">Blood Type</label>
+                  <select id="add-blood-type" name="bloodType">
+                    <option value="">Select blood type</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="add-medical-conditions">Medical Conditions</label>
+                <textarea id="add-medical-conditions" name="medicalConditions" placeholder="e.g., Asthma, Diabetes, Heart Condition"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="add-allergies">Allergies</label>
+                <textarea id="add-allergies" name="allergies" placeholder="Food, medication, environmental allergies"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="add-medications">Current Medications</label>
+                <textarea id="add-medications" name="medications" placeholder="List any medications being taken"></textarea>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="add-medical-aid">Medical Aid Provider</label>
+                  <input type="text" id="add-medical-aid" name="medicalAidProvider" placeholder="e.g., Discovery, Medshield, Bonitas" />
+                </div>
+                <div class="form-group">
+                  <label for="add-medical-aid-number">Medical Aid Member #</label>
+                  <input type="text" id="add-medical-aid-number" name="medicalAidMemberNumber" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="add-doctor-name">Doctor/GP Name</label>
+                  <input type="text" id="add-doctor-name" name="doctorName" />
+                </div>
+                <div class="form-group">
+                  <label for="add-doctor-phone">Doctor Phone</label>
+                  <input type="tel" id="add-doctor-phone" name="doctorPhone" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="add-emergency-name">Emergency Contact Name</label>
+                  <input type="text" id="add-emergency-name" name="emergencyContactName" />
+                </div>
+                <div class="form-group">
+                  <label for="add-emergency-relationship">Relationship</label>
+                  <select id="add-emergency-relationship" name="emergencyContactRelationship">
+                    <option value="">Select relationship</option>
+                    <option value="Spouse">Spouse</option>
+                    <option value="Parent">Parent</option>
+                    <option value="Sibling">Sibling</option>
+                    <option value="Child">Child</option>
+                    <option value="Friend">Friend</option>
+                    <option value="Colleague">Colleague</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="add-emergency-phone">Emergency Contact Phone</label>
+                <input type="tel" id="add-emergency-phone" name="emergencyContactPhone" />
+              </div>
+
+              <div id="add-message" class="add-message"></div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="cancel-add-btn">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submit-add-btn">Add Participant</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
@@ -482,6 +631,33 @@ export class ParticipantsPage {
     document.getElementById('export-btn').addEventListener('click', () => {
       this.exportParticipantsList();
     });
+
+    // Add participant button
+    document.getElementById('add-participant-btn').addEventListener('click', () => {
+      document.getElementById('add-participant-modal').style.display = 'flex';
+    });
+
+    // Close add participant modal
+    document.getElementById('close-add-modal').addEventListener('click', () => {
+      document.getElementById('add-participant-modal').style.display = 'none';
+    });
+
+    document.getElementById('cancel-add-btn').addEventListener('click', () => {
+      document.getElementById('add-participant-modal').style.display = 'none';
+    });
+
+    // Close modal on background click
+    document.getElementById('add-participant-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'add-participant-modal') {
+        document.getElementById('add-participant-modal').style.display = 'none';
+      }
+    });
+
+    // Add participant form submission
+    document.getElementById('add-participant-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleAddParticipant();
+    });
   }
 
   async checkInParticipant(participantId) {
@@ -544,6 +720,101 @@ export class ParticipantsPage {
     } catch (error) {
       console.error('Delete error:', error);
       alert('Failed to delete participant');
+    }
+  }
+
+  async handleAddParticipant() {
+    const form = document.getElementById('add-participant-form');
+    const messageDiv = document.getElementById('add-message');
+    const submitBtn = document.getElementById('submit-add-btn');
+
+    // Clear previous message
+    messageDiv.textContent = '';
+    messageDiv.className = 'add-message';
+
+    // Validate form
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const formData = new FormData(form);
+    const data = {
+      event_id: this.currentEvent,
+      first_name: formData.get('firstName'),
+      last_name: formData.get('lastName'),
+      email: formData.get('email'),
+      phone: formData.get('phone') || null,
+      category: formData.get('category'),
+      age_group: formData.get('ageGroup') || null,
+      blood_type: formData.get('bloodType') || null,
+      medical_conditions: formData.get('medicalConditions') || null,
+      allergies: formData.get('allergies') || null,
+      medications: formData.get('medications') || null,
+      medical_aid_provider: formData.get('medicalAidProvider') || null,
+      medical_aid_member_number: formData.get('medicalAidMemberNumber') || null,
+      doctor_name: formData.get('doctorName') || null,
+      doctor_phone: formData.get('doctorPhone') || null,
+      emergency_contact_name: formData.get('emergencyContactName') || null,
+      emergency_contact_relationship: formData.get('emergencyContactRelationship') || null,
+      emergency_contact_phone: formData.get('emergencyContactPhone') || null,
+      race_rules_accepted: true,
+      terms_accepted: true,
+      privacy_policy_accepted: true,
+      accepted_at: new Date().toISOString(),
+      status: 'registered'
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Adding...';
+
+    try {
+      // Check if email already registered for this event
+      const { data: existing, error: checkError } = await supabase
+        .from('participants')
+        .select('id')
+        .eq('event_id', this.currentEvent)
+        .eq('email', data.email)
+        .single();
+
+      if (existing) {
+        throw new Error('This email is already registered for this event');
+      }
+
+      // Generate registration number
+      const { data: registrationNum, error: numError } = await supabase
+        .rpc('get_next_registration_number', { p_event_id: this.currentEvent });
+
+      if (numError) throw numError;
+
+      data.registration_number = registrationNum;
+
+      // Insert participant
+      const { error: insertError } = await supabase
+        .from('participants')
+        .insert([data]);
+
+      if (insertError) throw insertError;
+
+      // Show success message
+      messageDiv.className = 'add-message success';
+      messageDiv.textContent = `✓ Participant "${data.first_name} ${data.last_name}" added successfully with registration #${registrationNum}`;
+
+      // Reset form
+      form.reset();
+
+      // Reload participants list
+      setTimeout(() => {
+        document.getElementById('add-participant-modal').style.display = 'none';
+        this.loadParticipants();
+      }, 1500);
+    } catch (error) {
+      console.error('Add participant error:', error);
+      messageDiv.className = 'add-message error';
+      messageDiv.textContent = error.message || 'Failed to add participant. Please try again.';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Add Participant';
     }
   }
 
@@ -802,6 +1073,10 @@ export class ParticipantsPage {
         overflow-y: auto;
       }
 
+      .participants-modal .modal-content.modal-large {
+        max-width: 700px;
+      }
+
       .modal-close {
         background: none;
         border: none;
@@ -848,6 +1123,78 @@ export class ParticipantsPage {
         border-radius: 6px;
         font-size: 0.9rem;
         line-height: 1.6;
+      }
+
+      .add-participant-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .add-participant-form .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      .add-participant-form .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .add-participant-form label {
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      .add-participant-form input,
+      .add-participant-form select,
+      .add-participant-form textarea {
+        padding: 0.75rem;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        font-family: inherit;
+        transition: all 0.3s ease;
+      }
+
+      .add-participant-form input:focus,
+      .add-participant-form select:focus,
+      .add-participant-form textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(0, 153, 255, 0.1);
+      }
+
+      .add-participant-form textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      .add-message {
+        padding: 1rem;
+        border-radius: 8px;
+        display: none;
+      }
+
+      .add-message.success {
+        display: block;
+        background: rgba(76, 175, 80, 0.1);
+        border: 2px solid #4CAF50;
+        color: #4CAF50;
+      }
+
+      .add-message.error {
+        display: block;
+        background: rgba(255, 107, 107, 0.1);
+        border: 2px solid #ff6b6b;
+        color: #ff6b6b;
       }
 
       .modal-actions {
@@ -900,6 +1247,10 @@ export class ParticipantsPage {
 
         .participants-modal .modal-content {
           width: 95%;
+        }
+
+        .add-participant-form .form-row {
+          grid-template-columns: 1fr;
         }
       }
     `;
