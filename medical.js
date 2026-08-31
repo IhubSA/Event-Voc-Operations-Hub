@@ -155,23 +155,12 @@ export class MedicalPage {
       const { data, error } = await supabase
         .from('incident_categories')
         .select('id')
-        .ilike('name', '%medical%')
+        .eq('domain', 'medical')
         .limit(1)
         .single();
 
       if (data) {
         this.medicalCategoryId = data.id;
-      } else {
-        // If no Medical category found, get the first category as fallback
-        const { data: allCategories, error: allError } = await supabase
-          .from('incident_categories')
-          .select('id')
-          .limit(1)
-          .single();
-
-        if (allCategories) {
-          this.medicalCategoryId = allCategories.id;
-        }
       }
     } catch (error) {
       console.error('Error fetching medical category:', error);
