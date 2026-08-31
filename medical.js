@@ -11,8 +11,9 @@ export class MedicalPage {
     this.medicalCategoryId = null;
   }
 
-  async render(eventId) {
+  async render(eventId, onBack) {
     this.currentEvent = eventId;
+    this.onBack = onBack;
     const container = document.getElementById('app');
 
     // Fetch the Medical incident category ID
@@ -21,7 +22,10 @@ export class MedicalPage {
     container.innerHTML = `
       <div class="medical-dashboard">
         <div class="medical-header">
-          <h1>Medical Operations</h1>
+          <div class="medical-header-top">
+            <h1>Medical Operations</h1>
+            <button class="btn btn-secondary btn-small" id="back-btn-medical">← Back to Dashboard</button>
+          </div>
           <div class="medical-header-stats">
             <div class="stat-card critical">
               <div class="stat-value" id="critical-count">0</div>
@@ -437,6 +441,14 @@ export class MedicalPage {
   }
 
   setupEventListeners() {
+    // Back button
+    const backBtn = document.getElementById('back-btn-medical');
+    if (backBtn && this.onBack) {
+      backBtn.addEventListener('click', () => {
+        this.onBack();
+      });
+    }
+
     // New incident button
     document.getElementById('new-incident-btn').addEventListener('click', () => {
       document.getElementById('new-incident-modal').style.display = 'flex';
