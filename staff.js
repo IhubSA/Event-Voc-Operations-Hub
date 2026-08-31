@@ -7,7 +7,9 @@ export class StaffPage {
     this.currentEvent = null;
     this.currentUser = null;
     this.staffList = [];
+    this.assignmentsList = [];
     this.onBack = null;
+    this.currentAssignmentId = null;
   }
 
   async render(eventId, currentUser, onBack) {
@@ -129,6 +131,53 @@ export class StaffPage {
               <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" id="cancel-staff">Cancel</button>
                 <button type="submit" class="btn btn-primary">Save Staff Member</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Add/Edit Assignment Modal -->
+        <div class="staff-modal" id="assignment-modal" style="display: none;">
+          <div class="modal-content">
+            <button class="modal-close" id="close-assignment-modal">&times;</button>
+            <h2 id="assignment-modal-title">Create Assignment</h2>
+            <form id="assignment-form">
+              <div class="form-group">
+                <label>Staff Member *</label>
+                <select id="assignment-staff" required>
+                  <option value="">Select a staff member</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Assignment/Area *</label>
+                <input type="text" id="assignment-name" placeholder="e.g., Gate A, Medical Tent, Registration Desk" required />
+              </div>
+
+              <div class="form-group">
+                <label>Start Time</label>
+                <input type="time" id="assignment-start" />
+              </div>
+
+              <div class="form-group">
+                <label>End Time</label>
+                <input type="time" id="assignment-end" />
+              </div>
+
+              <div class="form-group">
+                <label>Status *</label>
+                <select id="assignment-status" required>
+                  <option value="pending">Pending</option>
+                  <option value="assigned">Assigned</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+
+              <div id="assignment-error-message" class="error-message"></div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="cancel-assignment">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Assignment</button>
               </div>
             </form>
           </div>
@@ -510,6 +559,83 @@ export class StaffPage {
         font-size: 1.1rem;
       }
 
+      .assignments-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .assignment-card {
+        background: rgba(0, 153, 255, 0.05);
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+      }
+
+      .assignment-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+      }
+
+      .assignment-details {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: rgba(0, 153, 255, 0.1);
+        border-radius: 8px;
+      }
+
+      .assignment-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+      }
+
+      .assignment-time {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+      }
+
+      .assignment-status {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin: 0.75rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .assignment-status.pending {
+        background: rgba(255, 193, 7, 0.2);
+        color: #FFC107;
+      }
+
+      .assignment-status.assigned {
+        background: rgba(33, 150, 243, 0.2);
+        color: #2196F3;
+      }
+
+      .assignment-status.completed {
+        background: rgba(76, 175, 80, 0.2);
+        color: #4CAF50;
+      }
+
+      .assignment-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+
+      .assignment-actions .btn {
+        flex: 1;
+        font-size: 0.85rem;
+        padding: 0.5rem;
+      }
+
       @media (max-width: 768px) {
         .staff-dashboard {
           padding: 1rem;
@@ -559,8 +685,34 @@ export class StaffPage {
       this.staffList = data || [];
       this.renderStaffList();
       this.renderCheckinList();
+      await this.loadAssignments();
     } catch (error) {
       console.error('Error loading staff:', error);
+    }
+  }
+
+  async loadAssignments() {
+    try {
+      const { data, error } = await supabase
+        .from('staff_assignments')
+        .select(`
+          *,
+          event_staff (
+            id,
+            name,
+            email
+          )
+        `)
+        .eq('event_id', this.currentEvent)
+        .order('start_time', { ascending: false });
+
+      if (error) throw error;
+
+      this.assignmentsList = data || [];
+      this.renderAssignmentsList();
+    } catch (error) {
+      console.error('Error loading assignments:', error);
+      this.assignmentsList = [];
     }
   }
 
@@ -651,6 +803,77 @@ export class StaffPage {
     });
   }
 
+  renderAssignmentsList() {
+    const container = document.getElementById('assignments-container');
+
+    if (!this.assignmentsList || this.assignmentsList.length === 0) {
+      container.innerHTML = `
+        <div class="loading">
+          <p>No assignments yet</p>
+          <button class="btn btn-primary" id="create-assignment-btn" style="margin-top: 1rem;">+ Create Assignment</button>
+        </div>
+      `;
+      const createBtn = container.querySelector('#create-assignment-btn');
+      if (createBtn) {
+        createBtn.addEventListener('click', () => this.openAssignmentModal());
+      }
+      return;
+    }
+
+    const assignmentsHtml = this.assignmentsList.map(assignment => {
+      const staff = assignment.event_staff;
+      const startTime = assignment.start_time ? new Date(assignment.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'TBA';
+      const endTime = assignment.end_time ? new Date(assignment.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'TBA';
+      const statusClass = assignment.status === 'completed' ? 'completed' : assignment.status === 'assigned' ? 'assigned' : 'pending';
+
+      return `
+        <div class="assignment-card">
+          <div class="staff-name">${staff.name}</div>
+          <div class="staff-info">📧 ${staff.email}</div>
+
+          <div class="assignment-details">
+            <div class="assignment-title">${assignment.assignment}</div>
+            <div class="assignment-time">
+              <span>⏱️ ${startTime} - ${endTime}</span>
+            </div>
+          </div>
+
+          <div class="assignment-status ${statusClass}">
+            ${assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
+          </div>
+
+          <div class="assignment-actions">
+            <button class="btn btn-sm btn-primary" data-edit-assignment="${assignment.id}">Edit</button>
+            <button class="btn btn-sm btn-danger" data-delete-assignment="${assignment.id}">Delete</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = `
+      <div style="margin-bottom: 1.5rem;">
+        <button class="btn btn-primary" id="create-assignment-btn">+ Create Assignment</button>
+      </div>
+      <div class="assignments-grid">
+        ${assignmentsHtml}
+      </div>
+    `;
+
+    // Add event listeners
+    const createBtn = container.querySelector('#create-assignment-btn');
+    if (createBtn) {
+      createBtn.addEventListener('click', () => this.openAssignmentModal());
+    }
+
+    container.querySelectorAll('[data-edit-assignment]').forEach(btn => {
+      btn.addEventListener('click', () => this.editAssignment(btn.dataset.editAssignment));
+    });
+
+    container.querySelectorAll('[data-delete-assignment]').forEach(btn => {
+      btn.addEventListener('click', () => this.deleteAssignment(btn.dataset.deleteAssignment));
+    });
+  }
+
   async checkIn(staffId) {
     try {
       const { error } = await supabase
@@ -722,6 +945,21 @@ export class StaffPage {
 
     document.getElementById('cancel-staff').addEventListener('click', () => {
       this.closeStaffModal();
+    });
+
+    // Assignment modal close
+    document.getElementById('close-assignment-modal').addEventListener('click', () => {
+      this.closeAssignmentModal();
+    });
+
+    document.getElementById('cancel-assignment').addEventListener('click', () => {
+      this.closeAssignmentModal();
+    });
+
+    // Assignment form submission
+    document.getElementById('assignment-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.saveAssignment();
     });
 
     // Role checkboxes for showing/hiding functions
@@ -910,6 +1148,139 @@ export class StaffPage {
     } catch (error) {
       console.error('Error deleting staff:', error);
       alert('Failed to delete staff member');
+    }
+  }
+
+  openAssignmentModal() {
+    // Populate staff dropdown
+    const staffSelect = document.getElementById('assignment-staff');
+    staffSelect.innerHTML = '<option value="">Select a staff member</option>';
+
+    this.staffList.forEach(staff => {
+      const option = document.createElement('option');
+      option.value = staff.id;
+      option.textContent = `${staff.name} (${staff.staff_roles.map(r => r.role).join(', ')})`;
+      staffSelect.appendChild(option);
+    });
+
+    document.getElementById('assignment-modal').style.display = 'flex';
+    document.getElementById('assignment-modal-title').textContent = 'Create Assignment';
+    document.getElementById('assignment-form').reset();
+    document.getElementById('assignment-error-message').classList.remove('show');
+    this.currentAssignmentId = null;
+  }
+
+  closeAssignmentModal() {
+    document.getElementById('assignment-modal').style.display = 'none';
+  }
+
+  async saveAssignment() {
+    const staffId = document.getElementById('assignment-staff').value;
+    const assignmentName = document.getElementById('assignment-name').value;
+    const startTime = document.getElementById('assignment-start').value;
+    const endTime = document.getElementById('assignment-end').value;
+    const status = document.getElementById('assignment-status').value;
+    const errorMsg = document.getElementById('assignment-error-message');
+
+    if (!staffId || !assignmentName || !status) {
+      errorMsg.textContent = 'Please fill in all required fields';
+      errorMsg.classList.add('show');
+      return;
+    }
+
+    try {
+      const startDateTime = startTime ? new Date(`2000-01-01T${startTime}`).toISOString() : null;
+      const endDateTime = endTime ? new Date(`2000-01-01T${endTime}`).toISOString() : null;
+
+      if (this.currentAssignmentId) {
+        // Update existing assignment
+        const { error } = await supabase
+          .from('staff_assignments')
+          .update({
+            staff_id: staffId,
+            assignment: assignmentName,
+            start_time: startDateTime,
+            end_time: endDateTime,
+            status
+          })
+          .eq('id', this.currentAssignmentId);
+
+        if (error) throw error;
+      } else {
+        // Create new assignment
+        const { error } = await supabase
+          .from('staff_assignments')
+          .insert([{
+            staff_id: staffId,
+            event_id: this.currentEvent,
+            assignment: assignmentName,
+            start_time: startDateTime,
+            end_time: endDateTime,
+            status
+          }]);
+
+        if (error) throw error;
+      }
+
+      this.closeAssignmentModal();
+      await this.loadAssignments();
+    } catch (error) {
+      console.error('Error saving assignment:', error);
+      errorMsg.textContent = error.message || 'Failed to save assignment';
+      errorMsg.classList.add('show');
+    }
+  }
+
+  async editAssignment(assignmentId) {
+    const assignment = this.assignmentsList.find(a => a.id === assignmentId);
+    if (!assignment) return;
+
+    // Populate staff dropdown
+    const staffSelect = document.getElementById('assignment-staff');
+    staffSelect.innerHTML = '<option value="">Select a staff member</option>';
+
+    this.staffList.forEach(staff => {
+      const option = document.createElement('option');
+      option.value = staff.id;
+      option.textContent = `${staff.name} (${staff.staff_roles.map(r => r.role).join(', ')})`;
+      staffSelect.appendChild(option);
+    });
+
+    // Populate form with assignment data
+    staffSelect.value = assignment.staff_id;
+    document.getElementById('assignment-name').value = assignment.assignment;
+    document.getElementById('assignment-status').value = assignment.status;
+
+    if (assignment.start_time) {
+      const startDate = new Date(assignment.start_time);
+      document.getElementById('assignment-start').value = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`;
+    }
+
+    if (assignment.end_time) {
+      const endDate = new Date(assignment.end_time);
+      document.getElementById('assignment-end').value = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+    }
+
+    document.getElementById('assignment-modal-title').textContent = 'Edit Assignment';
+    document.getElementById('assignment-modal').style.display = 'flex';
+    document.getElementById('assignment-error-message').classList.remove('show');
+    this.currentAssignmentId = assignmentId;
+  }
+
+  async deleteAssignment(assignmentId) {
+    if (!confirm('Are you sure you want to delete this assignment?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('staff_assignments')
+        .delete()
+        .eq('id', assignmentId);
+
+      if (error) throw error;
+      await this.loadAssignments();
+    } catch (error) {
+      console.error('Error deleting assignment:', error);
+      alert('Failed to delete assignment');
     }
   }
 
