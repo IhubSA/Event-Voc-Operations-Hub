@@ -1,15 +1,14 @@
-// Security Module - Dashboard Page
-import { supabase } from './supabase.js';
+// Medical Operations Module - Dashboard Page
+import { supabase, supabaseApi } from './supabase.js';
 
-export class SecurityPage {
+export class MedicalPage {
   constructor() {
     this.currentEvent = null;
-    this.securityIncidents = [];
-    this.securityCheckpoints = [];
+    this.medicalIncidents = [];
+    this.medicalResources = [];
     this.selectedIncident = null;
     this.unsubscribe = null;
-    this.securityCategoryId = null;
-    this.overallThreatLevel = 'green';
+    this.medicalCategoryId = null;
   }
 
   async render(eventId, onBack) {
@@ -17,70 +16,66 @@ export class SecurityPage {
     this.onBack = onBack;
     const container = document.getElementById('app');
 
-    // Fetch the Security incident category ID
-    await this.fetchSecurityCategoryId();
+    // Fetch the Medical incident category ID
+    await this.fetchMedicalCategoryId();
 
     container.innerHTML = `
-      <div class="security-dashboard">
-        <div class="security-header">
-          <div class="security-header-top">
-            <h1>Security Operations</h1>
-            <button class="btn btn-secondary btn-small" id="back-btn-security">← Back to Dashboard</button>
+      <div class="medical-dashboard">
+        <div class="medical-header">
+          <div class="medical-header-top">
+            <h1>Medical Operations</h1>
+            <button class="btn btn-secondary btn-small" id="back-btn-medical">← Back to Dashboard</button>
           </div>
-          <div class="threat-level-indicator" id="threat-indicator">
-            <div class="threat-badge threat-green">🟢 GREEN</div>
-            <span>Overall Threat Level</span>
-          </div>
-          <div class="security-header-stats">
+          <div class="medical-header-stats">
             <div class="stat-card critical">
               <div class="stat-value" id="critical-count">0</div>
-              <div class="stat-label">Critical Threats</div>
+              <div class="stat-label">Critical</div>
             </div>
             <div class="stat-card high">
               <div class="stat-value" id="high-count">0</div>
-              <div class="stat-label">High Risk</div>
+              <div class="stat-label">High Priority</div>
             </div>
             <div class="stat-card medium">
               <div class="stat-value" id="medium-count">0</div>
-              <div class="stat-label">Medium Risk</div>
+              <div class="stat-label">Medium</div>
             </div>
             <div class="stat-card low">
               <div class="stat-value" id="low-count">0</div>
-              <div class="stat-label">Low Risk</div>
+              <div class="stat-label">Low</div>
             </div>
             <div class="stat-card">
-              <div class="stat-value" id="checkpoints-count">0</div>
-              <div class="stat-label">Checkpoints Active</div>
+              <div class="stat-value" id="resources-count">0</div>
+              <div class="stat-label">Resources Available</div>
             </div>
           </div>
         </div>
 
-        <div class="security-content">
-          <div class="security-main">
+        <div class="medical-content">
+          <div class="medical-main">
             <div class="incidents-section">
               <div class="section-header">
-                <h2>Security Incidents</h2>
+                <h2>Medical Incidents</h2>
                 <button class="btn btn-primary" id="new-incident-btn">+ New Incident</button>
               </div>
-              <div class="security-incidents-list" id="incidents-container">
+              <div class="medical-incidents-list" id="incidents-container">
                 <div class="loading">Loading incidents...</div>
               </div>
             </div>
           </div>
 
-          <div class="security-sidebar">
-            <div class="checkpoints-section">
-              <h3>Security Checkpoints</h3>
-              <div class="checkpoints-list" id="checkpoints-container">
-                <div class="loading">Loading checkpoints...</div>
+          <div class="medical-sidebar">
+            <div class="resources-section">
+              <h3>Medical Resources</h3>
+              <div class="resources-list" id="resources-container">
+                <div class="loading">Loading resources...</div>
               </div>
             </div>
-            <div class="investigation-metrics">
-              <h3>Investigation Status</h3>
-              <div class="metrics-container">
+            <div class="response-times-section">
+              <h3>Response Metrics</h3>
+              <div class="metrics-container" id="metrics-container">
                 <div class="metric">
-                  <span class="metric-label">Open Investigations</span>
-                  <span class="metric-value" id="open-investigations">0</span>
+                  <span class="metric-label">Avg Response Time</span>
+                  <span class="metric-value" id="avg-response">--</span>
                 </div>
                 <div class="metric">
                   <span class="metric-label">Resolved Today</span>
@@ -101,44 +96,36 @@ export class SecurityPage {
         <div class="new-incident-modal" id="new-incident-modal" style="display: none !important;">
           <div class="modal-content">
             <button class="modal-close" id="close-new-modal">&times;</button>
-            <h2>Report Security Incident</h2>
+            <h2>Report Medical Incident</h2>
             <form id="new-incident-form">
               <div class="form-group">
-                <label>Incident Type</label>
-                <select id="incident-type" required>
-                  <option value="unauthorized_entry">Unauthorized Entry</option>
-                  <option value="theft">Theft</option>
-                  <option value="assault">Assault</option>
-                  <option value="trespassing">Trespassing</option>
-                  <option value="suspicious_activity">Suspicious Activity</option>
-                  <option value="access_violation">Access Violation</option>
-                  <option value="other">Other</option>
+                <label>Patient Name</label>
+                <input type="text" id="patient-name" required />
+              </div>
+              <div class="form-group">
+                <label>Patient Age</label>
+                <input type="number" id="patient-age" required />
+              </div>
+              <div class="form-group">
+                <label>Triage Level</label>
+                <select id="triage-level" required>
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="low">Low</option>
                 </select>
               </div>
               <div class="form-group">
-                <label>Threat Level</label>
-                <select id="threat-level" required>
-                  <option value="low">🟢 Low</option>
-                  <option value="medium">🟡 Medium</option>
-                  <option value="high">🟠 High</option>
-                  <option value="critical">🔴 Critical</option>
-                </select>
+                <label>Symptoms</label>
+                <textarea id="symptoms" required rows="3"></textarea>
               </div>
               <div class="form-group">
-                <label>Description</label>
-                <textarea id="description" required rows="3"></textarea>
-              </div>
-              <div class="form-group">
-                <label>Suspect Description</label>
-                <textarea id="suspect-description" rows="2"></textarea>
-              </div>
-              <div class="form-group">
-                <label>Location (Checkpoint/Zone)</label>
+                <label>Location (Venue/Zone)</label>
                 <input type="text" id="incident-location" required />
               </div>
               <div class="form-group">
-                <label>Assign to Security Officer</label>
-                <select id="assigned-officer">
+                <label>Assign to Medical Staff</label>
+                <select id="assigned-staff">
                   <option value="">Unassigned</option>
                 </select>
               </div>
@@ -153,8 +140,8 @@ export class SecurityPage {
     `;
 
     // Load data
-    await this.loadSecurityIncidents();
-    await this.loadSecurityCheckpoints();
+    await this.loadMedicalIncidents();
+    await this.loadMedicalResources();
 
     // Setup event listeners
     this.setupEventListeners();
@@ -163,110 +150,101 @@ export class SecurityPage {
     this.subscribeToIncidents();
   }
 
-  async fetchSecurityCategoryId() {
+  async fetchMedicalCategoryId() {
     try {
       const { data, error } = await supabase
         .from('incident_categories')
         .select('id')
-        .ilike('name', '%security%')
+        .ilike('name', '%medical%')
         .limit(1)
         .single();
 
       if (data) {
-        this.securityCategoryId = data.id;
+        this.medicalCategoryId = data.id;
       } else {
-        const { data: allCategories } = await supabase
+        // If no Medical category found, get the first category as fallback
+        const { data: allCategories, error: allError } = await supabase
           .from('incident_categories')
           .select('id')
           .limit(1)
           .single();
 
         if (allCategories) {
-          this.securityCategoryId = allCategories.id;
+          this.medicalCategoryId = allCategories.id;
         }
       }
     } catch (error) {
-      console.error('Error fetching security category:', error);
+      console.error('Error fetching medical category:', error);
+      // Continue anyway - will show error when trying to create incident
     }
   }
 
-  async loadSecurityIncidents() {
+  async loadMedicalIncidents() {
     try {
       const { data, error } = await supabase
-        .from('security_incidents')
+        .from('medical_incidents')
         .select(`
           id,
           incident_id,
-          incident_type,
-          suspect_description,
-          evidence,
-          investigation_notes,
-          assigned_security_officer_id,
-          resolution_method,
+          medical_type,
+          severity,
+          patient_name,
+          patient_age,
+          triage_level,
+          symptoms,
+          vital_signs,
+          assigned_to_user_id,
+          response_time,
+          resolved_at,
+          treatment_notes,
           created_at,
-          updated_at,
-          incidents!inner(id, title, description, threat_level, security_classification, investigation_status, status, created_at, venue_id, zone_id)
+          incidents!inner(id, title, description, venue_id, zone_id, status, created_at)
         `)
         .eq('incidents.event_id', this.currentEvent)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      this.securityIncidents = data || [];
-      this.calculateThreatLevel();
+      this.medicalIncidents = data || [];
       this.renderIncidents();
       this.updateStats();
     } catch (error) {
-      console.error('Error loading security incidents:', error);
+      console.error('Error loading medical incidents:', error);
       document.getElementById('incidents-container').innerHTML =
         `<div class="error">Failed to load incidents: ${error.message}</div>`;
     }
   }
 
-  async loadSecurityCheckpoints() {
+  async loadMedicalResources() {
     try {
       const { data, error } = await supabase
-        .from('security_checkpoints')
+        .from('medical_resources')
         .select('*')
         .eq('event_id', this.currentEvent)
-        .order('created_at', { ascending: false });
+        .eq('status', 'available');
 
       if (error) throw error;
 
-      this.securityCheckpoints = data || [];
-      this.renderCheckpoints();
+      this.medicalResources = data || [];
+      this.renderResources();
     } catch (error) {
-      console.error('Error loading security checkpoints:', error);
+      console.error('Error loading medical resources:', error);
     }
-  }
-
-  calculateThreatLevel() {
-    let maxThreat = 'green';
-    const threatLevels = { green: 0, yellow: 1, orange: 2, red: 3 };
-
-    this.securityIncidents.forEach(incident => {
-      const level = incident.incidents.threat_level || 'green';
-      if (threatLevels[level] > threatLevels[maxThreat]) {
-        maxThreat = level;
-      }
-    });
-
-    this.overallThreatLevel = maxThreat;
   }
 
   renderIncidents() {
     const container = document.getElementById('incidents-container');
 
-    if (this.securityIncidents.length === 0) {
-      container.innerHTML = `<div class="empty-state">No security incidents reported</div>`;
+    if (this.medicalIncidents.length === 0) {
+      container.innerHTML = `<div class="empty-state">No medical incidents reported</div>`;
       return;
     }
 
-    container.innerHTML = this.securityIncidents.map(incident => `
-      <div class="security-incident-card threat-${incident.incidents.threat_level || 'green'}" data-incident-id="${incident.id}">
+    container.innerHTML = this.medicalIncidents.map(incident => `
+      <div class="medical-incident-card triage-${incident.triage_level || 'medium'}" data-incident-id="${incident.id}">
         <div class="card-header">
-          <div class="threat-badge threat-${incident.incidents.threat_level || 'green'}">
-            ${this.getThreatEmoji(incident.incidents.threat_level || 'green')} ${(incident.incidents.threat_level || 'green').toUpperCase()}
+          <div class="triage-badge triage-${incident.triage_level || 'medium'}">
+            ${(incident.triage_level || 'medium').toUpperCase()}
           </div>
           <div class="incident-status ${incident.incidents.status}">
             ${incident.incidents.status.toUpperCase()}
@@ -274,26 +252,32 @@ export class SecurityPage {
         </div>
 
         <div class="card-body">
-          <h3>${incident.incident_type.replace(/_/g, ' ').toUpperCase()}</h3>
+          <h3>${incident.patient_name || 'Unknown Patient'}</h3>
           <div class="incident-details">
             <div class="detail-row">
-              <span class="label">Description:</span>
-              <span class="value">${incident.incidents.description || 'Not recorded'}</span>
+              <span class="label">Age:</span>
+              <span class="value">${incident.patient_age || '--'} years</span>
             </div>
-            ${incident.suspect_description ? `
-              <div class="detail-row">
-                <span class="label">Suspect:</span>
-                <span class="value">${incident.suspect_description}</span>
-              </div>
-            ` : ''}
             <div class="detail-row">
-              <span class="label">Investigation:</span>
-              <span class="value">${incident.incidents.investigation_status || 'pending'}</span>
+              <span class="label">Symptoms:</span>
+              <span class="value">${incident.symptoms || 'Not recorded'}</span>
             </div>
             <div class="detail-row">
               <span class="label">Reported:</span>
               <span class="value">${new Date(incident.created_at).toLocaleTimeString()}</span>
             </div>
+            ${incident.response_time ? `
+              <div class="detail-row">
+                <span class="label">Response Time:</span>
+                <span class="value">${incident.response_time}</span>
+              </div>
+            ` : ''}
+            ${incident.resolved_at ? `
+              <div class="detail-row">
+                <span class="label">Resolved:</span>
+                <span class="value">${new Date(incident.resolved_at).toLocaleTimeString()}</span>
+              </div>
+            ` : ''}
           </div>
         </div>
 
@@ -307,49 +291,40 @@ export class SecurityPage {
     `).join('');
   }
 
-  renderCheckpoints() {
-    const container = document.getElementById('checkpoints-container');
+  renderResources() {
+    const container = document.getElementById('resources-container');
 
-    if (this.securityCheckpoints.length === 0) {
-      container.innerHTML = `<div class="empty-state">No checkpoints configured</div>`;
+    if (this.medicalResources.length === 0) {
+      container.innerHTML = `<div class="empty-state">No available resources</div>`;
       return;
     }
 
-    container.innerHTML = this.securityCheckpoints.map(checkpoint => `
-      <div class="checkpoint-card">
-        <div class="checkpoint-location">${checkpoint.location}</div>
-        <div class="checkpoint-info">
+    container.innerHTML = this.medicalResources.map(resource => `
+      <div class="resource-card">
+        <div class="resource-type">${resource.resource_type}</div>
+        <div class="resource-info">
           <div class="info-row">
-            <span class="label">Status:</span>
-            <span class="status-badge status-${checkpoint.status}">${checkpoint.status}</span>
+            <span>${resource.description || 'N/A'}</span>
           </div>
           <div class="info-row">
-            <span class="label">Personnel:</span>
-            <span>${checkpoint.personnel_count} staff</span>
+            <span class="label">Location:</span>
+            <span>${resource.location || 'Unknown'}</span>
           </div>
-          <div class="info-row">
-            <span class="label">Screened:</span>
-            <span>${checkpoint.people_screened} people</span>
-          </div>
-          <div class="info-row">
-            <span class="label">Incidents:</span>
-            <span>${checkpoint.incidents_count}</span>
+          ${resource.contact_person ? `
+            <div class="info-row">
+              <span class="label">Contact:</span>
+              <span>${resource.contact_person}</span>
+            </div>
+          ` : ''}
+          <div class="resource-status">
+            <span class="status-badge status-${resource.status}">${resource.status}</span>
           </div>
         </div>
       </div>
     `).join('');
 
-    document.getElementById('checkpoints-count').textContent = this.securityCheckpoints.length;
-  }
-
-  getThreatEmoji(level) {
-    const emojis = {
-      'green': '🟢',
-      'yellow': '🟡',
-      'orange': '🟠',
-      'red': '🔴'
-    };
-    return emojis[level] || '🟢';
+    // Update resources count
+    document.getElementById('resources-count').textContent = this.medicalResources.length;
   }
 
   updateStats() {
@@ -360,12 +335,9 @@ export class SecurityPage {
       low: 0
     };
 
-    this.securityIncidents.forEach(incident => {
-      const threat = incident.incidents.threat_level || 'green';
-      if (threat === 'red') stats.critical++;
-      else if (threat === 'orange') stats.high++;
-      else if (threat === 'yellow') stats.medium++;
-      else stats.low++;
+    this.medicalIncidents.forEach(incident => {
+      const triage = incident.triage_level || 'medium';
+      stats[triage]++;
     });
 
     document.getElementById('critical-count').textContent = stats.critical;
@@ -373,23 +345,12 @@ export class SecurityPage {
     document.getElementById('medium-count').textContent = stats.medium;
     document.getElementById('low-count').textContent = stats.low;
 
-    // Update threat indicator
-    const threatIndicator = document.getElementById('threat-indicator');
-    threatIndicator.innerHTML = `
-      <div class="threat-badge threat-${this.overallThreatLevel}">${this.getThreatEmoji(this.overallThreatLevel)} ${this.overallThreatLevel.toUpperCase()}</div>
-      <span>Overall Threat Level</span>
-    `;
-
-    // Calculate open investigations
-    const openInvestigations = this.securityIncidents.filter(i => i.incidents.investigation_status === 'open').length;
-    document.getElementById('open-investigations').textContent = openInvestigations;
-
     // Calculate resolved today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const resolvedToday = this.securityIncidents.filter(i => {
-      if (i.incidents.status !== 'resolved') return false;
-      const resolved = new Date(i.updated_at);
+    const resolvedToday = this.medicalIncidents.filter(i => {
+      if (!i.resolved_at) return false;
+      const resolved = new Date(i.resolved_at);
       resolved.setHours(0, 0, 0, 0);
       return resolved.getTime() === today.getTime();
     }).length;
@@ -398,7 +359,7 @@ export class SecurityPage {
   }
 
   showIncidentDetail(incidentId) {
-    const incident = this.securityIncidents.find(i => i.id === incidentId);
+    const incident = this.medicalIncidents.find(i => i.id === incidentId);
     if (!incident) return;
 
     const modal = document.getElementById('incident-modal');
@@ -406,77 +367,69 @@ export class SecurityPage {
 
     detailContainer.innerHTML = `
       <div class="incident-detail">
-        <h2>Security Incident Details</h2>
+        <h2>Medical Incident Details</h2>
 
         <div class="detail-section">
-          <h3>Incident Information</h3>
+          <h3>Patient Information</h3>
           <div class="info-grid">
             <div class="info-item">
-              <label>Type</label>
-              <p>${incident.incident_type.replace(/_/g, ' ').toUpperCase()}</p>
+              <label>Name</label>
+              <p>${incident.patient_name || 'Not recorded'}</p>
             </div>
             <div class="info-item">
-              <label>Threat Level</label>
-              <p><span class="threat-badge threat-${incident.incidents.threat_level || 'green'}">${this.getThreatEmoji(incident.incidents.threat_level || 'green')} ${(incident.incidents.threat_level || 'green').toUpperCase()}</span></p>
+              <label>Age</label>
+              <p>${incident.patient_age || 'Not recorded'} years</p>
             </div>
             <div class="info-item">
-              <label>Classification</label>
-              <p>${incident.incidents.security_classification || 'Not classified'}</p>
+              <label>Triage Level</label>
+              <p><span class="triage-badge triage-${incident.triage_level || 'medium'}">${(incident.triage_level || 'medium').toUpperCase()}</span></p>
             </div>
           </div>
         </div>
 
         <div class="detail-section">
-          <h3>Description</h3>
-          <p>${incident.incidents.description || 'Not recorded'}</p>
-        </div>
-
-        ${incident.suspect_description ? `
-          <div class="detail-section">
-            <h3>Suspect Description</h3>
-            <p>${incident.suspect_description}</p>
-          </div>
-        ` : ''}
-
-        <div class="detail-section">
-          <h3>Investigation</h3>
+          <h3>Medical Details</h3>
           <div class="info-grid">
             <div class="info-item full-width">
-              <label>Status</label>
-              <p class="status-${incident.incidents.investigation_status}">${(incident.incidents.investigation_status || 'pending').toUpperCase()}</p>
+              <label>Symptoms</label>
+              <p>${incident.symptoms || 'Not recorded'}</p>
             </div>
-            ${incident.evidence ? `
+            ${incident.vital_signs ? `
               <div class="info-item full-width">
-                <label>Evidence</label>
-                <p>${incident.evidence}</p>
+                <label>Vital Signs</label>
+                <pre>${JSON.stringify(incident.vital_signs, null, 2)}</pre>
               </div>
             ` : ''}
-            ${incident.investigation_notes ? `
+            ${incident.treatment_notes ? `
               <div class="info-item full-width">
-                <label>Investigation Notes</label>
-                <p>${incident.investigation_notes}</p>
-              </div>
-            ` : ''}
-            ${incident.resolution_method ? `
-              <div class="info-item full-width">
-                <label>Resolution Method</label>
-                <p>${incident.resolution_method}</p>
+                <label>Treatment Notes</label>
+                <p>${incident.treatment_notes}</p>
               </div>
             ` : ''}
           </div>
         </div>
 
         <div class="detail-section">
-          <h3>Timeline</h3>
-          <div class="timeline">
-            <div class="timeline-item">
-              <span class="timeline-label">Reported</span>
-              <span class="timeline-time">${new Date(incident.created_at).toLocaleString()}</span>
+          <h3>Response Information</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Status</label>
+              <p class="status-${incident.incidents.status}">${incident.incidents.status.toUpperCase()}</p>
             </div>
-            ${incident.updated_at !== incident.created_at ? `
-              <div class="timeline-item">
-                <span class="timeline-label">Last Updated</span>
-                <span class="timeline-time">${new Date(incident.updated_at).toLocaleString()}</span>
+            <div class="info-item">
+              <label>Reported</label>
+              <p>${new Date(incident.created_at).toLocaleString()}</p>
+            </div>
+            ${incident.response_time ? `
+              <div class="info-item">
+                <label>Response Time</label>
+                <p>${incident.response_time}</p>
+              </div>
+            ` : ''}
+            ${incident.resolved_at ? `
+              <div class="info-item">
+                <label>Resolved</label>
+                <p>${new Date(incident.resolved_at).toLocaleString()}</p>
               </div>
             ` : ''}
           </div>
@@ -489,17 +442,19 @@ export class SecurityPage {
 
   setupEventListeners() {
     // Back button
-    const backBtn = document.getElementById('back-btn-security');
+    const backBtn = document.getElementById('back-btn-medical');
     if (backBtn && this.onBack) {
       backBtn.addEventListener('click', () => {
         this.onBack();
       });
     }
 
+    // New incident button
     document.getElementById('new-incident-btn').addEventListener('click', () => {
       document.getElementById('new-incident-modal').style.display = 'flex';
     });
 
+    // Close modals
     document.getElementById('close-modal').addEventListener('click', () => {
       document.getElementById('incident-modal').style.display = 'none';
     });
@@ -512,22 +467,26 @@ export class SecurityPage {
       document.getElementById('new-incident-modal').style.display = 'none';
     });
 
+    // View incident details
     document.querySelectorAll('.view-incident').forEach(btn => {
       btn.addEventListener('click', (e) => {
         this.showIncidentDetail(e.target.dataset.incidentId);
       });
     });
 
+    // Mark as resolved
     document.querySelectorAll('.mark-resolved').forEach(btn => {
       btn.addEventListener('click', (e) => {
         this.markIncidentResolved(e.target.dataset.incidentId);
       });
     });
 
+    // New incident form submission
     document.getElementById('new-incident-form').addEventListener('submit', (e) => {
       this.handleNewIncident(e);
     });
 
+    // Close modal on background click
     document.getElementById('incident-modal').addEventListener('click', (e) => {
       if (e.target.id === 'incident-modal') {
         document.getElementById('incident-modal').style.display = 'none';
@@ -544,29 +503,29 @@ export class SecurityPage {
   async handleNewIncident(e) {
     e.preventDefault();
 
-    const incidentType = document.getElementById('incident-type').value;
-    const threatLevel = document.getElementById('threat-level').value;
-    const description = document.getElementById('description').value;
-    const suspectDescription = document.getElementById('suspect-description').value;
+    const patientName = document.getElementById('patient-name').value;
+    const patientAge = parseInt(document.getElementById('patient-age').value);
+    const triageLevel = document.getElementById('triage-level').value;
+    const symptoms = document.getElementById('symptoms').value;
     const location = document.getElementById('incident-location').value;
-    const assignedOfficerId = document.getElementById('assigned-officer').value;
+    const assignedStaffId = document.getElementById('assigned-staff').value;
 
     try {
-      if (!this.securityCategoryId) {
-        throw new Error('Security incident category not found. Please contact administrator.');
+      // Check if we have the medical category ID
+      if (!this.medicalCategoryId) {
+        throw new Error('Medical incident category not found. Please contact administrator.');
       }
 
-      // Create the incident
+      // First create the incident
       const { data: incident, error: incidentError } = await supabase
         .from('incidents')
         .insert([
           {
             event_id: this.currentEvent,
-            incident_category_id: this.securityCategoryId,
-            title: `Security: ${incidentType.replace(/_/g, ' ')}`,
-            description: description,
-            severity: threatLevel,
-            threat_level: threatLevel,
+            incident_category_id: this.medicalCategoryId,
+            title: `Medical: ${patientName}`,
+            description: symptoms,
+            severity: triageLevel,
             status: 'open'
           }
         ])
@@ -575,26 +534,32 @@ export class SecurityPage {
 
       if (incidentError) throw incidentError;
 
-      // Create the security incident
-      const { error: securityError } = await supabase
-        .from('security_incidents')
+      // Then create the medical incident
+      const { error: medicalError } = await supabase
+        .from('medical_incidents')
         .insert([
           {
             incident_id: incident.id,
-            incident_type: incidentType,
-            suspect_description: suspectDescription,
-            assigned_security_officer_id: assignedOfficerId || null
+            patient_name: patientName,
+            patient_age: patientAge,
+            triage_level: triageLevel,
+            symptoms: symptoms,
+            assigned_to_user_id: assignedStaffId || null,
+            medical_type: 'reported'
           }
         ]);
 
-      if (securityError) throw securityError;
+      if (medicalError) throw medicalError;
 
+      // Reset form and close modal
       document.getElementById('new-incident-form').reset();
       document.getElementById('new-incident-modal').style.display = 'none';
 
-      await this.loadSecurityIncidents();
+      // Reload incidents
+      await this.loadMedicalIncidents();
 
-      alert('Security incident reported successfully');
+      // Show success message
+      alert('Medical incident reported successfully');
     } catch (error) {
       console.error('Error creating incident:', error);
       alert(`Error: ${error.message}`);
@@ -605,12 +570,12 @@ export class SecurityPage {
     try {
       const { error } = await supabase
         .from('incidents')
-        .update({ status: 'resolved', investigation_status: 'closed' })
+        .update({ status: 'resolved' })
         .eq('id', incidentId);
 
       if (error) throw error;
 
-      await this.loadSecurityIncidents();
+      await this.loadMedicalIncidents();
       alert('Incident marked as resolved');
     } catch (error) {
       console.error('Error updating incident:', error);
@@ -619,26 +584,27 @@ export class SecurityPage {
   }
 
   subscribeToIncidents() {
+    // Subscribe to real-time changes
     this.unsubscribe = supabase
-      .channel(`security-incidents-${this.currentEvent}`)
+      .channel(`medical-incidents-${this.currentEvent}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'security_incidents'
+          table: 'medical_incidents'
         },
         (payload) => {
-          console.log('Security incident update:', payload);
-          this.loadSecurityIncidents();
+          console.log('Medical incident update:', payload);
+          this.loadMedicalIncidents();
         }
       )
       .subscribe();
   }
 
   destroy() {
-    if (this.unsubscribe) {
-      this.unsubscribe();
+    if (this.unsubscribe && typeof this.unsubscribe.unsubscribe === 'function') {
+      this.unsubscribe.unsubscribe();
     }
   }
 }
