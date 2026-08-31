@@ -9,6 +9,7 @@ export class IntegratedDashboard {
     this.medicalIncidents = [];
     this.securityIncidents = [];
     this.safetyHazards = [];
+    this.staffList = [];
     this.subscriptions = [];
   }
 
@@ -472,7 +473,8 @@ export class IntegratedDashboard {
       await Promise.all([
         this.loadMedicalIncidents(),
         this.loadSecurityIncidents(),
-        this.loadSafetyHazards()
+        this.loadSafetyHazards(),
+        this.loadStaff()
       ]);
 
       this.updateMetrics();
@@ -526,6 +528,32 @@ export class IntegratedDashboard {
     } catch (error) {
       console.error('Error loading safety hazards:', error);
       this.safetyHazards = [];
+    }
+  }
+
+  async loadStaff() {
+    try {
+      const { data, error } = await supabase
+        .from('event_staff')
+        .select(`
+          *,
+          staff_roles (
+            id,
+            role
+          ),
+          staff_checkin (
+            id,
+            check_in_time,
+            check_out_time
+          )
+        `)
+        .eq('event_id', this.currentEvent.id);
+
+      if (error) throw error;
+      this.staffList = data || [];
+    } catch (error) {
+      console.error('Error loading staff:', error);
+      this.staffList = [];
     }
   }
 
@@ -595,6 +623,37 @@ export class IntegratedDashboard {
     // Calculate compliance score (100 - penalties)
     const complianceScore = Math.max(0, 100 - (severityMap['Critical'] * 10 + severityMap['High'] * 5 + severityMap['Medium'] * 2));
     document.getElementById('compliance-score').textContent = complianceScore + '%';
+
+    // Staff metrics
+    let directors = 0;
+    let officers = 0;
+    let coordinators = 0;
+    let checkedIn = 0;
+
+    this.staffList.forEach(staff => {
+      // Count staff by role
+      if (staff.staff_roles) {
+        staff.staff_roles.forEach(role => {
+          if (role.role === 'Event Director') directors++;
+          if (role.role === 'Event Safety Officer') officers++;
+          if (role.role === 'Event Coordinator') coordinators++;
+        });
+      }
+
+      // Count checked in staff (has check_in records with check_in_time)
+      if (staff.staff_checkin && staff.staff_checkin.length > 0) {
+        const lastCheckin = staff.staff_checkin[staff.staff_checkin.length - 1];
+        if (lastCheckin.check_in_time && !lastCheckin.check_out_time) {
+          checkedIn++;
+        }
+      }
+    });
+
+    document.getElementById('staff-total').textContent = this.staffList.length;
+    document.getElementById('staff-directors').textContent = directors;
+    document.getElementById('staff-officers').textContent = officers;
+    document.getElementById('staff-coordinators').textContent = coordinators;
+    document.getElementById('staff-checkedin').textContent = checkedIn;
   }
 
   displayAlerts() {
