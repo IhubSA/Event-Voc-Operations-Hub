@@ -168,22 +168,12 @@ export class SecurityPage {
       const { data, error } = await supabase
         .from('incident_categories')
         .select('id')
-        .ilike('name', '%security%')
+        .eq('domain', 'security')
         .limit(1)
         .single();
 
       if (data) {
         this.securityCategoryId = data.id;
-      } else {
-        const { data: allCategories } = await supabase
-          .from('incident_categories')
-          .select('id')
-          .limit(1)
-          .single();
-
-        if (allCategories) {
-          this.securityCategoryId = allCategories.id;
-        }
       }
     } catch (error) {
       console.error('Error fetching security category:', error);
