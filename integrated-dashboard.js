@@ -120,6 +120,32 @@ export class IntegratedDashboard {
             </div>
             <button class="btn btn-sm btn-primary" data-module="safety">Open Module</button>
           </div>
+
+          <div class="metric-card staff-card">
+            <div class="metric-header">
+              <h3>👥 Staff Management</h3>
+              <span class="metric-count" id="staff-total">0</span>
+            </div>
+            <div class="staff-breakdown">
+              <div class="staff-item">
+                <span class="staff-label">Directors</span>
+                <span class="staff-count" id="staff-directors">0</span>
+              </div>
+              <div class="staff-item">
+                <span class="staff-label">Officers</span>
+                <span class="staff-count" id="staff-officers">0</span>
+              </div>
+              <div class="staff-item">
+                <span class="staff-label">Coordinators</span>
+                <span class="staff-count" id="staff-coordinators">0</span>
+              </div>
+              <div class="staff-item">
+                <span class="staff-label">Checked In</span>
+                <span class="staff-count" id="staff-checkedin">0</span>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-primary" data-module="staff">Manage Staff</button>
+          </div>
         </div>
 
         <div class="alerts-section" id="alerts-section" style="display: none;">
