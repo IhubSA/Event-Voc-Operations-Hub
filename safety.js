@@ -11,14 +11,18 @@ export class SafetyPage {
     this.unsubscribe = null;
   }
 
-  async render(eventId) {
+  async render(eventId, onBack) {
     this.currentEvent = eventId;
+    this.onBack = onBack;
     const container = document.getElementById('app');
 
     container.innerHTML = `
       <div class="safety-dashboard">
         <div class="safety-header">
-          <h1>Safety & Compliance</h1>
+          <div class="safety-header-top">
+            <h1>Safety & Compliance</h1>
+            <button class="btn btn-secondary btn-small" id="back-btn-safety">← Back to Dashboard</button>
+          </div>
           <div class="compliance-score-indicator" id="compliance-indicator">
             <div class="compliance-score">--</div>
             <span>Overall Compliance Score</span>
@@ -492,6 +496,14 @@ export class SafetyPage {
   }
 
   setupEventListeners() {
+    // Back button
+    const backBtn = document.getElementById('back-btn-safety');
+    if (backBtn && this.onBack) {
+      backBtn.addEventListener('click', () => {
+        this.onBack();
+      });
+    }
+
     document.getElementById('new-hazard-btn').addEventListener('click', () => {
       document.getElementById('new-hazard-modal').style.display = 'flex';
     });
