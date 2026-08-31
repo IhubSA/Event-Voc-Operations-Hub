@@ -277,13 +277,19 @@ export class ParticipantsPage {
         ` : ''}
       </div>
 
-      ${participant.emergency_contact_name || participant.emergency_contact_phone ? `
+      ${participant.emergency_contact_name || participant.emergency_contact_phone || participant.emergency_contact_relationship ? `
         <div class="detail-section">
           <h3>Emergency Contact</h3>
           ${participant.emergency_contact_name ? `
             <div class="detail-item">
               <span class="label">Name:</span>
               <span class="value">${participant.emergency_contact_name}</span>
+            </div>
+          ` : ''}
+          ${participant.emergency_contact_relationship ? `
+            <div class="detail-item">
+              <span class="label">Relationship:</span>
+              <span class="value">${participant.emergency_contact_relationship}</span>
             </div>
           ` : ''}
           ${participant.emergency_contact_phone ? `
@@ -295,10 +301,93 @@ export class ParticipantsPage {
         </div>
       ` : ''}
 
-      ${participant.medical_info ? `
+      ${participant.blood_type || participant.medical_conditions || participant.allergies || participant.medications ? `
         <div class="detail-section">
           <h3>Medical Information</h3>
-          <div class="medical-info">${participant.medical_info}</div>
+          ${participant.blood_type ? `
+            <div class="detail-item">
+              <span class="label">Blood Type:</span>
+              <span class="value">${participant.blood_type}</span>
+            </div>
+          ` : ''}
+          ${participant.medical_conditions ? `
+            <div class="detail-item">
+              <span class="label">Medical Conditions:</span>
+              <span class="value">${participant.medical_conditions}</span>
+            </div>
+          ` : ''}
+          ${participant.allergies ? `
+            <div class="detail-item">
+              <span class="label">Allergies:</span>
+              <span class="value">${participant.allergies}</span>
+            </div>
+          ` : ''}
+          ${participant.medications ? `
+            <div class="detail-item">
+              <span class="label">Current Medications:</span>
+              <span class="value">${participant.medications}</span>
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
+
+      ${participant.medical_aid_provider || participant.medical_aid_member_number || participant.doctor_name || participant.doctor_phone ? `
+        <div class="detail-section">
+          <h3>Medical Aid & Doctor Details</h3>
+          ${participant.medical_aid_provider ? `
+            <div class="detail-item">
+              <span class="label">Medical Aid Provider:</span>
+              <span class="value">${participant.medical_aid_provider}</span>
+            </div>
+          ` : ''}
+          ${participant.medical_aid_member_number ? `
+            <div class="detail-item">
+              <span class="label">Medical Aid Member #:</span>
+              <span class="value">${participant.medical_aid_member_number}</span>
+            </div>
+          ` : ''}
+          ${participant.doctor_name ? `
+            <div class="detail-item">
+              <span class="label">Doctor/GP Name:</span>
+              <span class="value">${participant.doctor_name}</span>
+            </div>
+          ` : ''}
+          ${participant.doctor_phone ? `
+            <div class="detail-item">
+              <span class="label">Doctor Phone:</span>
+              <span class="value">${participant.doctor_phone}</span>
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
+
+      ${participant.race_rules_accepted || participant.terms_accepted || participant.privacy_policy_accepted ? `
+        <div class="detail-section">
+          <h3>Agreements & Acceptance</h3>
+          ${participant.race_rules_accepted ? `
+            <div class="detail-item">
+              <span class="label">Race Rules Accepted:</span>
+              <span class="value">✓ Yes</span>
+            </div>
+          ` : ''}
+          ${participant.terms_accepted ? `
+            <div class="detail-item">
+              <span class="label">Terms Accepted:</span>
+              <span class="value">✓ Yes</span>
+            </div>
+          ` : ''}
+          ${participant.privacy_policy_accepted ? `
+            <div class="detail-item">
+              <span class="label">Privacy Policy Accepted:</span>
+              <span class="value">✓ Yes</span>
+            </div>
+          ` : ''}
+          ${participant.accepted_at ? `
+            <div class="detail-item">
+              <span class="label">Accepted Date:</span>
+              <span class="value">${new Date(participant.accepted_at).toLocaleString()}</span>
+            </div>
+          ` : ''}
         </div>
       ` : ''}
     `;
@@ -460,7 +549,7 @@ export class ParticipantsPage {
 
   exportParticipantsList() {
     const csv = [
-      ['Registration #', 'First Name', 'Last Name', 'Email', 'Phone', 'Category', 'Age Group', 'Bib #', 'Status', 'Checked In', 'Finished'].join(',')
+      ['Registration #', 'First Name', 'Last Name', 'Email', 'Phone', 'Category', 'Age Group', 'Bib #', 'Status', 'Checked In', 'Finished', 'Blood Type', 'Medical Conditions', 'Allergies', 'Medications', 'Medical Aid Provider', 'Medical Aid #', 'Doctor Name', 'Doctor Phone', 'Emergency Contact', 'EC Relationship', 'EC Phone', 'Race Rules Accepted', 'Terms Accepted', 'Privacy Accepted', 'Accepted Date'].join(',')
     ];
 
     this.participantsList.forEach(p => {
@@ -475,7 +564,22 @@ export class ParticipantsPage {
         p.bib_number || '',
         p.status,
         p.checked_in_at ? new Date(p.checked_in_at).toLocaleString() : '',
-        p.finished_at ? new Date(p.finished_at).toLocaleString() : ''
+        p.finished_at ? new Date(p.finished_at).toLocaleString() : '',
+        p.blood_type || '',
+        p.medical_conditions || '',
+        p.allergies || '',
+        p.medications || '',
+        p.medical_aid_provider || '',
+        p.medical_aid_member_number || '',
+        p.doctor_name || '',
+        p.doctor_phone || '',
+        p.emergency_contact_name || '',
+        p.emergency_contact_relationship || '',
+        p.emergency_contact_phone || '',
+        p.race_rules_accepted ? 'Yes' : 'No',
+        p.terms_accepted ? 'Yes' : 'No',
+        p.privacy_policy_accepted ? 'Yes' : 'No',
+        p.accepted_at ? new Date(p.accepted_at).toLocaleString() : ''
       ].map(cell => `"${cell}"`).join(','));
     });
 
