@@ -11,6 +11,7 @@ export class IntegratedDashboard {
     this.safetyHazards = [];
     this.staffList = [];
     this.participantsList = [];
+    this.routes = [];
     this.subscriptions = [];
   }
 
@@ -191,6 +192,10 @@ export class IntegratedDashboard {
               <div class="route-item">
                 <span class="route-label">Evacuation Routes</span>
                 <span class="route-count" id="routes-evacuation">0</span>
+              </div>
+              <div class="route-item">
+                <span class="route-label">Race Routes</span>
+                <span class="route-count" id="routes-race">0</span>
               </div>
             </div>
             <button class="btn btn-sm btn-primary" data-module="route-map">Open Routes</button>
@@ -597,7 +602,8 @@ export class IntegratedDashboard {
         this.loadSecurityIncidents(),
         this.loadSafetyHazards(),
         this.loadStaff(),
-        this.loadParticipants()
+        this.loadParticipants(),
+        this.loadRoutes()
       ]);
 
       this.updateMetrics();
@@ -692,6 +698,21 @@ export class IntegratedDashboard {
     } catch (error) {
       console.error('Error loading participants:', error);
       this.participantsList = [];
+    }
+  }
+
+  async loadRoutes() {
+    try {
+      const { data, error } = await supabase
+        .from('routes')
+        .select('*')
+        .eq('event_id', this.currentEvent.id);
+
+      if (error) throw error;
+      this.routes = data || [];
+    } catch (error) {
+      console.error('Error loading routes:', error);
+      this.routes = [];
     }
   }
 
@@ -802,6 +823,28 @@ export class IntegratedDashboard {
     document.getElementById('participants-registered').textContent = totalParticipants;
     document.getElementById('participants-checked-in').textContent = checkedInParticipants;
     document.getElementById('participants-completed').textContent = completedParticipants;
+
+    // Route metrics
+    const routeTypeMap = {
+      'staff_route': 0,
+      'vehicle_route': 0,
+      'evacuation_route': 0,
+      'race_route': 0
+    };
+
+    this.routes.forEach(route => {
+      const type = route.type || 'staff_route';
+      if (routeTypeMap.hasOwnProperty(type)) {
+        routeTypeMap[type]++;
+      }
+    });
+
+    const totalRoutes = this.routes.length;
+    document.getElementById('routes-total').textContent = totalRoutes;
+    document.getElementById('routes-staff').textContent = routeTypeMap['staff_route'];
+    document.getElementById('routes-vehicle').textContent = routeTypeMap['vehicle_route'];
+    document.getElementById('routes-evacuation').textContent = routeTypeMap['evacuation_route'];
+    document.getElementById('routes-race').textContent = routeTypeMap['race_route'];
   }
 
   displayAlerts() {
