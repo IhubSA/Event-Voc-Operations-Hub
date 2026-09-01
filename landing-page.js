@@ -17,7 +17,9 @@ export class LandingPage {
               <h1 class="welcome-text">Welcome to the</h1>
 
               <div class="voc-logo-container">
-                <svg class="voc-icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <img class="voc-logo-image" src="./voc-logo.png" alt="VOC Logo" onerror="this.style.display='none'"/>
+                <!-- Fallback: Shows only if image fails to load -->
+                <svg class="voc-icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="display: none;">
                   <!-- Outer circle -->
                   <circle cx="100" cy="100" r="95" fill="none" stroke="#0099FF" stroke-width="2"/>
 
@@ -195,10 +197,18 @@ export class LandingPage {
         height: 140px;
       }
 
+      .voc-logo-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 12px rgba(0, 99, 255, 0.2));
+      }
+
       .voc-icon {
         width: 100%;
         height: 100%;
         filter: drop-shadow(0 4px 12px rgba(0, 99, 255, 0.2));
+        display: block;
       }
 
       .voc-branding {
