@@ -118,11 +118,19 @@ function renderNoAccess() {
         <h1 style="margin: 0 0 1rem 0; font-size: 1.5rem; color: #333;">Access Denied</h1>
         <p style="margin: 0 0 2rem 0; color: #666; font-size: 1.1rem;">Your account has not been assigned to an organization yet.</p>
         <p style="margin: 0 0 2rem 0; color: #999; font-size: 0.95rem;">Please contact your system administrator to add you to an organization.</p>
-        <button onclick="location.reload()" style="padding: 0.75rem 1.5rem; background: #0099FF; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; font-weight: 600;">Reload Page</button>
-        <button onclick="handleLogout()" style="padding: 0.75rem 1.5rem; background: #f0f0f0; color: #333; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; margin-left: 0.5rem;">Logout</button>
+        <button id="no-access-logout" style="padding: 0.75rem 1.5rem; background: #0099FF; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; font-weight: 600;">Reload Page</button>
+        <button id="no-access-logout-btn" style="padding: 0.75rem 1.5rem; background: #f0f0f0; color: #333; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; margin-left: 0.5rem;">Logout</button>
       </div>
     </div>
   `;
+
+  document.getElementById('no-access-logout')?.addEventListener('click', () => {
+    location.reload();
+  });
+
+  document.getElementById('no-access-logout-btn')?.addEventListener('click', () => {
+    onLogout();
+  });
 }
 
 async function onLogout() {
