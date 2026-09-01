@@ -302,6 +302,7 @@ export class RouteMapConsole {
     } else {
       btn.textContent = '✎ Start Drawing Route';
       btn.classList.remove('active');
+      this.updateSaveButtonState();
     }
   }
 
@@ -412,6 +413,7 @@ export class RouteMapConsole {
       lng: latLng.lng()
     });
 
+    this.updateSaveButtonState();
     this.showToast(`Water table added (${this.waterTableMarkers.length})`, 'success');
   }
 
@@ -436,6 +438,7 @@ export class RouteMapConsole {
       lng: latLng.lng()
     });
 
+    this.updateSaveButtonState();
     this.showToast(`Marshal position added (${this.marshalMarkers.length})`, 'success');
   }
 
@@ -542,6 +545,7 @@ export class RouteMapConsole {
     this.isAddingStart = false;
     document.getElementById('add-start-btn').classList.remove('active');
     this.enableOtherModes();
+    this.updateSaveButtonState();
     this.showToast('Start point set! 🚩', 'success');
   }
 
@@ -568,6 +572,7 @@ export class RouteMapConsole {
     this.isAddingFinish = false;
     document.getElementById('add-finish-btn').classList.remove('active');
     this.enableOtherModes();
+    this.updateSaveButtonState();
     this.showToast('Finish point set! 🏁', 'success');
   }
 
@@ -592,6 +597,7 @@ export class RouteMapConsole {
       lng: latLng.lng()
     });
 
+    this.updateSaveButtonState();
     this.showToast(`Medical station added (${this.medicalStationMarkers.length})`, 'success');
   }
 
@@ -616,6 +622,7 @@ export class RouteMapConsole {
       lng: latLng.lng()
     });
 
+    this.updateSaveButtonState();
     this.showToast(`Security vehicle added (${this.securityVehicleMarkers.length})`, 'success');
   }
 
@@ -661,8 +668,30 @@ export class RouteMapConsole {
   clearDrawing() {
     this.clearAllMarkersAndPolylines();
     this.updateWaypointsList();
-    document.getElementById('clear-drawing-btn').disabled = true;
-    document.getElementById('save-route-btn').disabled = true;
+    this.updateSaveButtonState();
+  }
+
+  updateSaveButtonState() {
+    // Enable save button if there's any content on the map
+    const hasContent =
+      this.markers.length > 0 ||
+      this.marshalMarkers.length > 0 ||
+      this.waterTableMarkers.length > 0 ||
+      this.medicalStationMarkers.length > 0 ||
+      this.securityVehicleMarkers.length > 0 ||
+      this.startPoint !== null ||
+      this.finishPoint !== null;
+
+    const clearBtn = document.getElementById('clear-drawing-btn');
+    const saveBtn = document.getElementById('save-route-btn');
+
+    if (hasContent) {
+      clearBtn.disabled = false;
+      saveBtn.disabled = false;
+    } else {
+      clearBtn.disabled = true;
+      saveBtn.disabled = true;
+    }
   }
 
   clearAllMarkersAndPolylines() {
@@ -685,16 +714,24 @@ export class RouteMapConsole {
   }
 
   async saveRoute() {
-    if (this.markers.length < 2) {
-      alert('Please create a route with at least 2 waypoints');
-      return;
-    }
-
     const routeName = document.getElementById('route-name-input').value;
     const routeType = document.getElementById('route-type-select').value;
 
     if (!routeName) {
       alert('Please enter a route name');
+      return;
+    }
+
+    // Check if route has at least some content (waypoints OR special locations)
+    const hasWaypoints = this.markers.length >= 2;
+    const hasMarshal = this.marshalMarkers.length > 0;
+    const hasWaterTable = this.waterTableMarkers.length > 0;
+    const hasMedical = this.medicalStationMarkers.length > 0;
+    const hasSecurity = this.securityVehicleMarkers.length > 0;
+    const hasStartFinish = this.startPoint || this.finishPoint;
+
+    if (!hasWaypoints && !hasMarshal && !hasWaterTable && !hasMedical && !hasSecurity && !hasStartFinish) {
+      alert('Please add at least waypoints or special locations (marshals, water tables, etc.) to the route');
       return;
     }
 
