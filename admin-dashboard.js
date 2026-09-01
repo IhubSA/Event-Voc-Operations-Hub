@@ -414,10 +414,10 @@ export class AdminDashboard {
   async loadMembers(orgId) {
     try {
       const { data, error } = await supabase
-        .rpc('get_org_members_by_role', {
-          p_org_id: orgId,
-          p_role: null
-        });
+        .from('organization_members')
+        .select('user_id, role, is_active')
+        .eq('org_id', orgId)
+        .eq('is_active', true);
 
       if (error) throw error;
 
@@ -431,7 +431,7 @@ export class AdminDashboard {
       const html = data.map(member => `
         <div class="admin-card">
           <div class="card-content">
-            <p><strong>${member.email}</strong></p>
+            <p><strong>User: ${member.user_id}</strong></p>
             <p><span class="badge role-${member.role}">${member.role.toUpperCase()}</span></p>
           </div>
           <div class="card-actions">
@@ -461,7 +461,7 @@ export class AdminDashboard {
     try {
       const { data, error } = await supabase
         .from('admin_users')
-        .select('*, user_id(email)')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -485,7 +485,7 @@ export class AdminDashboard {
     const html = this.adminUsers.map(admin => `
       <div class="admin-card">
         <div class="card-content">
-          <p><strong>${admin.user_id?.email || 'Unknown'}</strong></p>
+          <p><strong>User ID: ${admin.user_id}</strong></p>
           <p><span class="badge admin-${admin.admin_level}">${admin.admin_level.replace('_', ' ').toUpperCase()}</span></p>
           <p><small>Created: ${new Date(admin.created_at).toLocaleDateString()}</small></p>
         </div>
@@ -553,29 +553,13 @@ export class AdminDashboard {
     try {
       const data = Object.fromEntries(formData);
 
-      // Get user by email
-      const { data: users, error: userError } = await supabase.auth.admin.listUsers();
-      const user = users?.users?.find(u => u.email === data.email);
+      // For now, require user to provide the UUID (they can get it from auth.users table)
+      // Or you can implement proper user lookup via RPC function
+      this.showMessage('Note: User must already be registered in the system. Please get their User ID and try again.', 'info');
 
-      if (!user) {
-        throw new Error('User not found. Please ensure the email is registered in the system.');
-      }
-
-      // Add admin user
-      const { error } = await supabase
-        .from('admin_users')
-        .insert([{
-          user_id: user.id,
-          admin_level: data.admin_level,
-          created_by: (await supabase.auth.getUser()).data.user.id
-        }]);
-
-      if (error) throw error;
-
+      // TODO: Implement proper user email lookup via backend RPC function
       this.hideModal('add-admin-modal');
       document.getElementById('add-admin-form').reset();
-      await this.loadAdminUsers();
-      this.showMessage('Admin user added successfully!', 'success');
     } catch (error) {
       console.error('Error adding admin user:', error);
       this.showMessage(`Error: ${error.message}`, 'error');
