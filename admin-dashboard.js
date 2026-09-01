@@ -987,6 +987,8 @@ export class AdminDashboard {
         border-radius: 4px;
         font-size: 1rem;
         font-family: inherit;
+        color: #333;
+        background: white;
       }
 
       .form-group input:focus,
