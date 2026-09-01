@@ -10,12 +10,31 @@ export class RouteMapConsole {
     this.isDrawing = false;
     this.polylines = [];
     this.markers = [];
+    this.waterTableMarkers = [];
+    this.marshalMarkers = [];
+    this.medicalStationMarkers = [];
+    this.securityVehicleMarkers = [];
+    this.startPoint = null;
+    this.finishPoint = null;
+    this.distanceLabels = [];
     this.routeTypes = ['staff_route', 'vehicle_route', 'evacuation_route'];
     this.colors = {
       staff_route: '#0099FF',
       vehicle_route: '#FF6B35',
-      evacuation_route: '#FF3333'
+      evacuation_route: '#FF3333',
+      water_table: '#1E90FF',
+      marshal: '#9370DB',
+      medical_station: '#E91E63',
+      security_vehicle: '#FF9800',
+      start: '#4CAF50',
+      finish: '#F44336'
     };
+    this.isAddingWaterTable = false;
+    this.isAddingMarshal = false;
+    this.isAddingMedical = false;
+    this.isAddingSecurity = false;
+    this.isAddingStart = false;
+    this.isAddingFinish = false;
   }
 
   async render(eventId, onBack) {
@@ -68,6 +87,18 @@ export class RouteMapConsole {
               <button class="btn btn-primary" id="start-drawing-btn">✎ Start Drawing</button>
               <button class="btn btn-secondary" id="clear-drawing-btn" disabled>Clear</button>
               <button class="btn btn-success" id="save-route-btn" disabled>💾 Save</button>
+            </div>
+            <div class="control-group">
+              <button class="btn btn-success" id="add-start-btn">🚩 Start</button>
+              <button class="btn btn-danger" id="add-finish-btn">🏁 Finish</button>
+            </div>
+            <div class="control-group">
+              <button class="btn btn-info" id="add-medical-btn">🏥 Medical</button>
+              <button class="btn btn-warning" id="add-security-btn">🚔 Security</button>
+            </div>
+            <div class="control-group">
+              <button class="btn btn-info" id="add-water-table-btn">💧 Water</button>
+              <button class="btn btn-info" id="add-marshal-btn">👮 Marshal</button>
             </div>
           </div>
         </div>
@@ -172,10 +203,22 @@ export class RouteMapConsole {
       streetViewControl: false,
     });
 
-    // Click listener for drawing
+    // Click listener for drawing, water tables, marshals, and other points
     this.map.addListener('click', (e) => {
       if (this.isDrawing) {
         this.addWaypoint(e.latLng);
+      } else if (this.isAddingWaterTable) {
+        this.addWaterTable(e.latLng);
+      } else if (this.isAddingMarshal) {
+        this.addMarshal(e.latLng);
+      } else if (this.isAddingStart) {
+        this.addStartPoint(e.latLng);
+      } else if (this.isAddingFinish) {
+        this.addFinishPoint(e.latLng);
+      } else if (this.isAddingMedical) {
+        this.addMedicalStation(e.latLng);
+      } else if (this.isAddingSecurity) {
+        this.addSecurityVehicle(e.latLng);
       }
     });
   }
@@ -195,6 +238,30 @@ export class RouteMapConsole {
 
     document.getElementById('save-route-btn')?.addEventListener('click', () => {
       this.saveRoute();
+    });
+
+    document.getElementById('add-water-table-btn')?.addEventListener('click', () => {
+      this.toggleWaterTableMode();
+    });
+
+    document.getElementById('add-marshal-btn')?.addEventListener('click', () => {
+      this.toggleMarshalMode();
+    });
+
+    document.getElementById('add-start-btn')?.addEventListener('click', () => {
+      this.toggleStartMode();
+    });
+
+    document.getElementById('add-finish-btn')?.addEventListener('click', () => {
+      this.toggleFinishMode();
+    });
+
+    document.getElementById('add-medical-btn')?.addEventListener('click', () => {
+      this.toggleMedicalMode();
+    });
+
+    document.getElementById('add-security-btn')?.addEventListener('click', () => {
+      this.toggleSecurityMode();
     });
 
     document.getElementById('edit-route-form')?.addEventListener('submit', (e) => {
@@ -286,6 +353,266 @@ export class RouteMapConsole {
     return svgMarker;
   }
 
+  toggleWaterTableMode() {
+    this.isAddingWaterTable = !this.isAddingWaterTable;
+    const btn = document.getElementById('add-water-table-btn');
+
+    if (this.isAddingWaterTable) {
+      btn.classList.add('active');
+      document.getElementById('start-drawing-btn').disabled = true;
+      document.getElementById('add-marshal-btn').disabled = true;
+      this.showToast('Click on map to place water tables', 'info');
+    } else {
+      btn.classList.remove('active');
+      document.getElementById('start-drawing-btn').disabled = false;
+      document.getElementById('add-marshal-btn').disabled = false;
+    }
+  }
+
+  toggleMarshalMode() {
+    this.isAddingMarshal = !this.isAddingMarshal;
+    const btn = document.getElementById('add-marshal-btn');
+
+    if (this.isAddingMarshal) {
+      btn.classList.add('active');
+      document.getElementById('start-drawing-btn').disabled = true;
+      document.getElementById('add-water-table-btn').disabled = true;
+      this.showToast('Click on map to place marshals', 'info');
+    } else {
+      btn.classList.remove('active');
+      document.getElementById('start-drawing-btn').disabled = false;
+      document.getElementById('add-water-table-btn').disabled = false;
+    }
+  }
+
+  addWaterTable(latLng) {
+    const marker = new google.maps.Marker({
+      position: latLng,
+      map: this.map,
+      title: `Water Table ${this.waterTableMarkers.length + 1}`,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: this.colors.water_table,
+        fillOpacity: 0.9,
+        strokeColor: '#fff',
+        strokeWeight: 2
+      }
+    });
+
+    this.waterTableMarkers.push({
+      marker: marker,
+      lat: latLng.lat(),
+      lng: latLng.lng()
+    });
+
+    this.showToast(`Water table added (${this.waterTableMarkers.length})`, 'success');
+  }
+
+  addMarshal(latLng) {
+    const marker = new google.maps.Marker({
+      position: latLng,
+      map: this.map,
+      title: `Marshal ${this.marshalMarkers.length + 1}`,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: this.colors.marshal,
+        fillOpacity: 0.9,
+        strokeColor: '#fff',
+        strokeWeight: 2
+      }
+    });
+
+    this.marshalMarkers.push({
+      marker: marker,
+      lat: latLng.lat(),
+      lng: latLng.lng()
+    });
+
+    this.showToast(`Marshal position added (${this.marshalMarkers.length})`, 'success');
+  }
+
+  toggleStartMode() {
+    this.isAddingStart = !this.isAddingStart;
+    const btn = document.getElementById('add-start-btn');
+
+    if (this.isAddingStart) {
+      if (this.startPoint) {
+        this.startPoint.setMap(null);
+        this.startPoint = null;
+      }
+      btn.classList.add('active');
+      this.disableOtherModes('start');
+      this.showToast('Click on map to set START point', 'info');
+    } else {
+      btn.classList.remove('active');
+      this.enableOtherModes();
+    }
+  }
+
+  toggleFinishMode() {
+    this.isAddingFinish = !this.isAddingFinish;
+    const btn = document.getElementById('add-finish-btn');
+
+    if (this.isAddingFinish) {
+      if (this.finishPoint) {
+        this.finishPoint.setMap(null);
+        this.finishPoint = null;
+      }
+      btn.classList.add('active');
+      this.disableOtherModes('finish');
+      this.showToast('Click on map to set FINISH point', 'info');
+    } else {
+      btn.classList.remove('active');
+      this.enableOtherModes();
+    }
+  }
+
+  toggleMedicalMode() {
+    this.isAddingMedical = !this.isAddingMedical;
+    const btn = document.getElementById('add-medical-btn');
+
+    if (this.isAddingMedical) {
+      btn.classList.add('active');
+      this.disableOtherModes('medical');
+      this.showToast('Click on map to place medical stations', 'info');
+    } else {
+      btn.classList.remove('active');
+      this.enableOtherModes();
+    }
+  }
+
+  toggleSecurityMode() {
+    this.isAddingSecurity = !this.isAddingSecurity;
+    const btn = document.getElementById('add-security-btn');
+
+    if (this.isAddingSecurity) {
+      btn.classList.add('active');
+      this.disableOtherModes('security');
+      this.showToast('Click on map to place security vehicles', 'info');
+    } else {
+      btn.classList.remove('active');
+      this.enableOtherModes();
+    }
+  }
+
+  disableOtherModes(currentMode) {
+    if (currentMode !== 'drawing') document.getElementById('start-drawing-btn').disabled = true;
+    if (currentMode !== 'water') document.getElementById('add-water-table-btn').disabled = true;
+    if (currentMode !== 'marshal') document.getElementById('add-marshal-btn').disabled = true;
+    if (currentMode !== 'medical') document.getElementById('add-medical-btn').disabled = true;
+    if (currentMode !== 'security') document.getElementById('add-security-btn').disabled = true;
+  }
+
+  enableOtherModes() {
+    document.getElementById('start-drawing-btn').disabled = false;
+    document.getElementById('add-water-table-btn').disabled = false;
+    document.getElementById('add-marshal-btn').disabled = false;
+    document.getElementById('add-medical-btn').disabled = false;
+    document.getElementById('add-security-btn').disabled = false;
+  }
+
+  addStartPoint(latLng) {
+    if (this.startPoint) {
+      this.startPoint.setMap(null);
+    }
+
+    const marker = new google.maps.Marker({
+      position: latLng,
+      map: this.map,
+      title: 'START',
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 12,
+        fillColor: this.colors.start,
+        fillOpacity: 0.95,
+        strokeColor: '#fff',
+        strokeWeight: 3
+      }
+    });
+
+    this.startPoint = marker;
+    this.isAddingStart = false;
+    document.getElementById('add-start-btn').classList.remove('active');
+    this.enableOtherModes();
+    this.showToast('Start point set! 🚩', 'success');
+  }
+
+  addFinishPoint(latLng) {
+    if (this.finishPoint) {
+      this.finishPoint.setMap(null);
+    }
+
+    const marker = new google.maps.Marker({
+      position: latLng,
+      map: this.map,
+      title: 'FINISH',
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 12,
+        fillColor: this.colors.finish,
+        fillOpacity: 0.95,
+        strokeColor: '#fff',
+        strokeWeight: 3
+      }
+    });
+
+    this.finishPoint = marker;
+    this.isAddingFinish = false;
+    document.getElementById('add-finish-btn').classList.remove('active');
+    this.enableOtherModes();
+    this.showToast('Finish point set! 🏁', 'success');
+  }
+
+  addMedicalStation(latLng) {
+    const marker = new google.maps.Marker({
+      position: latLng,
+      map: this.map,
+      title: `Medical Station ${this.medicalStationMarkers.length + 1}`,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: this.colors.medical_station,
+        fillOpacity: 0.9,
+        strokeColor: '#fff',
+        strokeWeight: 2
+      }
+    });
+
+    this.medicalStationMarkers.push({
+      marker: marker,
+      lat: latLng.lat(),
+      lng: latLng.lng()
+    });
+
+    this.showToast(`Medical station added (${this.medicalStationMarkers.length})`, 'success');
+  }
+
+  addSecurityVehicle(latLng) {
+    const marker = new google.maps.Marker({
+      position: latLng,
+      map: this.map,
+      title: `Security Vehicle ${this.securityVehicleMarkers.length + 1}`,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: this.colors.security_vehicle,
+        fillOpacity: 0.9,
+        strokeColor: '#fff',
+        strokeWeight: 2
+      }
+    });
+
+    this.securityVehicleMarkers.push({
+      marker: marker,
+      lat: latLng.lat(),
+      lng: latLng.lng()
+    });
+
+    this.showToast(`Security vehicle added (${this.securityVehicleMarkers.length})`, 'success');
+  }
+
   updateWaypointsList() {
     const list = document.getElementById('waypoints-list');
     if (this.markers.length === 0) {
@@ -293,15 +620,34 @@ export class RouteMapConsole {
       return;
     }
 
+    let totalDistance = 0;
+    const waypointHtml = this.markers.map((marker, i) => {
+      let distanceText = '';
+      if (i > 0) {
+        const prevMarker = this.markers[i - 1];
+        const distance = google.maps.geometry.spherical.computeDistanceBetween(
+          prevMarker.getPosition(),
+          marker.getPosition()
+        );
+        totalDistance += distance;
+        distanceText = `<small style="color: #999;">${(distance / 1000).toFixed(2)} km</small>`;
+      }
+      return `
+        <div class="waypoint-item">
+          <span class="waypoint-number">${i + 1}</span>
+          <span class="waypoint-coords">${marker.getPosition().lat().toFixed(4)}, ${marker.getPosition().lng().toFixed(4)}</span>
+          ${distanceText}
+          <button class="btn-small btn-danger" onclick="this.parentElement.remove()">×</button>
+        </div>
+      `;
+    }).join('');
+
     list.innerHTML = `
       <div class="waypoints-items">
-        ${this.markers.map((marker, i) => `
-          <div class="waypoint-item">
-            <span class="waypoint-number">${i + 1}</span>
-            <span class="waypoint-coords">${marker.getPosition().lat().toFixed(4)}, ${marker.getPosition().lng().toFixed(4)}</span>
-            <button class="btn-small btn-danger" onclick="this.parentElement.remove()">×</button>
-          </div>
-        `).join('')}
+        ${waypointHtml}
+        <div style="padding: 0.75rem; background: #e8f5e9; border-radius: 4px; margin-top: 0.5rem; font-weight: bold;">
+          Total: ${(totalDistance / 1000).toFixed(2)} km
+        </div>
       </div>
     `;
   }
@@ -316,8 +662,20 @@ export class RouteMapConsole {
   clearAllMarkersAndPolylines() {
     this.markers.forEach(marker => marker.setMap(null));
     this.polylines.forEach(polyline => polyline.setMap(null));
+    this.waterTableMarkers.forEach(wt => wt.marker.setMap(null));
+    this.marshalMarkers.forEach(m => m.marker.setMap(null));
+    this.medicalStationMarkers.forEach(ms => ms.marker.setMap(null));
+    this.securityVehicleMarkers.forEach(sv => sv.marker.setMap(null));
+    if (this.startPoint) this.startPoint.setMap(null);
+    if (this.finishPoint) this.finishPoint.setMap(null);
     this.markers = [];
     this.polylines = [];
+    this.waterTableMarkers = [];
+    this.marshalMarkers = [];
+    this.medicalStationMarkers = [];
+    this.securityVehicleMarkers = [];
+    this.startPoint = null;
+    this.finishPoint = null;
   }
 
   async saveRoute() {
@@ -876,9 +1234,32 @@ export class RouteMapConsole {
         background: #da190b;
       }
 
+      .btn-info {
+        background: #17a2b8;
+        color: white;
+      }
+
+      .btn-info:hover {
+        background: #138496;
+      }
+
+      .btn-warning {
+        background: #FF9800;
+        color: white;
+      }
+
+      .btn-warning:hover {
+        background: #e68900;
+      }
+
       .btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+      }
+
+      .btn.active {
+        box-shadow: 0 0 8px rgba(0,0,0,0.3);
+        transform: scale(1.05);
       }
 
       .modal {
