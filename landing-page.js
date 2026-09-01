@@ -1,6 +1,6 @@
 // VOC Landing Page
 // Welcome/splash page shown before login
-// Uses actual VOC logo
+// Exact design matching user specifications
 
 export class LandingPage {
   constructor() {}
@@ -15,54 +15,47 @@ export class LandingPage {
         <div class="landing-content">
           <div class="landing-card">
             <div class="landing-logo-section">
-              <h1 class="welcome-text">Welcome to the</h1>
-
               <div class="voc-logo-container">
                 <img class="voc-logo-image" src="./voc-logo.png" alt="VOC Logo" />
               </div>
 
-              <div class="voc-branding">
-                <h2>VOC</h2>
-                <p class="tagline">VENUE OPERATIONS CENTRE</p>
+              <div class="voc-mission">
+                <div class="mission-statement">
+                  <span class="mission-item">CONNECT</span>
+                  <span class="mission-divider">|</span>
+                  <span class="mission-item">MANAGE</span>
+                  <span class="mission-divider">|</span>
+                  <span class="mission-item">PROTECT</span>
+                  <span class="mission-divider">|</span>
+                  <span class="mission-item">DELIVER</span>
+                </div>
               </div>
-            </div>
 
-            <div class="voc-mission">
-              <div class="mission-statement">
-                <span class="mission-item">CONNECT</span>
-                <span class="mission-divider">|</span>
-                <span class="mission-item">MANAGE</span>
-                <span class="mission-divider">|</span>
-                <span class="mission-item">PROTECT</span>
-                <span class="mission-divider">|</span>
-                <span class="mission-item">DELIVER</span>
+              <div class="operational-pillars">
+                <div class="pillar security">
+                  <div class="pillar-icon">🔒</div>
+                  <div class="pillar-label">Security</div>
+                </div>
+                <div class="pillar medical">
+                  <div class="pillar-icon">✚</div>
+                  <div class="pillar-label">Medical</div>
+                </div>
+                <div class="pillar safety">
+                  <div class="pillar-icon">⚠️</div>
+                  <div class="pillar-label">Safety</div>
+                </div>
+                <div class="pillar communications">
+                  <div class="pillar-icon">📡</div>
+                  <div class="pillar-label">Communications</div>
+                </div>
+                <div class="pillar operations">
+                  <div class="pillar-icon">⚙️</div>
+                  <div class="pillar-label">Operations</div>
+                </div>
               </div>
-            </div>
 
-            <div class="operational-pillars">
-              <div class="pillar security">
-                <div class="pillar-icon">🔒</div>
-                <div class="pillar-label">Security</div>
-              </div>
-              <div class="pillar medical">
-                <div class="pillar-icon">✚</div>
-                <div class="pillar-label">Medical</div>
-              </div>
-              <div class="pillar safety">
-                <div class="pillar-icon">⚠️</div>
-                <div class="pillar-label">Safety</div>
-              </div>
-              <div class="pillar communications">
-                <div class="pillar-icon">📡</div>
-                <div class="pillar-label">Communications</div>
-              </div>
-              <div class="pillar operations">
-                <div class="pillar-icon">⚙️</div>
-                <div class="pillar-label">Operations</div>
-              </div>
+              <button class="btn btn-primary btn-large" id="login-btn">GO TO LOGIN</button>
             </div>
-
-            <button class="btn btn-primary btn-large" id="login-btn">Go to Login</button>
           </div>
 
           <div class="landing-info">
@@ -122,7 +115,7 @@ export class LandingPage {
       }
 
       .landing-content {
-        max-width: 900px;
+        max-width: 1100px;
         width: 100%;
         display: grid;
         grid-template-columns: 1fr 350px;
@@ -142,7 +135,6 @@ export class LandingPage {
         flex-direction: column;
         align-items: center;
         text-align: center;
-        gap: 2rem;
       }
 
       .landing-logo-section {
@@ -153,17 +145,9 @@ export class LandingPage {
         width: 100%;
       }
 
-      .welcome-text {
-        margin: 0;
-        color: #333;
-        font-size: 1.3rem;
-        font-weight: 400;
-        letter-spacing: 0.5px;
-      }
-
       .voc-logo-container {
-        width: 180px;
-        height: 180px;
+        width: 300px;
+        height: 200px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -176,38 +160,12 @@ export class LandingPage {
         filter: drop-shadow(0 4px 12px rgba(0, 99, 255, 0.2));
       }
 
-      .voc-branding {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-      }
-
-      .voc-branding h2 {
-        margin: 0;
-        font-size: 2.5rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #0063FF 0%, #0099FF 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        letter-spacing: 2px;
-      }
-
-      .tagline {
-        margin: 0;
-        color: #666;
-        font-size: 0.85rem;
-        font-weight: 600;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-      }
-
       .voc-mission {
         width: 100%;
-        padding: 1.5rem;
-        background: rgba(0, 153, 255, 0.05);
-        border-radius: 12px;
-        border: 2px solid rgba(0, 153, 255, 0.1);
+        padding: 0;
+        background: transparent;
+        border-radius: 0;
+        border: none;
       }
 
       .mission-statement {
@@ -219,16 +177,17 @@ export class LandingPage {
       }
 
       .mission-item {
-        color: #0099FF;
+        color: #333;
         font-weight: 700;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         letter-spacing: 1px;
         text-transform: uppercase;
       }
 
       .mission-divider {
-        color: #ccc;
+        color: #999;
         font-weight: 300;
+        font-size: 0.8rem;
       }
 
       .operational-pillars {
@@ -239,10 +198,10 @@ export class LandingPage {
       }
 
       .pillar {
-        background: linear-gradient(135deg, rgba(0, 153, 255, 0.1) 0%, rgba(0, 153, 255, 0.05) 100%);
+        background: linear-gradient(135deg, rgba(0, 153, 255, 0.08) 0%, rgba(0, 153, 255, 0.02) 100%);
         border: 2px solid rgba(0, 153, 255, 0.15);
         border-radius: 12px;
-        padding: 1rem;
+        padding: 1.2rem 0.8rem;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -257,7 +216,7 @@ export class LandingPage {
       }
 
       .pillar-icon {
-        font-size: 1.8rem;
+        font-size: 2rem;
       }
 
       .pillar-label {
@@ -266,26 +225,6 @@ export class LandingPage {
         color: #333;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-      }
-
-      .pillar.security {
-        border-color: rgba(0, 153, 255, 0.2);
-      }
-
-      .pillar.medical {
-        border-color: rgba(255, 107, 53, 0.2);
-      }
-
-      .pillar.safety {
-        border-color: rgba(255, 149, 0, 0.2);
-      }
-
-      .pillar.communications {
-        border-color: rgba(0, 170, 0, 0.2);
-      }
-
-      .pillar.operations {
-        border-color: rgba(102, 102, 102, 0.2);
       }
 
       .btn-large {
@@ -299,7 +238,7 @@ export class LandingPage {
         cursor: pointer;
         transition: all 0.3s ease;
         width: 100%;
-        max-width: 300px;
+        max-width: 280px;
         background: #0099FF;
         color: white;
       }
@@ -316,12 +255,13 @@ export class LandingPage {
       }
 
       .landing-info {
-        background: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.95);
         border-radius: 16px;
         padding: 2rem;
         border: 2px solid rgba(0, 153, 255, 0.1);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         text-align: left;
+        height: fit-content;
       }
 
       .landing-info h3 {
@@ -340,7 +280,7 @@ export class LandingPage {
 
       .landing-info ul {
         margin: 0;
-        padding: 0 0 0 1.5rem;
+        padding: 0;
         list-style: none;
       }
 
@@ -349,13 +289,16 @@ export class LandingPage {
         color: #666;
         font-size: 0.9rem;
         line-height: 1.5;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
       }
 
       .landing-info li:before {
-        content: "✓ ";
+        content: "✓";
         color: #0099FF;
         font-weight: 700;
-        margin-right: 0.5rem;
+        font-size: 1.1rem;
       }
 
       @media (max-width: 1000px) {
@@ -365,6 +308,11 @@ export class LandingPage {
 
         .landing-info {
           display: none;
+        }
+
+        .voc-logo-container {
+          width: 250px;
+          height: 170px;
         }
       }
 
@@ -377,21 +325,13 @@ export class LandingPage {
           padding: 2rem 1.5rem;
         }
 
-        .welcome-text {
-          font-size: 1.1rem;
-        }
-
         .voc-logo-container {
-          width: 140px;
+          width: 200px;
           height: 140px;
         }
 
-        .voc-branding h2 {
-          font-size: 2rem;
-        }
-
         .operational-pillars {
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(3, 1fr);
           gap: 0.75rem;
         }
 
@@ -403,21 +343,6 @@ export class LandingPage {
         .mission-divider {
           display: none;
         }
-      }
-
-      @media (max-width: 480px) {
-        .voc-branding h2 {
-          font-size: 1.8rem;
-        }
-
-        .tagline {
-          font-size: 0.75rem;
-          letter-spacing: 2px;
-        }
-
-        .operational-pillars {
-          grid-template-columns: repeat(2, 1fr);
-        }
 
         .pillar-icon {
           font-size: 1.5rem;
@@ -425,6 +350,30 @@ export class LandingPage {
 
         .pillar-label {
           font-size: 0.7rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .voc-logo-container {
+          width: 150px;
+          height: 110px;
+        }
+
+        .operational-pillars {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.5rem;
+        }
+
+        .pillar {
+          padding: 1rem 0.6rem;
+        }
+
+        .pillar-icon {
+          font-size: 1.3rem;
+        }
+
+        .mission-statement {
+          font-size: 0.75rem;
         }
       }
     `;
