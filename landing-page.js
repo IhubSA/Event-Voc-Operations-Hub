@@ -1,5 +1,6 @@
 // VOC Landing Page
 // Welcome/splash page shown before login
+// Uses actual VOC logo
 
 export class LandingPage {
   constructor() {}
@@ -17,39 +18,7 @@ export class LandingPage {
               <h1 class="welcome-text">Welcome to the</h1>
 
               <div class="voc-logo-container">
-                <img class="voc-logo-image" src="./voc-logo.png" alt="VOC Logo" onerror="this.style.display='none'"/>
-                <!-- Fallback: Shows only if image fails to load -->
-                <svg class="voc-icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="display: none;">
-                  <!-- Outer circle -->
-                  <circle cx="100" cy="100" r="95" fill="none" stroke="#0099FF" stroke-width="2"/>
-
-                  <!-- Inner segments for the compass/operations indicators -->
-                  <g id="compass">
-                    <!-- Security (top left) -->
-                    <circle cx="60" cy="60" r="12" fill="#0099FF"/>
-                    <text x="60" y="67" text-anchor="middle" fill="white" font-size="16" font-weight="bold">🔒</text>
-
-                    <!-- Medical (top right) -->
-                    <circle cx="140" cy="60" r="12" fill="#FF6B35"/>
-                    <text x="140" y="67" text-anchor="middle" fill="white" font-size="16" font-weight="bold">✚</text>
-
-                    <!-- Operations (right) -->
-                    <circle cx="160" cy="100" r="12" fill="#666"/>
-                    <text x="160" y="107" text-anchor="middle" fill="white" font-size="16" font-weight="bold">⚙️</text>
-
-                    <!-- Safety (bottom right) -->
-                    <circle cx="140" cy="140" r="12" fill="#FF9500"/>
-                    <text x="140" y="147" text-anchor="middle" fill="white" font-size="16" font-weight="bold">⚠️</text>
-
-                    <!-- Communications (bottom left) -->
-                    <circle cx="60" cy="140" r="12" fill="#00AA00"/>
-                    <text x="60" y="147" text-anchor="middle" fill="white" font-size="16" font-weight="bold">📡</text>
-                  </g>
-
-                  <!-- Center circle -->
-                  <circle cx="100" cy="100" r="20" fill="#0099FF"/>
-                  <text x="100" y="108" text-anchor="middle" fill="white" font-size="24" font-weight="bold">V</text>
-                </svg>
+                <img class="voc-logo-image" src="./voc-logo.png" alt="VOC Logo" />
               </div>
 
               <div class="voc-branding">
@@ -193,8 +162,11 @@ export class LandingPage {
       }
 
       .voc-logo-container {
-        width: 140px;
-        height: 140px;
+        width: 180px;
+        height: 180px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .voc-logo-image {
@@ -202,13 +174,6 @@ export class LandingPage {
         height: 100%;
         object-fit: contain;
         filter: drop-shadow(0 4px 12px rgba(0, 99, 255, 0.2));
-      }
-
-      .voc-icon {
-        width: 100%;
-        height: 100%;
-        filter: drop-shadow(0 4px 12px rgba(0, 99, 255, 0.2));
-        display: block;
       }
 
       .voc-branding {
@@ -335,11 +300,14 @@ export class LandingPage {
         transition: all 0.3s ease;
         width: 100%;
         max-width: 300px;
+        background: #0099FF;
+        color: white;
       }
 
       .btn-large:hover:not(:disabled) {
         transform: translateY(-2px);
         box-shadow: 0 10px 30px rgba(0, 153, 255, 0.3);
+        background: #0088DD;
       }
 
       .btn-large:disabled {
@@ -414,8 +382,8 @@ export class LandingPage {
         }
 
         .voc-logo-container {
-          width: 100px;
-          height: 100px;
+          width: 140px;
+          height: 140px;
         }
 
         .voc-branding h2 {
