@@ -27,33 +27,37 @@ async function initializeApp() {
   if (user) {
     currentUser = user;
 
-    // Check if user is admin
-    const { data: adminData } = await supabase
-      .from('admin_users')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
+    try {
+      // Check if user is admin
+      const { data: adminData, error: adminError } = await supabase
+        .from('admin_users')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
 
-    isAdmin = !!adminData;
+      isAdmin = adminData && adminData.length > 0;
 
-    // Check if user is member of any organizations
-    const { data: memberData } = await supabase
-      .from('organization_members')
-      .select('org_id')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .limit(1)
-      .single();
+      // Check if user is member of any organizations
+      const { data: memberData, error: memberError } = await supabase
+        .from('organization_members')
+        .select('org_id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .limit(1);
 
-    if (isAdmin) {
-      // Admins go to admin dashboard
-      renderAdminDashboard();
-    } else if (memberData) {
-      // Organization members go to their org dashboard
-      currentOrg = memberData.org_id;
-      renderDashboard();
-    } else {
-      // No org/admin status - show no access message
+      if (isAdmin) {
+        // Admins go to admin dashboard
+        renderAdminDashboard();
+      } else if (memberData && memberData.length > 0) {
+        // Organization members go to their org dashboard
+        currentOrg = memberData[0].org_id;
+        renderDashboard();
+      } else {
+        // No org/admin status - show no access message
+        renderNoAccess();
+      }
+    } catch (error) {
+      console.error('Error initializing app:', error);
       renderNoAccess();
     }
   } else {
