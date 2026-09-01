@@ -173,6 +173,28 @@ export class IntegratedDashboard {
             </div>
             <button class="btn btn-sm btn-primary" data-module="participants">Manage</button>
           </div>
+
+          <div class="metric-card routes-card">
+            <div class="metric-header">
+              <h3>🗺️ Route Mapping</h3>
+              <span class="metric-count" id="routes-total">0</span>
+            </div>
+            <div class="routes-breakdown">
+              <div class="route-item">
+                <span class="route-label">Staff Routes</span>
+                <span class="route-count" id="routes-staff">0</span>
+              </div>
+              <div class="route-item">
+                <span class="route-label">Vehicle Routes</span>
+                <span class="route-count" id="routes-vehicle">0</span>
+              </div>
+              <div class="route-item">
+                <span class="route-label">Evacuation Routes</span>
+                <span class="route-count" id="routes-evacuation">0</span>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-primary" data-module="route-map">Open Routes</button>
+          </div>
         </div>
 
         <div class="alerts-section" id="alerts-section" style="display: none;">
@@ -382,6 +404,38 @@ export class IntegratedDashboard {
         font-size: 1.5rem;
         font-weight: 700;
         color: var(--text-primary);
+      }
+
+      .routes-breakdown {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .route-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border-radius: 8px;
+        background: rgba(0, 153, 255, 0.08);
+        border: 1px solid rgba(0, 153, 255, 0.3);
+      }
+
+      .route-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      .route-count {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
       }
 
       .metric-card .btn {
