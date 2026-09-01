@@ -10,9 +10,12 @@ export class AdminDashboard {
     this.adminUsers = [];
   }
 
-  async render(onBack) {
+  async render(onBack, onSwitchToOrg) {
     this.onBack = onBack;
+    this.onSwitchToOrg = onSwitchToOrg;
     const container = document.getElementById('app');
+
+    const switchOrgButton = onSwitchToOrg ? `<button class="btn btn-primary" id="switch-to-org-btn" style="margin-right: 1rem;">→ Go to Organization</button>` : '';
 
     const adminHtml = `
       <div class="admin-container">
@@ -21,7 +24,10 @@ export class AdminDashboard {
             <h1>Admin Dashboard</h1>
             <p class="admin-subtitle">Manage organizations, users, and platform settings</p>
           </div>
-          <button class="btn btn-secondary" id="back-btn">← Back</button>
+          <div style="display: flex; gap: 0.5rem;">
+            ${switchOrgButton}
+            <button class="btn btn-secondary" id="back-btn">← Back</button>
+          </div>
         </div>
 
         <div class="admin-nav">
@@ -258,6 +264,11 @@ export class AdminDashboard {
     // Back button
     document.getElementById('back-btn')?.addEventListener('click', () => {
       if (this.onBack) this.onBack();
+    });
+
+    // Switch to organization button
+    document.getElementById('switch-to-org-btn')?.addEventListener('click', () => {
+      if (this.onSwitchToOrg) this.onSwitchToOrg();
     });
 
     // Create organization button

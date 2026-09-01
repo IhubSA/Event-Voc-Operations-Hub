@@ -46,6 +46,10 @@ async function initializeApp() {
         .limit(1);
 
       if (isAdmin) {
+        // If admin is also an org member, set the org
+        if (memberData && memberData.length > 0) {
+          currentOrg = memberData[0].org_id;
+        }
         // Admins go to admin dashboard
         renderAdminDashboard();
       } else if (memberData && memberData.length > 0) {
@@ -95,7 +99,9 @@ function renderDashboard() {
     currentPage.destroy?.();
   }
 
-  dashboardPage.render(currentUser, onEventSelected, onLogout);
+  // Pass callback to switch to admin dashboard if user is admin
+  const onSwitchToAdmin = isAdmin ? renderAdminDashboard : null;
+  dashboardPage.render(currentUser, onEventSelected, onLogout, onSwitchToAdmin);
   currentPage = dashboardPage;
 }
 
@@ -107,9 +113,11 @@ function renderAdminDashboard() {
     currentPage.destroy?.();
   }
 
+  // Pass callback to switch to org dashboard if user is also an org member
+  const onSwitchToOrg = currentOrg ? renderDashboard : null;
   adminDashboard.render(() => {
     onLogout();
-  });
+  }, onSwitchToOrg);
 
   currentPage = adminDashboard;
 }
