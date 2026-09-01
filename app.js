@@ -12,6 +12,7 @@ import { StaffPage } from './staff.js';
 import { ParticipantsPage } from './participants.js';
 import { EventSettings } from './event-settings.js';
 import { AdminDashboard } from './admin-dashboard.js';
+import { RouteMapConsole } from './route-map-console.js';
 
 const authService = new AuthService();
 let currentUser = null;
@@ -258,6 +259,16 @@ function loadModule(moduleName) {
 
     eventSettings.render(currentEvent?.id || currentEvent, backToIntegratedDashboard);
     currentPage = eventSettings;
+  } else if (moduleName === 'route-map') {
+    const container = document.getElementById('app');
+    const routeMapConsole = new RouteMapConsole();
+
+    if (currentPage) {
+      currentPage.destroy?.();
+    }
+
+    routeMapConsole.render(currentEvent?.id || currentEvent, backToIntegratedDashboard);
+    currentPage = routeMapConsole;
   } else {
     alert(`${moduleName} module coming soon!`);
   }
