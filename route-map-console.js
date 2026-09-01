@@ -23,6 +23,23 @@ export class RouteMapConsole {
     this.onBack = onBack;
     const container = document.getElementById('app');
 
+    // Get current user's org_id
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: memberData } = await supabase
+          .from('organization_members')
+          .select('org_id')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .limit(1);
+
+        this.orgId = memberData?.[0]?.org_id || user.id;
+      }
+    } catch (error) {
+      console.error('Error getting org_id:', error);
+    }
+
     const html = `
       <div class="route-map-container">
         <div class="route-map-header">
@@ -129,8 +146,15 @@ export class RouteMapConsole {
     container.innerHTML = html;
     this.addStyles();
     this.setupEventListeners();
-    this.initMap();
-    await this.loadRoutes();
+
+    // Wait for Google Maps to be available before initializing
+    if (typeof google !== 'undefined' && google.maps) {
+      this.initMap();
+      await this.loadRoutes();
+    } else {
+      console.error('Google Maps API not loaded');
+      this.showToast('Error: Google Maps API failed to load', 'error');
+    }
   }
 
   initMap() {
@@ -317,7 +341,7 @@ export class RouteMapConsole {
         .from('routes')
         .insert({
           event_id: this.eventId,
-          org_id: (await supabase.auth.getUser()).data.user.id,
+          org_id: this.orgId,
           name: routeName,
           type: routeType,
           waypoints: waypoints,
@@ -378,13 +402,26 @@ export class RouteMapConsole {
               <small>Status: ${route.status}</small>
             </div>
             <div class="route-actions">
-              <button class="btn-small btn-primary" onclick="this.showRouteDetails('${route.id}')">View</button>
-              <button class="btn-small btn-secondary" onclick="this.editRoute('${route.id}')">Edit</button>
+              <button class="btn-small btn-primary" data-route-id="${route.id}" data-action="view">View</button>
+              <button class="btn-small btn-secondary" data-route-id="${route.id}" data-action="edit">Edit</button>
             </div>
           </div>
         `).join('')}
       </div>
     `;
+
+    // Attach event listeners to action buttons
+    list.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const routeId = e.target.dataset.routeId;
+        const action = e.target.dataset.action;
+        if (action === 'edit') {
+          this.editRoute(routeId);
+        } else if (action === 'view') {
+          this.showRouteDetails(routeId);
+        }
+      });
+    });
   }
 
   displayRoutesOnMap() {
@@ -491,6 +528,25 @@ export class RouteMapConsole {
 
   hideModal(modalId) {
     document.getElementById(modalId)?.classList.add('hidden');
+  }
+
+  showRouteDetails(routeId) {
+    const route = this.routes.find(r => r.id === routeId);
+    if (!route) {
+      this.showToast('Route not found', 'error');
+      return;
+    }
+
+    // Center map on this route's waypoints
+    if (route.waypoints && route.waypoints.length > 0) {
+      const bounds = new google.maps.LatLngBounds();
+      route.waypoints.forEach(wp => {
+        bounds.extend({ lat: wp.lat, lng: wp.lng });
+      });
+      this.map.fitBounds(bounds);
+    }
+
+    this.showToast(`Showing route: ${route.name}`, 'info');
   }
 
   showToast(message, type = 'info') {
