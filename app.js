@@ -1,4 +1,4 @@
-// Main Application Controller with Landing Page
+// Main Application Controller with Multi-Tenant Support
 import { supabase } from './supabase.js';
 import { AuthService } from './auth.js';
 import { LandingPage } from './landing-page.js';
@@ -11,21 +11,52 @@ import { SafetyPage } from './safety.js';
 import { StaffPage } from './staff.js';
 import { ParticipantsPage } from './participants.js';
 import { EventSettings } from './event-settings.js';
+import { AdminDashboard } from './admin-dashboard.js';
 
 const authService = new AuthService();
 let currentUser = null;
 let currentEvent = null;
+let currentOrg = null;
 let currentPage = null;
 let showedLanding = false;
+let isAdmin = false;
 
 async function initializeApp() {
   const user = await authService.getCurrentUser();
 
   if (user) {
     currentUser = user;
-    renderDashboard();
+
+    // Check if user is admin
+    const { data: adminData } = await supabase
+      .from('admin_users')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    isAdmin = !!adminData;
+
+    // Check if user is member of any organizations
+    const { data: memberData } = await supabase
+      .from('organization_members')
+      .select('org_id')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .limit(1)
+      .single();
+
+    if (isAdmin) {
+      // Admins go to admin dashboard
+      renderAdminDashboard();
+    } else if (memberData) {
+      // Organization members go to their org dashboard
+      currentOrg = memberData.org_id;
+      renderDashboard();
+    } else {
+      // No org/admin status - show no access message
+      renderNoAccess();
+    }
   } else {
-    // Show landing page first if not already shown
     if (!showedLanding) {
       renderLanding();
     } else {
@@ -64,11 +95,43 @@ function renderDashboard() {
   currentPage = dashboardPage;
 }
 
+function renderAdminDashboard() {
+  const container = document.getElementById('app');
+  const adminDashboard = new AdminDashboard();
+
+  if (currentPage) {
+    currentPage.destroy?.();
+  }
+
+  adminDashboard.render(() => {
+    onLogout();
+  });
+
+  currentPage = adminDashboard;
+}
+
+function renderNoAccess() {
+  const container = document.getElementById('app');
+  container.innerHTML = `
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0a1e3e 0%, #1a3a5c 50%, #0d2547 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <div style="background: white; border-radius: 12px; padding: 3rem; text-align: center; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+        <h1 style="margin: 0 0 1rem 0; font-size: 1.5rem; color: #333;">Access Denied</h1>
+        <p style="margin: 0 0 2rem 0; color: #666; font-size: 1.1rem;">Your account has not been assigned to an organization yet.</p>
+        <p style="margin: 0 0 2rem 0; color: #999; font-size: 0.95rem;">Please contact your system administrator to add you to an organization.</p>
+        <button onclick="location.reload()" style="padding: 0.75rem 1.5rem; background: #0099FF; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; font-weight: 600;">Reload Page</button>
+        <button onclick="handleLogout()" style="padding: 0.75rem 1.5rem; background: #f0f0f0; color: #333; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; margin-left: 0.5rem;">Logout</button>
+      </div>
+    </div>
+  `;
+}
+
 async function onLogout() {
   try {
     await authService.logout();
     currentUser = null;
     currentEvent = null;
+    currentOrg = null;
+    isAdmin = false;
     showedLanding = false;
     renderLanding();
   } catch (error) {
@@ -78,7 +141,7 @@ async function onLogout() {
 
 function onLoginSuccess(user) {
   currentUser = user;
-  renderDashboard();
+  initializeApp();
 }
 
 function onEventSelected(event) {
@@ -97,11 +160,9 @@ function showIntegratedDashboard() {
     currentUser,
     currentEvent,
     (module) => {
-      // Module selection callback
       loadModule(module);
     },
     () => {
-      // Back button callback
       currentEvent = null;
       renderDashboard();
     }
@@ -187,11 +248,13 @@ authService.onAuthChange((user) => {
   if (user) {
     currentUser = user;
     if (!currentPage) {
-      renderDashboard();
+      initializeApp();
     }
   } else {
     currentUser = null;
     currentEvent = null;
+    currentOrg = null;
+    isAdmin = false;
     showedLanding = false;
     renderLanding();
   }
