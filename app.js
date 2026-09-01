@@ -1,6 +1,7 @@
-// Main Application Controller
+// Main Application Controller with Landing Page
 import { supabase } from './supabase.js';
 import { AuthService } from './auth.js';
+import { LandingPage } from './landing-page.js';
 import { LoginPage } from './login.js';
 import { DashboardPage } from './dashboard.js';
 import { IntegratedDashboard } from './integrated-dashboard.js';
@@ -15,6 +16,7 @@ const authService = new AuthService();
 let currentUser = null;
 let currentEvent = null;
 let currentPage = null;
+let showedLanding = false;
 
 async function initializeApp() {
   const user = await authService.getCurrentUser();
@@ -23,8 +25,25 @@ async function initializeApp() {
     currentUser = user;
     renderDashboard();
   } else {
-    renderLogin();
+    // Show landing page first if not already shown
+    if (!showedLanding) {
+      renderLanding();
+    } else {
+      renderLogin();
+    }
   }
+}
+
+function renderLanding() {
+  const container = document.getElementById('app');
+  const landingPage = new LandingPage();
+
+  landingPage.render(() => {
+    showedLanding = true;
+    renderLogin();
+  });
+
+  currentPage = landingPage;
 }
 
 function renderLogin() {
@@ -50,7 +69,8 @@ async function onLogout() {
     await authService.logout();
     currentUser = null;
     currentEvent = null;
-    renderLogin();
+    showedLanding = false;
+    renderLanding();
   } catch (error) {
     console.error('Logout error:', error);
   }
@@ -172,7 +192,8 @@ authService.onAuthChange((user) => {
   } else {
     currentUser = null;
     currentEvent = null;
-    renderLogin();
+    showedLanding = false;
+    renderLanding();
   }
 });
 
