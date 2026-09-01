@@ -17,11 +17,12 @@ export class RouteMapConsole {
     this.startPoint = null;
     this.finishPoint = null;
     this.distanceLabels = [];
-    this.routeTypes = ['staff_route', 'vehicle_route', 'evacuation_route'];
+    this.routeTypes = ['staff_route', 'vehicle_route', 'evacuation_route', 'race_route'];
     this.colors = {
       staff_route: '#0099FF',
       vehicle_route: '#FF6B35',
       evacuation_route: '#FF3333',
+      race_route: '#9C27B0',
       water_table: '#1E90FF',
       marshal: '#9370DB',
       medical_station: '#E91E63',
@@ -77,6 +78,7 @@ export class RouteMapConsole {
                 <option value="staff_route">Staff Route</option>
                 <option value="vehicle_route">Vehicle Route</option>
                 <option value="evacuation_route">Evacuation Route</option>
+                <option value="race_route">Race Route</option>
               </select>
             </div>
             <div class="control-group">
@@ -123,6 +125,10 @@ export class RouteMapConsole {
                 <div class="legend-item">
                   <div class="legend-color" style="background-color: #FF3333;"></div>
                   <span>Evacuation Routes</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color" style="background-color: #9C27B0;"></div>
+                  <span>Race Routes</span>
                 </div>
               </div>
             </div>
@@ -698,6 +704,42 @@ export class RouteMapConsole {
       lng: marker.getPosition().lng()
     }));
 
+    // Prepare special locations data
+    const marshals = this.marshalMarkers.map((m, i) => ({
+      order: i + 1,
+      lat: m.lat,
+      lng: m.lng
+    }));
+
+    const waterTables = this.waterTableMarkers.map((w, i) => ({
+      order: i + 1,
+      lat: w.lat,
+      lng: w.lng
+    }));
+
+    const medicalStations = this.medicalStationMarkers.map((ms, i) => ({
+      order: i + 1,
+      lat: ms.lat,
+      lng: ms.lng
+    }));
+
+    const securityVehicles = this.securityVehicleMarkers.map((sv, i) => ({
+      order: i + 1,
+      lat: sv.lat,
+      lng: sv.lng
+    }));
+
+    const startFinish = {
+      start: this.startPoint ? {
+        lat: this.startPoint.getPosition().lat(),
+        lng: this.startPoint.getPosition().lng()
+      } : null,
+      finish: this.finishPoint ? {
+        lat: this.finishPoint.getPosition().lat(),
+        lng: this.finishPoint.getPosition().lng()
+      } : null
+    };
+
     try {
       const { data, error } = await supabase
         .from('routes')
@@ -707,6 +749,11 @@ export class RouteMapConsole {
           name: routeName,
           type: routeType,
           waypoints: waypoints,
+          marshals: marshals,
+          water_tables: waterTables,
+          medical_stations: medicalStations,
+          security_vehicles: securityVehicles,
+          start_finish: startFinish,
           status: 'active',
           created_at: new Date().toISOString()
         })
