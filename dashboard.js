@@ -121,7 +121,11 @@ export class DashboardPage {
     document.querySelectorAll('.event-card').forEach(card => {
       card.querySelector('.select-event').addEventListener('click', () => {
         const eventId = card.dataset.eventId;
-        this.onEventSelected(eventId);
+        // Find the full event object from this.events
+        const event = this.events.find(e => e.id === eventId);
+        if (event) {
+          this.onEventSelected(event);
+        }
       });
     });
   }
