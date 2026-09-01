@@ -50,32 +50,36 @@ export class RouteMapConsole {
           <button class="btn btn-secondary" id="back-btn">← Back</button>
         </div>
 
+        <div class="route-map-controls-sticky">
+          <div class="controls-wrapper">
+            <div class="control-group">
+              <label>Route Type:</label>
+              <select id="route-type-select" class="control-select">
+                <option value="staff_route">Staff Route</option>
+                <option value="vehicle_route">Vehicle Route</option>
+                <option value="evacuation_route">Evacuation Route</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label>Route Name:</label>
+              <input type="text" id="route-name-input" class="control-input" placeholder="e.g., North Entrance Route">
+            </div>
+            <div class="control-group">
+              <button class="btn btn-primary" id="start-drawing-btn">✎ Start Drawing</button>
+              <button class="btn btn-secondary" id="clear-drawing-btn" disabled>Clear</button>
+              <button class="btn btn-success" id="save-route-btn" disabled>💾 Save</button>
+            </div>
+          </div>
+        </div>
+
         <div class="route-map-content">
           <div class="route-map-main">
             <div id="map" class="map-container"></div>
-
-            <div class="map-controls">
-              <div class="control-group">
-                <label>Route Type:</label>
-                <select id="route-type-select" class="control-select">
-                  <option value="staff_route">Staff Route</option>
-                  <option value="vehicle_route">Vehicle Route</option>
-                  <option value="evacuation_route">Evacuation Route</option>
-                </select>
-              </div>
-              <div class="control-group">
-                <label>Route Name:</label>
-                <input type="text" id="route-name-input" class="control-input" placeholder="e.g., North Entrance Route">
-              </div>
-              <button class="btn btn-primary" id="start-drawing-btn">✎ Start Drawing Route</button>
-              <button class="btn btn-secondary" id="clear-drawing-btn" disabled>Clear Drawing</button>
-              <button class="btn btn-success" id="save-route-btn" disabled>💾 Save Route</button>
-            </div>
           </div>
 
           <div class="route-map-sidebar">
             <div class="sidebar-section">
-              <h3>Routes</h3>
+              <h3>Legend</h3>
               <div class="routes-legend">
                 <div class="legend-item">
                   <div class="legend-color" style="background-color: #0099FF;"></div>
@@ -596,12 +600,31 @@ export class RouteMapConsole {
         font-size: 0.9rem;
       }
 
+      .route-map-controls-sticky {
+        position: sticky;
+        top: 0;
+        background: white;
+        border-bottom: 2px solid #ddd;
+        padding: 1rem;
+        z-index: 100;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+
+      .controls-wrapper {
+        display: grid;
+        grid-template-columns: 200px 250px 1fr;
+        gap: 1rem;
+        align-items: end;
+        max-width: 1400px;
+      }
+
       .route-map-content {
         flex: 1;
         display: grid;
         grid-template-columns: 1fr 280px;
         gap: 1rem;
         padding: 1rem;
+        overflow: hidden;
       }
 
       .route-map-main {
@@ -615,24 +638,20 @@ export class RouteMapConsole {
         background: white;
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        min-height: 500px;
-      }
-
-      .map-controls {
-        background: white;
-        padding: 1rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr 1fr;
-        gap: 0.5rem;
-        align-items: end;
+        min-height: 600px;
       }
 
       .control-group {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
+      }
+
+      .control-group:last-child {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        align-items: flex-end;
       }
 
       .control-group label {
@@ -647,6 +666,13 @@ export class RouteMapConsole {
         border: 1px solid #ddd;
         border-radius: 4px;
         font-size: 0.9rem;
+        color: #333;
+        background: white;
+      }
+
+      .control-group button {
+        flex: 1;
+        min-width: 100px;
       }
 
       .route-map-sidebar {
@@ -914,8 +940,8 @@ export class RouteMapConsole {
           grid-template-columns: 1fr;
         }
 
-        .map-controls {
-          grid-template-columns: 1fr 1fr;
+        .controls-wrapper {
+          grid-template-columns: 150px 200px 1fr;
         }
       }
 
@@ -926,8 +952,16 @@ export class RouteMapConsole {
           align-items: flex-start;
         }
 
-        .map-controls {
+        .controls-wrapper {
           grid-template-columns: 1fr;
+        }
+
+        .route-map-content {
+          grid-template-columns: 1fr;
+        }
+
+        .map-container {
+          min-height: 400px;
         }
       }
     `;
