@@ -84,6 +84,29 @@ export class EventSettings {
             <li>Numbers are padded to 3 digits: REG-001, REG-002, REG-100, REG-1000, etc.</li>
           </ul>
         </div>
+
+        <div class="settings-danger-zone">
+          <h3>⚠️ Danger Zone</h3>
+          <p class="danger-description">These actions are irreversible. Please use with caution.</p>
+
+          <div class="danger-actions">
+            <div class="danger-action">
+              <div class="danger-info">
+                <h4>End Event</h4>
+                <p>Mark this event as completed. The event will be archived and no longer active.</p>
+              </div>
+              <button class="btn btn-warning" id="end-event-btn">🏁 End Event</button>
+            </div>
+
+            <div class="danger-action">
+              <div class="danger-info">
+                <h4>Delete Event</h4>
+                <p>Permanently delete this event and all associated data. This cannot be undone.</p>
+              </div>
+              <button class="btn btn-danger" id="delete-event-btn">🗑️ Delete Event</button>
+            </div>
+          </div>
+        </div>
       </div>
     `;
 
@@ -272,6 +295,78 @@ export class EventSettings {
     document.getElementById('bulk-assign-btn').addEventListener('click', () => {
       this.handleBulkAssignBibs();
     });
+
+    // End event
+    document.getElementById('end-event-btn')?.addEventListener('click', () => {
+      this.handleEndEvent();
+    });
+
+    // Delete event
+    document.getElementById('delete-event-btn')?.addEventListener('click', () => {
+      this.handleDeleteEvent();
+    });
+  }
+
+  async handleEndEvent() {
+    if (!confirm('Are you sure you want to end this event? It will be marked as completed.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({
+          status: 'completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', this.eventId);
+
+      if (error) throw error;
+
+      this.showMessage('✓ Event ended successfully!', 'success');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    } catch (error) {
+      console.error('Error ending event:', error);
+      this.showMessage(error.message || 'Failed to end event', 'error');
+    }
+  }
+
+  async handleDeleteEvent() {
+    if (!confirm('⚠️ WARNING: This will permanently delete this event and all associated data. Are you absolutely sure? Type "DELETE" to confirm.')) {
+      return;
+    }
+
+    const confirmation = prompt('Type "DELETE" to confirm permanent deletion:');
+    if (confirmation !== 'DELETE') {
+      this.showMessage('Deletion cancelled.', 'error');
+      return;
+    }
+
+    try {
+      // First delete all event-related data
+      await supabase
+        .from('event_settings')
+        .delete()
+        .eq('event_id', this.eventId);
+
+      // Delete the event itself
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', this.eventId);
+
+      if (error) throw error;
+
+      this.showMessage('✓ Event deleted permanently!', 'success');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      this.showMessage(error.message || 'Failed to delete event', 'error');
+    }
   }
 
   addStyles() {
@@ -444,6 +539,82 @@ export class EventSettings {
       .settings-info h3 {
         margin: 0 0 1rem 0;
         color: var(--primary);
+      }
+
+      .settings-danger-zone {
+        background: linear-gradient(135deg, rgba(255, 82, 82, 0.1), rgba(255, 107, 107, 0.05));
+        border: 2px solid #FF6B6B;
+        border-radius: 12px;
+        padding: 2rem;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      .settings-danger-zone h3 {
+        margin: 0 0 0.5rem 0;
+        color: #FF6B6B;
+        font-size: 1.3rem;
+      }
+
+      .danger-description {
+        margin: 0 0 2rem 0;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+      }
+
+      .danger-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .danger-action {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 2rem;
+      }
+
+      .danger-info h4 {
+        margin: 0 0 0.5rem 0;
+        color: var(--text-primary);
+        font-size: 1.1rem;
+      }
+
+      .danger-info p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      .btn-warning {
+        background: linear-gradient(135deg, #FF9800, #FFB74D);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 4px 16px rgba(255, 152, 0, 0.2);
+      }
+
+      .btn-warning:hover:not(:disabled) {
+        background: linear-gradient(135deg, #F57C00, #FF9800);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(255, 152, 0, 0.3);
+      }
+
+      .btn-danger {
+        background: linear-gradient(135deg, #FF6B6B, #FF5252);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 4px 16px rgba(255, 82, 82, 0.2);
+      }
+
+      .btn-danger:hover:not(:disabled) {
+        background: linear-gradient(135deg, #FF5252, #FF3838);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(255, 82, 82, 0.3);
       }
 
       .settings-info ul {
