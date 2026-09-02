@@ -1,4 +1,4 @@
-// Staff Management Module
+// Enhanced Staff Management Module with Marshal Position Assignment
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
 
@@ -9,8 +9,10 @@ export class StaffPage {
     this.staffList = [];
     this.assignmentsList = [];
     this.marshalLocations = [];
+    this.marshalAssignments = {}; // Track which marshal positions are assigned
     this.onBack = null;
     this.currentAssignmentId = null;
+    this.selectedMarshalPosition = null; // Track selected marshal for quick assignment
   }
 
   async render(eventId, currentUser, onBack) {
@@ -52,6 +54,7 @@ export class StaffPage {
         <div class="staff-content">
           <div class="staff-tabs">
             <button class="tab-btn active" data-tab="staff-list">Staff List</button>
+            <button class="tab-btn" data-tab="marshal-positions">Marshal Positions</button>
             <button class="tab-btn" data-tab="checkin">Check-in/out</button>
             <button class="tab-btn" data-tab="assignments">Assignments</button>
           </div>
@@ -59,6 +62,12 @@ export class StaffPage {
           <div id="staff-list" class="tab-content active">
             <div class="staff-grid" id="staff-grid">
               <div class="loading">Loading staff...</div>
+            </div>
+          </div>
+
+          <div id="marshal-positions" class="tab-content">
+            <div class="marshal-positions-container" id="marshal-positions-container">
+              <div class="loading">Loading marshal positions...</div>
             </div>
           </div>
 
@@ -151,8 +160,23 @@ export class StaffPage {
               </div>
 
               <div class="form-group">
-                <label>Assignment/Area *</label>
-                <input type="text" id="assignment-name" placeholder="e.g., Gate A, Medical Tent, Registration Desk" required />
+                <label>Assignment Type *</label>
+                <select id="assignment-type" required>
+                  <option value="custom">Custom Area</option>
+                  <option value="marshal-position">Marshal Position</option>
+                </select>
+              </div>
+
+              <div class="form-group" id="custom-assignment-group">
+                <label>Custom Area/Position</label>
+                <input type="text" id="assignment-name" placeholder="e.g., Gate A, Medical Tent, Registration Desk" />
+              </div>
+
+              <div class="form-group" id="marshal-position-group" style="display: none;">
+                <label>Marshal Position *</label>
+                <select id="assignment-marshal-position">
+                  <option value="">Select a marshal position</option>
+                </select>
               </div>
 
               <div class="form-group">
@@ -193,6 +217,8 @@ export class StaffPage {
 
     // Load staff and setup listeners
     await this.loadStaff();
+    await this.loadMarshalLocations();
+    await this.loadAssignments();
     this.setupEventListeners();
   }
 
@@ -262,6 +288,7 @@ export class StaffPage {
         gap: 1rem;
         margin-bottom: 2rem;
         border-bottom: 2px solid var(--border-color);
+        flex-wrap: wrap;
       }
 
       .tab-btn {
@@ -299,35 +326,144 @@ export class StaffPage {
         gap: 2.5rem;
       }
 
-      .staff-role-section {
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        padding: 1.5rem;
-        border: 2px solid var(--border-color);
-      }
-
-      .role-section-header {
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 3px solid var(--primary);
-      }
-
-      .role-section-header h3 {
-        margin: 0;
-        color: var(--primary);
-        font-size: 1.3rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .staff-grid-by-role {
+      .marshal-positions-container {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 1.5rem;
       }
 
+      .marshal-position-card {
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(0, 153, 255, 0.05) 100%);
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .marshal-position-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-4px);
+      }
+
+      .marshal-position-card.assigned {
+        border-color: var(--success);
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(76, 175, 80, 0.05) 100%);
+      }
+
+      .marshal-position-card .position-status {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .marshal-position-card .position-status.unassigned {
+        background: rgba(255, 82, 82, 0.2);
+        color: #FF5252;
+      }
+
+      .marshal-position-card .position-status.assigned {
+        background: rgba(76, 175, 80, 0.2);
+        color: var(--success);
+      }
+
+      .marshal-position-card .position-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.75rem;
+      }
+
+      .marshal-position-card .position-route {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      .marshal-position-card .position-coords {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        font-family: monospace;
+      }
+
+      .marshal-position-card .assigned-staff {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+      }
+
+      .marshal-position-card .assigned-staff .staff-name {
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.25rem;
+      }
+
+      .marshal-position-card .assigned-staff .staff-email {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+      }
+
+      .marshal-position-card .action-btn {
+        width: 100%;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .marshal-position-card .assign-btn {
+        background: linear-gradient(135deg, var(--primary), #00A8E8);
+        color: white;
+      }
+
+      .marshal-position-card .assign-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 153, 255, 0.3);
+      }
+
+      .marshal-position-card .change-btn {
+        background: rgba(255, 152, 0, 0.2);
+        color: #FF9800;
+      }
+
+      .marshal-position-card .change-btn:hover {
+        background: rgba(255, 152, 0, 0.3);
+      }
+
+      .marshal-position-card .remove-btn {
+        background: rgba(255, 82, 82, 0.2);
+        color: #FF5252;
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        padding: 0.5rem;
+      }
+
+      .marshal-position-card .remove-btn:hover {
+        background: rgba(255, 82, 82, 0.3);
+      }
+
       .staff-card {
-        background: rgba(0, 153, 255, 0.05);
+        background: var(--bg-secondary);
         border: 2px solid var(--border-color);
         border-radius: 12px;
         padding: 1.5rem;
@@ -337,204 +473,256 @@ export class StaffPage {
       .staff-card:hover {
         border-color: var(--primary);
         box-shadow: var(--shadow-lg);
-        transform: translateY(-2px);
+      }
+
+      .staff-role-section {
+        margin-bottom: 2rem;
+      }
+
+      .staff-role-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--border-color);
+      }
+
+      .staff-role-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
       }
 
       .staff-name {
-        font-size: 1.25rem;
         font-weight: 700;
         color: var(--text-primary);
+        font-size: 1rem;
         margin-bottom: 0.5rem;
       }
 
       .staff-info {
-        font-size: 0.9rem;
         color: var(--text-secondary);
+        font-size: 0.9rem;
         margin-bottom: 0.5rem;
       }
 
-      .staff-roles {
+      .staff-actions {
         display: flex;
-        flex-wrap: wrap;
         gap: 0.5rem;
         margin-top: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .staff-actions button {
+        flex: 1;
+        min-width: 100px;
       }
 
       .role-badge {
         display: inline-block;
-        background: linear-gradient(135deg, var(--primary), var(--primary-light));
-        color: white;
-        padding: 0.4rem 0.8rem;
-        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
         font-size: 0.75rem;
-        font-weight: 600;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-top: 0.75rem;
       }
 
-      .staff-functions-list {
-        font-size: 0.85rem;
+      .assignments-container {
+        display: grid;
+        gap: 1.5rem;
+      }
+
+      .assignment-item {
+        background: var(--bg-secondary);
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+      }
+
+      .assignment-item:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-md);
+      }
+
+      .assignment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+      }
+
+      .assignment-staff-info {
+        flex: 1;
+      }
+
+      .assignment-staff-name {
+        font-weight: 700;
         color: var(--primary);
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+      }
+
+      .assignment-area {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      .assignment-time {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        display: flex;
+        gap: 1rem;
         margin-top: 0.5rem;
       }
 
-      .staff-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
+      .assignment-status {
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .assignment-status.pending {
+        background: rgba(255, 193, 7, 0.2);
+        color: #FFC107;
+      }
+
+      .assignment-status.assigned {
+        background: rgba(76, 175, 80, 0.2);
+        color: var(--success);
+      }
+
+      .assignment-status.completed {
+        background: rgba(100, 100, 100, 0.2);
+        color: #999;
+      }
+
+      .assignment-actions {
+        display: flex;
         gap: 0.5rem;
         margin-top: 1rem;
       }
 
-      .staff-actions .btn {
-        font-size: 0.8rem;
-        padding: 0.5rem 0.3rem;
-        white-space: nowrap;
-      }
-
-      .checkin-container, .assignments-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 1.5rem;
-      }
-
-      .checkin-card, .assignment-card {
-        background: rgba(0, 153, 255, 0.05);
-        border: 2px solid var(--border-color);
-        border-radius: 12px;
-        padding: 1.5rem;
-      }
-
-      .checkin-status {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        padding: 0.75rem;
-        border-radius: 8px;
-        text-align: center;
-      }
-
-      .checkin-status.checked-in {
-        background: rgba(76, 175, 80, 0.2);
-        color: #4CAF50;
-      }
-
-      .checkin-status.checked-out {
-        background: rgba(244, 67, 54, 0.2);
-        color: #f44336;
-      }
-
-      .checkin-actions {
-        display: flex;
-        gap: 0.5rem;
-      }
-
-      .checkin-actions .btn {
-        flex: 1;
+      .assignment-actions button {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
       }
 
       .staff-modal {
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
+        right: 0;
+        bottom: 0;
         background: rgba(0, 0, 0, 0.7);
         display: flex;
-        align-items: center;
         justify-content: center;
+        align-items: center;
         z-index: 1000;
       }
 
-      .staff-modal .modal-content {
+      .modal-content {
         background: var(--bg-primary);
         border: 2px solid var(--border-color);
         border-radius: 12px;
         padding: 2rem;
+        max-width: 500px;
         width: 90%;
-        max-width: 600px;
         max-height: 90vh;
         overflow-y: auto;
+        position: relative;
+        box-shadow: var(--shadow-xl);
       }
 
       .modal-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
         background: none;
         border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
         color: var(--text-secondary);
-        float: right;
-        transition: all 0.2s ease;
+        font-size: 2rem;
+        cursor: pointer;
+        transition: color 0.3s ease;
       }
 
       .modal-close:hover {
-        color: var(--text-primary);
+        color: var(--primary);
+      }
+
+      .modal-content h2 {
+        margin-top: 0;
+        color: var(--primary);
+        margin-bottom: 1.5rem;
       }
 
       .form-group {
-        margin-bottom: 1.5rem;
         display: flex;
         flex-direction: column;
-        gap: 0.6rem;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
       }
 
       .form-group label {
         font-weight: 600;
         color: var(--text-primary);
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
       }
 
-      .form-group input, .form-group select {
-        padding: 0.85rem;
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        padding: 0.75rem;
         border: 2px solid var(--border-color);
         border-radius: 8px;
-        background: rgba(255, 255, 255, 0.05);
+        background: var(--bg-secondary);
         color: var(--text-primary);
         font-family: inherit;
-        font-size: 0.95rem;
+        transition: all 0.3s ease;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(0, 153, 255, 0.15);
       }
 
       .role-checkboxes {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 0.75rem;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
       }
 
       .role-checkboxes label {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        font-weight: normal;
-        text-transform: none;
-        letter-spacing: normal;
         cursor: pointer;
+        font-weight: normal;
       }
 
       .role-checkboxes input {
-        cursor: pointer;
         width: auto;
-      }
-
-      .functions-input {
-        display: flex;
-        gap: 0.5rem;
-      }
-
-      .functions-input input {
-        flex: 1;
+        cursor: pointer;
       }
 
       .functions-list {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
-        margin-top: 0.75rem;
+        margin-top: 0.5rem;
       }
 
       .function-tag {
-        background: linear-gradient(135deg, var(--primary), var(--primary-light));
-        color: white;
+        background: rgba(0, 153, 255, 0.2);
+        color: var(--primary);
         padding: 0.4rem 0.8rem;
-        border-radius: 6px;
+        border-radius: 20px;
         font-size: 0.85rem;
         display: flex;
         align-items: center;
@@ -544,125 +732,78 @@ export class StaffPage {
       .function-tag button {
         background: none;
         border: none;
-        color: white;
+        color: var(--primary);
         cursor: pointer;
-        font-size: 1rem;
+        font-weight: bold;
         padding: 0;
+      }
+
+      .modal-actions {
         display: flex;
-        align-items: center;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      .modal-actions button {
+        flex: 1;
       }
 
       .error-message {
-        color: #ff6b6b;
+        color: #FF5252;
         font-size: 0.9rem;
-        padding: 1rem;
-        background: rgba(255, 107, 107, 0.1);
-        border: 1px solid rgba(255, 107, 107, 0.3);
-        border-radius: 8px;
+        margin-bottom: 1rem;
         display: none;
-        margin: 1rem 0;
       }
 
       .error-message.show {
         display: block;
       }
 
-      .modal-actions {
-        display: flex;
-        gap: 1rem;
-        justify-content: flex-end;
-        margin-top: 2rem;
-        padding-top: 1.5rem;
-        border-top: 2px solid var(--border-color);
-      }
-
-      .modal-actions .btn {
-        flex: 1;
-        max-width: 150px;
-      }
-
       .loading {
         text-align: center;
+        color: var(--text-secondary);
         padding: 2rem;
-        color: var(--text-secondary);
-        font-size: 1.1rem;
       }
 
-      .assignments-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 1.5rem;
-      }
-
-      .assignment-card {
-        background: rgba(0, 153, 255, 0.05);
-        border: 2px solid var(--border-color);
-        border-radius: 12px;
-        padding: 1.5rem;
-        transition: all 0.3s ease;
-      }
-
-      .assignment-card:hover {
-        border-color: var(--primary);
-        box-shadow: var(--shadow-lg);
-        transform: translateY(-2px);
-      }
-
-      .assignment-details {
-        margin: 1rem 0;
-        padding: 1rem;
-        background: rgba(0, 153, 255, 0.1);
+      .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
         border-radius: 8px;
-      }
-
-      .assignment-title {
-        font-size: 1.1rem;
         font-weight: 600;
-        color: var(--primary);
-        margin-bottom: 0.5rem;
-      }
-
-      .assignment-time {
+        cursor: pointer;
+        transition: all 0.3s ease;
         font-size: 0.9rem;
-        color: var(--text-secondary);
       }
 
-      .assignment-status {
-        display: inline-block;
-        padding: 0.4rem 0.8rem;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin: 0.75rem 0;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+      .btn-primary {
+        background: linear-gradient(135deg, var(--primary), #00A8E8);
+        color: white;
       }
 
-      .assignment-status.pending {
-        background: rgba(255, 193, 7, 0.2);
-        color: #FFC107;
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 153, 255, 0.3);
       }
 
-      .assignment-status.assigned {
-        background: rgba(33, 150, 243, 0.2);
-        color: #2196F3;
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        border: 2px solid var(--border-color);
       }
 
-      .assignment-status.completed {
-        background: rgba(76, 175, 80, 0.2);
-        color: #4CAF50;
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: var(--primary);
       }
 
-      .assignment-actions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
+      .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
       }
 
-      .assignment-actions .btn {
-        flex: 1;
+      .btn-small {
+        padding: 0.5rem 1rem;
         font-size: 0.85rem;
-        padding: 0.5rem;
       }
 
       @media (max-width: 768px) {
@@ -675,33 +816,20 @@ export class StaffPage {
           gap: 1rem;
         }
 
-        .staff-grid-by-role, .checkin-container, .assignments-container {
-          grid-template-columns: 1fr;
+        .staff-tabs {
+          flex-wrap: wrap;
         }
 
-        .staff-role-section {
-          padding: 1rem;
-        }
-
-        .role-section-header h3 {
-          font-size: 1.1rem;
-        }
-
-        .staff-actions {
-          grid-template-columns: 1fr 1fr 1fr;
-        }
-
-        .staff-actions .btn {
-          font-size: 0.75rem;
-          padding: 0.4rem 0.2rem;
-        }
-
-        .staff-modal .modal-content {
-          width: 95%;
-          max-height: 95vh;
+        .tab-btn {
+          font-size: 0.9rem;
+          padding: 0.5rem 1rem;
         }
 
         .role-checkboxes {
+          grid-template-columns: 1fr;
+        }
+
+        .marshal-positions-container {
           grid-template-columns: 1fr;
         }
       }
@@ -716,12 +844,7 @@ export class StaffPage {
         .select(`
           *,
           staff_roles (
-            id,
-            role,
-            staff_functions (
-              id,
-              function_name
-            )
+            role
           )
         `)
         .eq('event_id', this.currentEvent);
@@ -729,12 +852,10 @@ export class StaffPage {
       if (error) throw error;
 
       this.staffList = data || [];
-      await this.loadMarshalLocations();
       this.renderStaffList();
-      this.renderCheckinList();
-      await this.loadAssignments();
     } catch (error) {
       console.error('Error loading staff:', error);
+      this.staffList = [];
     }
   }
 
@@ -747,28 +868,27 @@ export class StaffPage {
 
       if (error) throw error;
 
-      console.log('Routes loaded for marshals:', data);
-
-      // Flatten all marshals from all routes
       this.marshalLocations = [];
-      (data || []).forEach(route => {
-        if (route.marshals && Array.isArray(route.marshals) && route.marshals.length > 0) {
-          route.marshals.forEach((marshal, idx) => {
-            if (marshal.lat && marshal.lng) {
-              this.marshalLocations.push({
-                id: `${route.id}-marshal-${idx}`,
-                name: `Marshal Position ${idx + 1} (${route.name})`,
-                lat: marshal.lat,
-                lng: marshal.lng,
-                routeName: route.name,
-                routeType: route.type
-              });
-            }
-          });
-        }
-      });
+      if (data && Array.isArray(data)) {
+        data.forEach((route) => {
+          if (route.marshals && Array.isArray(route.marshals) && route.marshals.length > 0) {
+            route.marshals.forEach((marshal, idx) => {
+              if (marshal.lat && marshal.lng) {
+                this.marshalLocations.push({
+                  id: `${route.id}-marshal-${idx}`,
+                  name: marshal.name || `${route.name} - Position ${idx + 1}`,
+                  routeName: route.name,
+                  routeId: route.id,
+                  lat: marshal.lat,
+                  lng: marshal.lng,
+                });
+              }
+            });
+          }
+        });
+      }
 
-      console.log('Marshal locations found:', this.marshalLocations);
+      this.renderMarshalPositions();
     } catch (error) {
       console.error('Error loading marshal locations:', error);
       this.marshalLocations = [];
@@ -793,11 +913,76 @@ export class StaffPage {
       if (error) throw error;
 
       this.assignmentsList = data || [];
+
+      // Build marshal assignments map
+      this.marshalAssignments = {};
+      this.assignmentsList.forEach(assignment => {
+        if (assignment.assignment && assignment.assignment.startsWith('MARSHAL-')) {
+          const marshalId = assignment.assignment;
+          this.marshalAssignments[marshalId] = {
+            staffId: assignment.staff_id,
+            staffName: assignment.event_staff?.name || 'Unknown',
+            staffEmail: assignment.event_staff?.email || '',
+            assignmentId: assignment.id
+          };
+        }
+      });
+
+      this.renderMarshalPositions();
       this.renderAssignmentsList();
     } catch (error) {
       console.error('Error loading assignments:', error);
       this.assignmentsList = [];
     }
+  }
+
+  renderMarshalPositions() {
+    const container = document.getElementById('marshal-positions-container');
+    if (!container) return;
+
+    if (this.marshalLocations.length === 0) {
+      container.innerHTML = '<div class="loading">No marshal positions available</div>';
+      return;
+    }
+
+    const html = this.marshalLocations.map(marshal => {
+      const assignment = this.marshalAssignments[marshal.id];
+      const isAssigned = !!assignment;
+
+      return `
+        <div class="marshal-position-card ${isAssigned ? 'assigned' : ''}">
+          <div class="position-status ${isAssigned ? 'assigned' : 'unassigned'}">
+            ${isAssigned ? '✓ Assigned' : 'Unassigned'}
+          </div>
+
+          <div class="position-title">${marshal.name}</div>
+          <div class="position-route">📍 Route: ${marshal.routeName}</div>
+          <div class="position-coords">📌 ${marshal.lat.toFixed(4)}, ${marshal.lng.toFixed(4)}</div>
+
+          ${isAssigned ? `
+            <div class="assigned-staff">
+              <div class="staff-name">${assignment.staffName}</div>
+              <div class="staff-email">${assignment.staffEmail}</div>
+            </div>
+          ` : ''}
+
+          ${isAssigned ? `
+            <button class="action-btn change-btn" onclick="staffPage.openAssignmentModalForMarshal('${marshal.id}', true)">
+              Change Assignment
+            </button>
+            <button class="action-btn remove-btn" onclick="staffPage.removeAssignment('${assignment.assignmentId}')">
+              Remove Assignment
+            </button>
+          ` : `
+            <button class="action-btn assign-btn" onclick="staffPage.openAssignmentModalForMarshal('${marshal.id}', false)">
+              + Assign Marshal
+            </button>
+          `}
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = html;
   }
 
   renderStaffList() {
@@ -825,327 +1010,233 @@ export class StaffPage {
         staff.staff_roles.some(r => r.role === role)
       );
 
-      // For Marshal role, also include marshals from routes
-      let marshalCount = staffInRole.length;
-      let marshalLocationCards = '';
-
-      if (role === 'Marshal' && this.marshalLocations.length > 0) {
-        marshalCount += this.marshalLocations.length;
-        marshalLocationCards = this.marshalLocations.map(marshal => `
-          <div class="staff-card marshal-location-card">
-            <div class="staff-name">${marshal.name}</div>
-            <div class="staff-info">📍 Route: ${marshal.routeName}</div>
-            <div class="staff-info">📌 Position: ${marshal.lat.toFixed(4)}, ${marshal.lng.toFixed(4)}</div>
-            <div class="role-badge" style="background: linear-gradient(135deg, #9370DB, #B19CD9); margin-top: 0.75rem;">
-              Position on Map
-            </div>
-          </div>
-        `).join('');
-      }
-
-      if (marshalCount === 0) return; // Skip roles with no staff or positions
-
-      // Check if we should display this role (based on filter)
+      if (staffInRole.length === 0) return;
       if (filterRole && filterRole !== role) return;
 
       html += `
         <div class="staff-role-section">
-          <div class="role-section-header">
-            <h3>${role} (${marshalCount})</h3>
-          </div>
-          <div class="staff-grid-by-role">
-            ${staffInRole.map(staff => {
-              const functionsHtml = staff.staff_roles
-                .filter(r => r.role === role && r.staff_functions && r.staff_functions.length > 0)
-                .map(r => r.staff_functions.map(f => `<span>${f.function_name}</span>`).join(''))
-                .join('');
+          <div class="staff-role-title">${role} (${staffInRole.length})</div>
+          <div class="staff-role-grid">
+            ${staffInRole.map(staff => `
+              <div class="staff-card">
+                <div class="staff-name">${staff.name}</div>
+                <div class="staff-info">📧 ${staff.email}</div>
+                <div class="staff-info">📱 ${staff.phone}</div>
+                ${staff.id_number ? `<div class="staff-info">🆔 ${staff.id_number}</div>` : ''}
 
-              return `
-                <div class="staff-card">
-                  <div class="staff-name">${staff.name}</div>
-                  <div class="staff-info">📧 ${staff.email}</div>
-                  <div class="staff-info">📱 ${staff.phone}</div>
-                  ${staff.alternate_phone ? `<div class="staff-info">📞 ${staff.alternate_phone}</div>` : ''}
-                  ${staff.id_number ? `<div class="staff-info">🆔 ${staff.id_number}</div>` : ''}
-
-                  ${functionsHtml ? `<div class="staff-functions-list">${functionsHtml}</div>` : ''}
-
-                  <div class="staff-actions">
-                    <button class="btn btn-sm btn-secondary" data-assign="${staff.id}">Assign</button>
-                    <button class="btn btn-sm btn-primary" data-edit="${staff.id}">Edit</button>
-                    <button class="btn btn-sm btn-danger" data-delete="${staff.id}">Delete</button>
-                  </div>
+                <div class="staff-actions">
+                  <button class="btn btn-primary btn-sm" data-assign="${staff.id}" onclick="staffPage.openAssignmentModalForStaff('${staff.id}')">
+                    Assign
+                  </button>
+                  <button class="btn btn-secondary btn-sm" onclick="staffPage.editStaff('${staff.id}')">
+                    Edit
+                  </button>
+                  <button class="btn btn-secondary btn-sm" onclick="staffPage.deleteStaff('${staff.id}')">
+                    Delete
+                  </button>
                 </div>
-              `;
-            }).join('')}
-            ${marshalLocationCards}
+              </div>
+            `).join('')}
           </div>
         </div>
       `;
     });
 
     grid.innerHTML = html;
-
-    // Add event listeners for buttons
-    grid.querySelectorAll('[data-assign]').forEach(btn => {
-      btn.addEventListener('click', () => this.openAssignmentModalForStaff(btn.dataset.assign));
-    });
-
-    grid.querySelectorAll('[data-edit]').forEach(btn => {
-      btn.addEventListener('click', () => this.editStaff(btn.dataset.edit));
-    });
-
-    grid.querySelectorAll('[data-delete]').forEach(btn => {
-      btn.addEventListener('click', () => this.deleteStaff(btn.dataset.delete));
-    });
-  }
-
-  renderCheckinList() {
-    const container = document.getElementById('checkin-container');
-
-    if (this.staffList.length === 0) {
-      container.innerHTML = '<div class="loading">No staff members</div>';
-      return;
-    }
-
-    container.innerHTML = this.staffList.map(staff => `
-      <div class="checkin-card">
-        <div class="staff-name">${staff.name}</div>
-        <div class="staff-info">${staff.staff_roles.map(r => r.role).join(', ')}</div>
-
-        <div class="checkin-status checked-in">✓ Ready to Check In</div>
-
-        <div class="checkin-actions">
-          <button class="btn btn-sm btn-success" data-checkin="${staff.id}">Check In</button>
-          <button class="btn btn-sm btn-warning" data-checkout="${staff.id}">Check Out</button>
-        </div>
-      </div>
-    `).join('');
-
-    // Add checkin/checkout listeners
-    container.querySelectorAll('[data-checkin]').forEach(btn => {
-      btn.addEventListener('click', () => this.checkIn(btn.dataset.checkin));
-    });
-
-    container.querySelectorAll('[data-checkout]').forEach(btn => {
-      btn.addEventListener('click', () => this.checkOut(btn.dataset.checkout));
-    });
   }
 
   renderAssignmentsList() {
     const container = document.getElementById('assignments-container');
+    if (!container) return;
 
-    if (!this.assignmentsList || this.assignmentsList.length === 0) {
-      container.innerHTML = `
-        <div class="loading">
-          <p>No assignments yet</p>
-          <button class="btn btn-primary" id="create-assignment-btn" style="margin-top: 1rem;">+ Create Assignment</button>
-        </div>
-      `;
-      const createBtn = container.querySelector('#create-assignment-btn');
-      if (createBtn) {
-        createBtn.addEventListener('click', () => this.openAssignmentModal());
-      }
+    if (this.assignmentsList.length === 0) {
+      container.innerHTML = '<div class="loading">No assignments yet</div>';
       return;
     }
 
-    const assignmentsHtml = this.assignmentsList.map(assignment => {
-      const staff = assignment.event_staff;
-      const startTime = assignment.start_time ? new Date(assignment.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'TBA';
-      const endTime = assignment.end_time ? new Date(assignment.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'TBA';
-      const statusClass = assignment.status === 'completed' ? 'completed' : assignment.status === 'assigned' ? 'assigned' : 'pending';
-
-      return `
-        <div class="assignment-card">
-          <div class="staff-name">${staff.name}</div>
-          <div class="staff-info">📧 ${staff.email}</div>
-
-          <div class="assignment-details">
-            <div class="assignment-title">${assignment.assignment}</div>
+    const html = this.assignmentsList.map(assignment => `
+      <div class="assignment-item">
+        <div class="assignment-header">
+          <div class="assignment-staff-info">
+            <div class="assignment-staff-name">${assignment.event_staff?.name || 'Unknown'}</div>
+            <div class="assignment-area">${assignment.assignment}</div>
             <div class="assignment-time">
-              <span>⏱️ ${startTime} - ${endTime}</span>
+              ${assignment.start_time ? `<span>Start: ${new Date(assignment.start_time).toLocaleTimeString()}</span>` : ''}
+              ${assignment.end_time ? `<span>End: ${new Date(assignment.end_time).toLocaleTimeString()}</span>` : ''}
             </div>
           </div>
-
-          <div class="assignment-status ${statusClass}">
-            ${assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
-          </div>
-
-          <div class="assignment-actions">
-            <button class="btn btn-sm btn-primary" data-edit-assignment="${assignment.id}">Edit</button>
-            <button class="btn btn-sm btn-danger" data-delete-assignment="${assignment.id}">Delete</button>
-          </div>
+          <span class="assignment-status ${assignment.status}">${assignment.status.toUpperCase()}</span>
         </div>
-      `;
-    }).join('');
 
-    container.innerHTML = `
-      <div style="margin-bottom: 1.5rem;">
-        <button class="btn btn-primary" id="create-assignment-btn">+ Create Assignment</button>
+        <div class="assignment-actions">
+          <button class="btn btn-secondary btn-sm" onclick="staffPage.editAssignment('${assignment.id}')">
+            Edit
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="staffPage.removeAssignment('${assignment.id}')">
+            Remove
+          </button>
+        </div>
       </div>
-      <div class="assignments-grid">
-        ${assignmentsHtml}
-      </div>
-    `;
+    `).join('');
 
-    // Add event listeners
-    const createBtn = container.querySelector('#create-assignment-btn');
-    if (createBtn) {
-      createBtn.addEventListener('click', () => this.openAssignmentModal());
-    }
-
-    container.querySelectorAll('[data-edit-assignment]').forEach(btn => {
-      btn.addEventListener('click', () => this.editAssignment(btn.dataset.editAssignment));
-    });
-
-    container.querySelectorAll('[data-delete-assignment]').forEach(btn => {
-      btn.addEventListener('click', () => this.deleteAssignment(btn.dataset.deleteAssignment));
-    });
-  }
-
-  async checkIn(staffId) {
-    try {
-      const { error } = await supabase
-        .from('staff_checkin')
-        .insert([{
-          staff_id: staffId,
-          event_id: this.currentEvent,
-          check_in_time: new Date().toISOString()
-        }]);
-
-      if (error) throw error;
-      alert('Staff checked in successfully');
-      this.renderCheckinList();
-    } catch (error) {
-      console.error('Error checking in:', error);
-      alert('Failed to check in staff');
-    }
-  }
-
-  async checkOut(staffId) {
-    try {
-      const { error } = await supabase
-        .from('staff_checkin')
-        .update({ check_out_time: new Date().toISOString() })
-        .eq('staff_id', staffId)
-        .is('check_out_time', null);
-
-      if (error) throw error;
-      alert('Staff checked out successfully');
-      this.renderCheckinList();
-    } catch (error) {
-      console.error('Error checking out:', error);
-      alert('Failed to check out staff');
-    }
+    container.innerHTML = html;
   }
 
   setupEventListeners() {
-    // Back button
-    const backBtn = document.getElementById('back-btn-staff');
-    if (backBtn && this.onBack) {
-      backBtn.addEventListener('click', () => this.onBack());
-    }
-
-    // Add staff button
-    document.getElementById('add-staff-btn').addEventListener('click', () => {
-      this.openStaffModal();
-    });
-
-    // Tab buttons
+    // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-        e.target.classList.add('active');
-        document.getElementById(e.target.dataset.tab).classList.add('active');
+        btn.classList.add('active');
+        const tabId = btn.dataset.tab;
+        document.getElementById(tabId)?.classList.add('active');
       });
     });
 
-    // Role filter
-    document.getElementById('role-filter').addEventListener('change', () => {
-      this.renderStaffList();
+    // Add staff button
+    document.getElementById('add-staff-btn')?.addEventListener('click', () => {
+      this.openStaffModal();
     });
 
-    // Modal close
-    document.getElementById('close-staff-modal').addEventListener('click', () => {
-      this.closeStaffModal();
+    // Staff form submit
+    document.getElementById('staff-form')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.saveStaff();
     });
 
-    document.getElementById('cancel-staff').addEventListener('click', () => {
-      this.closeStaffModal();
-    });
-
-    // Assignment modal close
-    document.getElementById('close-assignment-modal').addEventListener('click', () => {
-      this.closeAssignmentModal();
-    });
-
-    document.getElementById('cancel-assignment').addEventListener('click', () => {
-      this.closeAssignmentModal();
-    });
-
-    // Assignment form submission
-    document.getElementById('assignment-form').addEventListener('submit', (e) => {
+    // Assignment form submit
+    document.getElementById('assignment-form')?.addEventListener('submit', (e) => {
       e.preventDefault();
       this.saveAssignment();
     });
 
-    // Role checkboxes for showing/hiding functions
-    document.querySelectorAll('.role-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', () => {
-        const hasOpsRole = Array.from(document.querySelectorAll('.role-checkbox'))
-          .some(cb => cb.checked && cb.value === 'Operations Staff');
-        document.getElementById('functions-group').style.display = hasOpsRole ? 'block' : 'none';
-      });
+    // Assignment type change
+    document.getElementById('assignment-type')?.addEventListener('change', (e) => {
+      const customGroup = document.getElementById('custom-assignment-group');
+      const marshalGroup = document.getElementById('marshal-position-group');
+
+      if (e.target.value === 'marshal-position') {
+        customGroup.style.display = 'none';
+        marshalGroup.style.display = 'block';
+        document.getElementById('assignment-name').removeAttribute('required');
+        document.getElementById('assignment-marshal-position').setAttribute('required', 'required');
+      } else {
+        customGroup.style.display = 'block';
+        marshalGroup.style.display = 'none';
+        document.getElementById('assignment-name').setAttribute('required', 'required');
+        document.getElementById('assignment-marshal-position').removeAttribute('required');
+      }
     });
 
-    // Add function button
-    document.getElementById('add-function-btn').addEventListener('click', (e) => {
-      e.preventDefault();
-      this.addFunction();
+    // Modal close buttons
+    document.getElementById('close-staff-modal')?.addEventListener('click', () => {
+      this.closeStaffModal();
     });
 
-    // Form submission
-    document.getElementById('staff-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.saveStaff();
+    document.getElementById('close-assignment-modal')?.addEventListener('click', () => {
+      this.closeAssignmentModal();
     });
+
+    document.getElementById('cancel-staff')?.addEventListener('click', () => {
+      this.closeStaffModal();
+    });
+
+    document.getElementById('cancel-assignment')?.addEventListener('click', () => {
+      this.closeAssignmentModal();
+    });
+
+    // Back button
+    document.getElementById('back-btn-staff')?.addEventListener('click', () => {
+      if (this.onBack) this.onBack();
+    });
+
+    // Role filter
+    document.getElementById('role-filter')?.addEventListener('change', () => {
+      this.renderStaffList();
+    });
+
+    // Populate staff dropdown for assignments
+    this.populateStaffDropdown();
+    this.populateMarshalPositionDropdown();
+  }
+
+  populateStaffDropdown() {
+    const select = document.getElementById('assignment-staff');
+    if (!select) return;
+
+    const options = this.staffList
+      .map(staff => `<option value="${staff.id}">${staff.name} (${staff.email})</option>`)
+      .join('');
+
+    select.innerHTML = '<option value="">Select a staff member</option>' + options;
+  }
+
+  populateMarshalPositionDropdown() {
+    const select = document.getElementById('assignment-marshal-position');
+    if (!select) return;
+
+    const options = this.marshalLocations
+      .map(marshal => `<option value="MARSHAL-${marshal.id}">${marshal.name}</option>`)
+      .join('');
+
+    select.innerHTML = '<option value="">Select a marshal position</option>' + options;
   }
 
   openStaffModal() {
-    document.getElementById('staff-modal').style.display = 'flex';
+    this.currentAssignmentId = null;
     document.getElementById('modal-title').textContent = 'Add Staff Member';
     document.getElementById('staff-form').reset();
-    document.getElementById('functions-group').style.display = 'none';
-    document.getElementById('functions-list').innerHTML = '';
     document.getElementById('error-message').classList.remove('show');
+    document.getElementById('staff-modal').style.display = 'flex';
   }
 
   closeStaffModal() {
     document.getElementById('staff-modal').style.display = 'none';
   }
 
-  addFunction() {
-    const input = document.getElementById('function-input');
-    const functionName = input.value.trim();
+  openAssignmentModalForStaff(staffId) {
+    this.selectedMarshalPosition = null;
+    this.currentAssignmentId = null;
+    document.getElementById('assignment-modal-title').textContent = 'Create Assignment';
+    document.getElementById('assignment-form').reset();
+    document.getElementById('assignment-type').value = 'custom';
+    document.getElementById('custom-assignment-group').style.display = 'block';
+    document.getElementById('marshal-position-group').style.display = 'none';
+    document.getElementById('assignment-staff').value = staffId;
+    document.getElementById('assignment-error-message').classList.remove('show');
+    document.getElementById('assignment-modal').style.display = 'flex';
+  }
 
-    if (!functionName) {
-      alert('Please enter a function');
-      return;
+  openAssignmentModalForMarshal(marshalId, isEdit = false) {
+    this.selectedMarshalPosition = marshalId;
+    this.currentAssignmentId = null;
+
+    const assignment = this.marshalAssignments[marshalId];
+    const marshal = this.marshalLocations.find(m => m.id === marshalId);
+
+    if (isEdit && assignment) {
+      document.getElementById('assignment-modal-title').textContent = 'Edit Assignment';
+      this.currentAssignmentId = assignment.assignmentId;
+      document.getElementById('assignment-staff').value = assignment.staffId;
+    } else {
+      document.getElementById('assignment-modal-title').textContent = `Assign to ${marshal?.name}`;
+      document.getElementById('assignment-form').reset();
     }
 
-    const functionsList = document.getElementById('functions-list');
-    const tag = document.createElement('div');
-    tag.className = 'function-tag';
-    tag.innerHTML = `
-      ${functionName}
-      <button type="button">×</button>
-    `;
+    document.getElementById('assignment-type').value = 'marshal-position';
+    document.getElementById('custom-assignment-group').style.display = 'none';
+    document.getElementById('marshal-position-group').style.display = 'block';
+    document.getElementById('assignment-marshal-position').value = `MARSHAL-${marshalId}`;
+    document.getElementById('assignment-error-message').classList.remove('show');
+    document.getElementById('assignment-modal').style.display = 'flex';
+  }
 
-    tag.querySelector('button').addEventListener('click', () => tag.remove());
-    functionsList.appendChild(tag);
-    input.value = '';
+  closeAssignmentModal() {
+    this.selectedMarshalPosition = null;
+    this.currentAssignmentId = null;
+    document.getElementById('assignment-modal').style.display = 'none';
   }
 
   async saveStaff() {
@@ -1154,64 +1245,45 @@ export class StaffPage {
     const phone = document.getElementById('staff-phone').value;
     const altPhone = document.getElementById('staff-alt-phone').value;
     const idNumber = document.getElementById('staff-id').value;
-    const selectedRoles = Array.from(document.querySelectorAll('.role-checkbox:checked'))
-      .map(cb => cb.value);
-    const functions = Array.from(document.querySelectorAll('.function-tag'))
-      .map(tag => tag.textContent.replace('×', '').trim());
-
+    const roles = Array.from(document.querySelectorAll('.role-checkbox:checked')).map(cb => cb.value);
     const errorMsg = document.getElementById('error-message');
 
-    if (!name || !email || !phone || selectedRoles.length === 0) {
-      errorMsg.textContent = 'Please fill in all required fields and select at least one role';
+    if (!name || !email || !phone || roles.length === 0) {
+      errorMsg.textContent = 'Please fill in all required fields';
       errorMsg.classList.add('show');
       return;
     }
 
     try {
-      // Insert staff member
-      const { data: staffData, error: staffError } = await supabase
+      const staffData = {
+        event_id: this.currentEvent,
+        name,
+        email,
+        phone,
+        alt_phone: altPhone || null,
+        id_number: idNumber || null
+      };
+
+      const { data, error } = await supabase
         .from('event_staff')
-        .insert([{
-          event_id: this.currentEvent,
-          name,
-          email,
-          phone,
-          alternate_phone: altPhone,
-          id_number: idNumber
-        }])
+        .insert([staffData])
         .select();
 
-      if (staffError) throw staffError;
+      if (error) throw error;
 
-      const staffId = staffData[0].id;
+      const staffId = data[0].id;
 
       // Insert roles
-      for (const role of selectedRoles) {
-        const { data: roleData, error: roleError } = await supabase
-          .from('staff_roles')
-          .insert([{
-            staff_id: staffId,
-            role
-          }])
-          .select();
+      const roleInserts = roles.map(role => ({
+        staff_id: staffId,
+        role
+      }));
 
-        if (roleError) throw roleError;
+      const { error: roleError } = await supabase
+        .from('staff_roles')
+        .insert(roleInserts);
 
-        // Insert functions if role is Operations Staff
-        if (role === 'Operations Staff' && functions.length > 0) {
-          const staffRoleId = roleData[0].id;
-          for (const func of functions) {
-            const { error: funcError } = await supabase
-              .from('staff_functions')
-              .insert([{
-                staff_role_id: staffRoleId,
-                function_name: func
-              }]);
-
-            if (funcError) throw funcError;
-          }
-        }
-      }
+      if (roleError) throw roleError;
 
       this.closeStaffModal();
       await this.loadStaff();
@@ -1222,113 +1294,12 @@ export class StaffPage {
     }
   }
 
-  async editStaff(staffId) {
-    const staff = this.staffList.find(s => s.id === staffId);
-    if (!staff) return;
-
-    // Populate form
-    document.getElementById('staff-name').value = staff.name;
-    document.getElementById('staff-email').value = staff.email;
-    document.getElementById('staff-phone').value = staff.phone;
-    document.getElementById('staff-alt-phone').value = staff.alternate_phone || '';
-    document.getElementById('staff-id').value = staff.id_number || '';
-
-    // Select roles
-    document.querySelectorAll('.role-checkbox').forEach(cb => {
-      cb.checked = staff.staff_roles.some(r => r.role === cb.value);
-    });
-
-    // Show/hide functions group
-    const hasOpsRole = staff.staff_roles.some(r => r.role === 'Operations Staff');
-    document.getElementById('functions-group').style.display = hasOpsRole ? 'block' : 'none';
-
-    // Show functions
-    const functionsList = document.getElementById('functions-list');
-    functionsList.innerHTML = '';
-    const opsFunctions = staff.staff_roles.find(r => r.role === 'Operations Staff');
-    if (opsFunctions && opsFunctions.staff_functions) {
-      opsFunctions.staff_functions.forEach(f => {
-        const tag = document.createElement('div');
-        tag.className = 'function-tag';
-        tag.innerHTML = `
-          ${f.function_name}
-          <button type="button">×</button>
-        `;
-        tag.querySelector('button').addEventListener('click', () => tag.remove());
-        functionsList.appendChild(tag);
-      });
-    }
-
-    document.getElementById('modal-title').textContent = 'Edit Staff Member';
-    document.getElementById('staff-modal').style.display = 'flex';
-  }
-
-  async deleteStaff(staffId) {
-    if (!confirm('Are you sure you want to delete this staff member?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('event_staff')
-        .delete()
-        .eq('id', staffId);
-
-      if (error) throw error;
-      await this.loadStaff();
-    } catch (error) {
-      console.error('Error deleting staff:', error);
-      alert('Failed to delete staff member');
-    }
-  }
-
-  openAssignmentModal() {
-    // Populate staff dropdown
-    const staffSelect = document.getElementById('assignment-staff');
-    staffSelect.innerHTML = '<option value="">Select a staff member</option>';
-
-    this.staffList.forEach(staff => {
-      const option = document.createElement('option');
-      option.value = staff.id;
-      option.textContent = `${staff.name} (${staff.staff_roles.map(r => r.role).join(', ')})`;
-      staffSelect.appendChild(option);
-    });
-
-    document.getElementById('assignment-modal').style.display = 'flex';
-    document.getElementById('assignment-modal-title').textContent = 'Create Assignment';
-    document.getElementById('assignment-form').reset();
-    document.getElementById('assignment-error-message').classList.remove('show');
-    this.currentAssignmentId = null;
-  }
-
-  openAssignmentModalForStaff(staffId) {
-    // Populate staff dropdown with all staff, but pre-select the clicked one
-    const staffSelect = document.getElementById('assignment-staff');
-    staffSelect.innerHTML = '<option value="">Select a staff member</option>';
-
-    this.staffList.forEach(staff => {
-      const option = document.createElement('option');
-      option.value = staff.id;
-      option.textContent = `${staff.name} (${staff.staff_roles.map(r => r.role).join(', ')})`;
-      staffSelect.appendChild(option);
-    });
-
-    // Pre-select the staff member
-    staffSelect.value = staffId;
-
-    document.getElementById('assignment-modal').style.display = 'flex';
-    document.getElementById('assignment-modal-title').textContent = 'Create Assignment';
-    document.getElementById('assignment-form').reset();
-    staffSelect.value = staffId; // Set after reset
-    document.getElementById('assignment-error-message').classList.remove('show');
-    this.currentAssignmentId = null;
-  }
-
-  closeAssignmentModal() {
-    document.getElementById('assignment-modal').style.display = 'none';
-  }
-
   async saveAssignment() {
     const staffId = document.getElementById('assignment-staff').value;
-    const assignmentName = document.getElementById('assignment-name').value;
+    const assignmentType = document.getElementById('assignment-type').value;
+    const assignmentName = assignmentType === 'custom'
+      ? document.getElementById('assignment-name').value
+      : document.getElementById('assignment-marshal-position').value;
     const startTime = document.getElementById('assignment-start').value;
     const endTime = document.getElementById('assignment-end').value;
     const status = document.getElementById('assignment-status').value;
@@ -1345,7 +1316,6 @@ export class StaffPage {
       const endDateTime = endTime ? new Date(`2000-01-01T${endTime}`).toISOString() : null;
 
       if (this.currentAssignmentId) {
-        // Update existing assignment
         const { error } = await supabase
           .from('staff_assignments')
           .update({
@@ -1359,7 +1329,6 @@ export class StaffPage {
 
         if (error) throw error;
       } else {
-        // Create new assignment
         const { error } = await supabase
           .from('staff_assignments')
           .insert([{
@@ -1383,44 +1352,80 @@ export class StaffPage {
     }
   }
 
-  async editAssignment(assignmentId) {
+  editStaff(staffId) {
+    const staff = this.staffList.find(s => s.id === staffId);
+    if (!staff) return;
+
+    document.getElementById('modal-title').textContent = 'Edit Staff Member';
+    document.getElementById('staff-name').value = staff.name;
+    document.getElementById('staff-email').value = staff.email;
+    document.getElementById('staff-phone').value = staff.phone;
+    document.getElementById('staff-alt-phone').value = staff.alt_phone || '';
+    document.getElementById('staff-id').value = staff.id_number || '';
+
+    document.querySelectorAll('.role-checkbox').forEach(cb => {
+      cb.checked = staff.staff_roles.some(r => r.role === cb.value);
+    });
+
+    document.getElementById('staff-modal').style.display = 'flex';
+  }
+
+  async deleteStaff(staffId) {
+    if (!confirm('Are you sure you want to delete this staff member?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('event_staff')
+        .delete()
+        .eq('id', staffId);
+
+      if (error) throw error;
+
+      await this.loadStaff();
+    } catch (error) {
+      console.error('Error deleting staff:', error);
+      alert('Failed to delete staff member: ' + error.message);
+    }
+  }
+
+  editAssignment(assignmentId) {
     const assignment = this.assignmentsList.find(a => a.id === assignmentId);
     if (!assignment) return;
 
-    // Populate staff dropdown
-    const staffSelect = document.getElementById('assignment-staff');
-    staffSelect.innerHTML = '<option value="">Select a staff member</option>';
+    this.currentAssignmentId = assignmentId;
+    document.getElementById('assignment-modal-title').textContent = 'Edit Assignment';
 
-    this.staffList.forEach(staff => {
-      const option = document.createElement('option');
-      option.value = staff.id;
-      option.textContent = `${staff.name} (${staff.staff_roles.map(r => r.role).join(', ')})`;
-      staffSelect.appendChild(option);
-    });
-
-    // Populate form with assignment data
-    staffSelect.value = assignment.staff_id;
-    document.getElementById('assignment-name').value = assignment.assignment;
+    document.getElementById('assignment-staff').value = assignment.staff_id;
     document.getElementById('assignment-status').value = assignment.status;
 
+    if (assignment.assignment.startsWith('MARSHAL-')) {
+      document.getElementById('assignment-type').value = 'marshal-position';
+      document.getElementById('assignment-marshal-position').value = assignment.assignment;
+      document.getElementById('custom-assignment-group').style.display = 'none';
+      document.getElementById('marshal-position-group').style.display = 'block';
+    } else {
+      document.getElementById('assignment-type').value = 'custom';
+      document.getElementById('assignment-name').value = assignment.assignment;
+      document.getElementById('custom-assignment-group').style.display = 'block';
+      document.getElementById('marshal-position-group').style.display = 'none';
+    }
+
     if (assignment.start_time) {
-      const startDate = new Date(assignment.start_time);
-      document.getElementById('assignment-start').value = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`;
+      const start = new Date(assignment.start_time);
+      document.getElementById('assignment-start').value = start.toTimeString().slice(0, 5);
     }
 
     if (assignment.end_time) {
-      const endDate = new Date(assignment.end_time);
-      document.getElementById('assignment-end').value = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+      const end = new Date(assignment.end_time);
+      document.getElementById('assignment-end').value = end.toTimeString().slice(0, 5);
     }
 
-    document.getElementById('assignment-modal-title').textContent = 'Edit Assignment';
-    document.getElementById('assignment-modal').style.display = 'flex';
     document.getElementById('assignment-error-message').classList.remove('show');
-    this.currentAssignmentId = assignmentId;
+    document.getElementById('assignment-modal').style.display = 'flex';
   }
 
-  async deleteAssignment(assignmentId) {
-    if (!confirm('Are you sure you want to delete this assignment?')) return;
+  async removeAssignment(assignmentId) {
+    if (!confirm('Are you sure you want to remove this assignment?')) return;
 
     try {
       const { error } = await supabase
@@ -1429,14 +1434,14 @@ export class StaffPage {
         .eq('id', assignmentId);
 
       if (error) throw error;
+
       await this.loadAssignments();
     } catch (error) {
-      console.error('Error deleting assignment:', error);
-      alert('Failed to delete assignment');
+      console.error('Error removing assignment:', error);
+      alert('Failed to remove assignment: ' + error.message);
     }
   }
-
-  destroy() {
-    // Cleanup if needed
-  }
 }
+
+// Global instance
+const staffPage = new StaffPage();
