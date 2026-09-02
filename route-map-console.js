@@ -57,6 +57,58 @@ export class RouteMapConsole {
     return R * c;
   }
 
+  // Create orange flag icon for marshal markers
+  createOrangeFlagMarker(scale = 0.75) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const size = 40 * scale;
+    canvas.width = size;
+    canvas.height = size;
+
+    // Draw background circle (white)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Draw orange flag
+    const flagX = size * 0.3;
+    const flagY = size * 0.3;
+    const flagWidth = size * 0.4;
+    const flagHeight = size * 0.4;
+
+    // Flag pole
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(flagX, flagY);
+    ctx.lineTo(flagX, flagY + flagHeight);
+    ctx.stroke();
+
+    // Orange flag rectangle
+    ctx.fillStyle = '#FF9800';
+    ctx.fillRect(flagX, flagY, flagWidth, flagHeight);
+
+    // Flag border
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(flagX, flagY, flagWidth, flagHeight);
+
+    return {
+      url: canvas.toDataURL(),
+      scaledSize: new google.maps.Size(size, size),
+      origin: new google.maps.Point(0, 0),
+      anchor: new google.maps.Point(size / 2, size / 2)
+    };
+  }
+
   // Create emoji marker icon for map markers
   createEmojiMarker(emoji, scale = 1.5) {
     const canvas = document.createElement('canvas');
@@ -1209,7 +1261,7 @@ export class RouteMapConsole {
               position: { lat: marshal.lat, lng: marshal.lng },
               map: this.map,
               title: `${route.name} - Marshal ${i + 1}`,
-              icon: this.createEmojiMarker('👮')
+              icon: this.createOrangeFlagMarker(0.75)
             });
             this.routeMapElements[route.id].markers.push(marker);
           }
@@ -1224,7 +1276,7 @@ export class RouteMapConsole {
               position: { lat: wt.lat, lng: wt.lng },
               map: this.map,
               title: `${route.name} - Water Table ${i + 1}`,
-              icon: this.createEmojiMarker('💧')
+              icon: this.createEmojiMarker('💧', 0.75)
             });
             this.routeMapElements[route.id].markers.push(marker);
           }
@@ -1239,7 +1291,7 @@ export class RouteMapConsole {
               position: { lat: ms.lat, lng: ms.lng },
               map: this.map,
               title: `${route.name} - Medical Station ${i + 1}`,
-              icon: this.createEmojiMarker('🏥')
+              icon: this.createEmojiMarker('🏥', 0.75)
             });
             this.routeMapElements[route.id].markers.push(marker);
           }
@@ -1254,7 +1306,7 @@ export class RouteMapConsole {
               position: { lat: sv.lat, lng: sv.lng },
               map: this.map,
               title: `${route.name} - Security Vehicle ${i + 1}`,
-              icon: this.createEmojiMarker('🚔')
+              icon: this.createEmojiMarker('🚔', 0.75)
             });
             this.routeMapElements[route.id].markers.push(marker);
           }
@@ -1268,7 +1320,7 @@ export class RouteMapConsole {
             position: { lat: route.start_finish.start.lat, lng: route.start_finish.start.lng },
             map: this.map,
             title: `${route.name} - Start`,
-            icon: this.createEmojiMarker('🚩', 1.8)
+            icon: this.createEmojiMarker('🚩', 0.9)
           });
           this.routeMapElements[route.id].markers.push(marker);
         }
@@ -1277,7 +1329,7 @@ export class RouteMapConsole {
             position: { lat: route.start_finish.finish.lat, lng: route.start_finish.finish.lng },
             map: this.map,
             title: `${route.name} - Finish`,
-            icon: this.createEmojiMarker('🏁', 1.8)
+            icon: this.createEmojiMarker('🏁', 0.9)
           });
           this.routeMapElements[route.id].markers.push(marker);
         }
