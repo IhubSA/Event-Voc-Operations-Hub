@@ -47,17 +47,28 @@ export class RouteMapConsole {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: memberData } = await supabase
+        const { data: memberData, error: memberError } = await supabase
           .from('organization_members')
           .select('org_id')
           .eq('user_id', user.id)
           .eq('is_active', true)
           .limit(1);
 
-        this.orgId = memberData?.[0]?.org_id || user.id;
+        if (memberError) {
+          console.error('Error fetching org_id:', memberError);
+        }
+
+        if (memberData && memberData.length > 0) {
+          this.orgId = memberData[0].org_id;
+          console.log('Set org_id to:', this.orgId);
+        } else {
+          console.warn('No organization membership found for user - routes may not save correctly');
+          this.orgId = null;
+        }
       }
     } catch (error) {
       console.error('Error getting org_id:', error);
+      this.orgId = null;
     }
 
     const html = `
@@ -722,6 +733,13 @@ export class RouteMapConsole {
       return;
     }
 
+    // Validate org_id
+    if (!this.orgId) {
+      alert('Error: Could not determine your organization. Please refresh the page and try again.');
+      console.error('org_id is not set. User may not have an active organization membership.');
+      return;
+    }
+
     // Check if route has at least some content (waypoints OR special locations)
     const hasWaypoints = this.markers.length >= 2;
     const hasMarshal = this.marshalMarkers.length > 0;
@@ -777,6 +795,9 @@ export class RouteMapConsole {
       } : null
     };
 
+    // Check if start_finish has any actual data
+    const hasStartFinishData = startFinish.start !== null || startFinish.finish !== null;
+
     try {
       const routeData = {
         event_id: this.eventId,
@@ -788,12 +809,16 @@ export class RouteMapConsole {
         water_tables: waterTables.length > 0 ? waterTables : null,
         medical_stations: medicalStations.length > 0 ? medicalStations : null,
         security_vehicles: securityVehicles.length > 0 ? securityVehicles : null,
-        start_finish: Object.keys(startFinish).length > 0 ? startFinish : null,
+        start_finish: hasStartFinishData ? startFinish : null,
         status: 'active',
         created_at: new Date().toISOString()
       };
 
       console.log('Saving route with data:', routeData);
+      console.log('Marshal markers count:', this.marshalMarkers.length);
+      console.log('Water table markers count:', this.waterTableMarkers.length);
+      console.log('Medical stations count:', this.medicalStationMarkers.length);
+      console.log('Security vehicles count:', this.securityVehicleMarkers.length);
 
       const { data, error } = await supabase
         .from('routes')
@@ -802,10 +827,19 @@ export class RouteMapConsole {
 
       if (error) {
         console.error('Supabase error:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
         throw error;
       }
 
       console.log('Route saved successfully:', data);
+      if (data && data.length > 0) {
+        console.log('Route ID:', data[0].id);
+        console.log('Marshals saved:', data[0].marshals);
+      } else {
+        console.warn('Route insert succeeded but no data returned - RLS policy may be too restrictive');
+      }
+
       this.showToast('Route saved successfully!', 'success');
       this.clearDrawing();
       document.getElementById('route-name-input').value = '';
