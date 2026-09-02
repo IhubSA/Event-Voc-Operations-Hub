@@ -1,6 +1,8 @@
 // Route Map Console
 // Interactive map for creating and managing event routes (staff, vehicles, emergency evacuation)
 import { supabase } from './supabase.js';
+import { Navbar } from './navbar.js';
+import { wrapWithShell } from './org-branding.js';
 
 export class RouteMapConsole {
   constructor() {
@@ -180,10 +182,12 @@ export class RouteMapConsole {
     };
   }
 
-  async render(eventId, onBack) {
+  async render(eventId, onBack, currentUser, onOpenClubSettings) {
     this.eventId = eventId;
     this.onBack = onBack;
     const container = document.getElementById('app');
+    const navbar = new Navbar(currentUser, () => {}, null, onOpenClubSettings);
+    const navbarHtml = navbar.render();
 
     // Get current user's org_id
     try {
@@ -337,7 +341,7 @@ export class RouteMapConsole {
       </div>
     `;
 
-    container.innerHTML = html;
+    container.innerHTML = wrapWithShell(navbarHtml, html);
     this.addStyles();
     this.setupEventListeners();
 

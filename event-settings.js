@@ -1,6 +1,8 @@
 // Event Settings Manager
 // Allows organizers to configure registration and bib number sequences
 import { supabase } from './supabase.js';
+import { Navbar } from './navbar.js';
+import { wrapWithShell } from './org-branding.js';
 
 export class EventSettings {
   constructor() {
@@ -9,10 +11,13 @@ export class EventSettings {
     this.isSaving = false;
   }
 
-  async render(eventId, onBack) {
+  async render(eventId, onBack, currentUser, onOpenClubSettings) {
     this.eventId = eventId;
 
     const container = document.getElementById('app');
+
+    const navbar = new Navbar(currentUser, () => {}, null, onOpenClubSettings);
+    const navbarHtml = navbar.render();
 
     const html = `
       <div class="settings-container">
@@ -110,7 +115,7 @@ export class EventSettings {
       </div>
     `;
 
-    container.innerHTML = html;
+    container.innerHTML = wrapWithShell(navbarHtml, html);
     this.addStyles();
     await this.loadSettings();
     this.setupEventListeners(onBack);

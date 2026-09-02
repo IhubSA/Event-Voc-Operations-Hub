@@ -1,23 +1,42 @@
 // Navbar Component
+import { getOrgBranding, canEditClubSettings } from './org-branding.js';
+
 export class Navbar {
-  constructor(currentUser, onLogout, onSwitchToAdmin) {
+  constructor(currentUser, onLogout, onSwitchToAdmin, onOpenClubSettings) {
     this.currentUser = currentUser;
     this.onLogout = onLogout;
     this.onSwitchToAdmin = onSwitchToAdmin;
+    this.onOpenClubSettings = onOpenClubSettings;
   }
 
   render() {
     const userEmail = this.currentUser?.email || 'User';
+    const branding = getOrgBranding();
+
+    const logoSrc = branding?.logo_url || './voc-logo.png';
+    const brandTitle = branding?.name || 'Venue Operations Centre';
+    const poweredBy = branding?.logo_url
+      ? `<span class="navbar-powered-by">Powered by VOC</span>`
+      : '';
+
+    const showSettingsBtn = this.onOpenClubSettings && canEditClubSettings();
+    const settingsButton = showSettingsBtn
+      ? `<button class="btn btn-secondary btn-sm" id="club-settings-btn">⚙️ Club Settings</button>`
+      : '';
     const adminButton = this.onSwitchToAdmin ? `<button class="btn btn-primary btn-sm" id="switch-to-admin-btn">→ Admin Dashboard</button>` : '';
 
     const html = `
       <nav class="navbar">
         <div class="navbar-brand">
-          <img src="./voc-logo.png" alt="VOC Logo" class="navbar-logo" />
-          <span class="navbar-title">Venue Operations Centre</span>
+          <img src="${logoSrc}" alt="${brandTitle} Logo" class="navbar-logo" onerror="this.onerror=null;this.src='./voc-logo.png';" />
+          <div class="navbar-brand-text">
+            <span class="navbar-title">${brandTitle}</span>
+            ${poweredBy}
+          </div>
         </div>
         <div class="navbar-end">
           <span class="user-info">${userEmail}</span>
+          ${settingsButton}
           ${adminButton}
           <button class="btn btn-secondary btn-sm" id="logout-btn">Logout</button>
         </div>
@@ -37,7 +56,14 @@ export class Navbar {
       .navbar-logo {
         height: 45px;
         width: auto;
+        max-width: 160px;
         object-fit: contain;
+      }
+
+      .navbar-brand-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
       }
 
       .navbar-title {
@@ -45,6 +71,14 @@ export class Navbar {
         font-weight: 700;
         color: var(--text-primary);
         letter-spacing: -0.3px;
+      }
+
+      .navbar-powered-by {
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: var(--text-muted, #78909C);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
 
       .navbar-end {
@@ -60,6 +94,10 @@ export class Navbar {
 
       @media (max-width: 768px) {
         .navbar-title {
+          display: none;
+        }
+
+        .navbar-powered-by {
           display: none;
         }
 
@@ -87,6 +125,13 @@ export class Navbar {
       if (switchAdminBtn && this.onSwitchToAdmin) {
         switchAdminBtn.addEventListener('click', () => {
           this.onSwitchToAdmin();
+        });
+      }
+
+      const clubSettingsBtn = document.getElementById('club-settings-btn');
+      if (clubSettingsBtn && this.onOpenClubSettings) {
+        clubSettingsBtn.addEventListener('click', () => {
+          this.onOpenClubSettings();
         });
       }
     }, 0);

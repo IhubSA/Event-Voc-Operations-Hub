@@ -2,6 +2,8 @@
 import { supabase } from './supabase.js';
 import { RiskCategorization } from './risk-categorization.js';
 import { InspectionChecklists } from './inspection-checklists.js';
+import { Navbar } from './navbar.js';
+import { wrapWithShell } from './org-branding.js';
 
 export class SafetyPage {
   constructor() {
@@ -13,12 +15,17 @@ export class SafetyPage {
     this.unsubscribe = null;
   }
 
-  async render(eventId, onBack) {
+  async render(eventId, onBack, currentUser, onOpenClubSettings) {
     this.currentEvent = eventId;
     this.onBack = onBack;
+    this.currentUser = currentUser;
+    this.onOpenClubSettings = onOpenClubSettings;
     const container = document.getElementById('app');
 
-    container.innerHTML = `
+    const navbar = new Navbar(currentUser, () => {}, null, onOpenClubSettings);
+    const navbarHtml = navbar.render();
+
+    const bodyHtml = `
       <div class="safety-dashboard">
         <div class="safety-header">
           <div class="safety-header-top">
@@ -217,6 +224,8 @@ export class SafetyPage {
       </div>
     `;
 
+    container.innerHTML = wrapWithShell(navbarHtml, bodyHtml);
+
     // Load data
     await this.loadHazards();
     await this.loadInspections();
@@ -337,12 +346,12 @@ export class SafetyPage {
 
   openRiskCategorization() {
     const riskCat = new RiskCategorization();
-    riskCat.render(this.currentEvent, () => this.render(this.currentEvent, this.onBack));
+    riskCat.render(this.currentEvent, () => this.render(this.currentEvent, this.onBack, this.currentUser, this.onOpenClubSettings));
   }
 
   openInspectionChecklists() {
     const checklists = new InspectionChecklists();
-    checklists.render(this.currentEvent, () => this.render(this.currentEvent, this.onBack));
+    checklists.render(this.currentEvent, () => this.render(this.currentEvent, this.onBack, this.currentUser, this.onOpenClubSettings));
   }
 
   renderHazards() {

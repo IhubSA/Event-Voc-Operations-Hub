@@ -1,6 +1,7 @@
 // Dashboard Page Component
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
+import { wrapWithShell } from './org-branding.js';
 
 export class DashboardPage {
   constructor() {
@@ -9,7 +10,7 @@ export class DashboardPage {
     this.currentUser = null;
   }
 
-  async render(currentUser, onEventSelected, onLogout, onSwitchToAdmin) {
+  async render(currentUser, onEventSelected, onLogout, onSwitchToAdmin, onOpenClubSettings) {
     this.currentUser = currentUser;
     this.onEventSelected = onEventSelected;
     this.onLogout = onLogout;
@@ -20,17 +21,17 @@ export class DashboardPage {
     // Render navbar
     const navbar = new Navbar(currentUser, onLogout || (() => {
       supabase.auth.signOut();
-    }), onSwitchToAdmin);
+    }), onSwitchToAdmin, onOpenClubSettings);
     const navbarHtml = navbar.render();
 
     // Initial loading state
-    container.innerHTML = navbarHtml + `
+    container.innerHTML = wrapWithShell(navbarHtml, `
       <div class="dashboard-wrapper">
         <div class="dashboard-content">
           <h2>Loading events...</h2>
         </div>
       </div>
-    `;
+    `);
 
     // Load events
     await this.loadEvents();

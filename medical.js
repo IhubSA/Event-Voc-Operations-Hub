@@ -1,5 +1,7 @@
 // Medical Operations Module - Dashboard Page
 import { supabase, supabaseApi } from './supabase.js';
+import { Navbar } from './navbar.js';
+import { wrapWithShell } from './org-branding.js';
 
 export class MedicalPage {
   constructor() {
@@ -11,7 +13,7 @@ export class MedicalPage {
     this.medicalCategoryId = null;
   }
 
-  async render(eventId, onBack) {
+  async render(eventId, onBack, currentUser, onOpenClubSettings) {
     this.currentEvent = eventId;
     this.onBack = onBack;
     const container = document.getElementById('app');
@@ -19,7 +21,10 @@ export class MedicalPage {
     // Fetch the Medical incident category ID
     await this.fetchMedicalCategoryId();
 
-    container.innerHTML = `
+    const navbar = new Navbar(currentUser, () => {}, null, onOpenClubSettings);
+    const navbarHtml = navbar.render();
+
+    const bodyHtml = `
       <div class="medical-dashboard">
         <div class="medical-header">
           <div class="medical-header-top">
@@ -138,6 +143,8 @@ export class MedicalPage {
         </div>
       </div>
     `;
+
+    container.innerHTML = wrapWithShell(navbarHtml, bodyHtml);
 
     // Load data
     await this.loadMedicalIncidents();

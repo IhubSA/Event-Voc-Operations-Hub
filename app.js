@@ -13,6 +13,8 @@ import { ParticipantsPage } from './participants.js';
 import { EventSettings } from './event-settings.js';
 import { AdminDashboard } from './admin-dashboard.js';
 import { RouteMapConsole } from './route-map-console.js';
+import { ClubSettingsPage } from './club-settings.js';
+import { loadOrgBranding, clearOrgBranding } from './org-branding.js';
 
 const authService = new AuthService();
 let currentUser = null;
@@ -63,6 +65,8 @@ async function initializeApp() {
             currentOrg = memberData[0].org_id;
             console.log('✓ Admin org set:', currentOrg);
           }
+          // Load the club's white-label branding (logo, colors, contact details) if they belong to an org
+          await loadOrgBranding(currentOrg, user.id);
           // Admins go to admin dashboard
           console.log('→ Rendering admin dashboard');
           renderAdminDashboard();
@@ -70,6 +74,8 @@ async function initializeApp() {
           // Organization members go to their org dashboard
           currentOrg = memberData[0].org_id;
           console.log('✓ User org set:', currentOrg);
+          // Load the club's white-label branding (logo, colors, contact details)
+          await loadOrgBranding(currentOrg, user.id);
           console.log('→ Rendering organization dashboard');
           renderDashboard();
         } else {
@@ -168,7 +174,7 @@ function renderDashboard() {
 
     // Pass callback to switch to admin dashboard if user is admin
     const onSwitchToAdmin = isAdmin ? renderAdminDashboard : null;
-    dashboardPage.render(currentUser, onEventSelected, onLogout, onSwitchToAdmin);
+    dashboardPage.render(currentUser, onEventSelected, onLogout, onSwitchToAdmin, onOpenClubSettings);
     currentPage = dashboardPage;
     console.log('✓ Organization dashboard rendered');
   } catch (error) {
@@ -247,6 +253,7 @@ async function onLogout() {
     currentOrg = null;
     isAdmin = false;
     showedLanding = false;
+    clearOrgBranding();
     renderLanding();
   } catch (error) {
     console.error('Logout error:', error);
@@ -279,10 +286,29 @@ function showIntegratedDashboard() {
     () => {
       currentEvent = null;
       renderDashboard();
-    }
+    },
+    onOpenClubSettings
   );
 
   currentPage = integratedDashboard;
+}
+
+function onOpenClubSettings() {
+  const clubSettings = new ClubSettingsPage();
+
+  if (currentPage) {
+    currentPage.destroy?.();
+  }
+
+  clubSettings.render(currentOrg, currentUser, () => {
+    if (currentEvent) {
+      showIntegratedDashboard();
+    } else {
+      renderDashboard();
+    }
+  });
+
+  currentPage = clubSettings;
 }
 
 function loadModule(moduleName) {
@@ -300,7 +326,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    medicalPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard);
+    medicalPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard, currentUser, onOpenClubSettings);
     currentPage = medicalPage;
   } else if (moduleName === 'security') {
     const container = document.getElementById('app');
@@ -310,7 +336,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    securityPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard);
+    securityPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard, currentUser, onOpenClubSettings);
     currentPage = securityPage;
   } else if (moduleName === 'safety') {
     const container = document.getElementById('app');
@@ -320,7 +346,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    safetyPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard);
+    safetyPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard, currentUser, onOpenClubSettings);
     currentPage = safetyPage;
   } else if (moduleName === 'staff') {
     const container = document.getElementById('app');
@@ -330,7 +356,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    staffPage.render(currentEvent?.id || currentEvent, currentUser, backToIntegratedDashboard);
+    staffPage.render(currentEvent?.id || currentEvent, currentUser, backToIntegratedDashboard, onOpenClubSettings);
     currentPage = staffPage;
   } else if (moduleName === 'participants') {
     const container = document.getElementById('app');
@@ -340,7 +366,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    participantsPage.render(currentEvent?.id || currentEvent, currentUser, backToIntegratedDashboard);
+    participantsPage.render(currentEvent?.id || currentEvent, currentUser, backToIntegratedDashboard, onOpenClubSettings);
     currentPage = participantsPage;
   } else if (moduleName === 'settings') {
     const container = document.getElementById('app');
@@ -350,7 +376,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    eventSettings.render(currentEvent?.id || currentEvent, backToIntegratedDashboard);
+    eventSettings.render(currentEvent?.id || currentEvent, backToIntegratedDashboard, currentUser, onOpenClubSettings);
     currentPage = eventSettings;
   } else if (moduleName === 'route-map') {
     const container = document.getElementById('app');
@@ -360,7 +386,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    routeMapConsole.render(currentEvent?.id || currentEvent, backToIntegratedDashboard);
+    routeMapConsole.render(currentEvent?.id || currentEvent, backToIntegratedDashboard, currentUser, onOpenClubSettings);
     currentPage = routeMapConsole;
   } else {
     alert(`${moduleName} module coming soon!`);
@@ -381,6 +407,7 @@ authService.onAuthChange((user) => {
     currentOrg = null;
     isAdmin = false;
     showedLanding = false;
+    clearOrgBranding();
     renderLanding();
   }
 });

@@ -1,6 +1,7 @@
 // Integrated Operations Dashboard
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
+import { wrapWithShell } from './org-branding.js';
 
 export class IntegratedDashboard {
   constructor() {
@@ -15,7 +16,7 @@ export class IntegratedDashboard {
     this.subscriptions = [];
   }
 
-  async render(currentUser, currentEvent, onModuleSelect, onBack) {
+  async render(currentUser, currentEvent, onModuleSelect, onBack, onOpenClubSettings) {
     this.currentUser = currentUser;
     this.currentEvent = currentEvent;
     this.onModuleSelect = onModuleSelect;
@@ -26,14 +27,13 @@ export class IntegratedDashboard {
     // Render navbar
     const navbar = new Navbar(currentUser, () => {
       // Logout will be handled by app.js
-    });
+    }, null, onOpenClubSettings);
 
     const navbarHtml = navbar.render();
 
     // Create dashboard container
     const isEventEnded = currentEvent.status === 'completed' || currentEvent.status === 'ended';
     const dashboardHtml = `
-      ${navbarHtml}
       <div class="integrated-dashboard ${isEventEnded ? 'event-ended' : ''}">
         ${isEventEnded ? `
           <div class="event-ended-banner">
@@ -258,7 +258,7 @@ export class IntegratedDashboard {
       </div>
     `;
 
-    container.innerHTML = dashboardHtml;
+    container.innerHTML = wrapWithShell(navbarHtml, dashboardHtml);
 
     // Add styles
     const style = document.createElement('style');

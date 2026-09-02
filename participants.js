@@ -2,6 +2,7 @@
 // Admin interface for managing event participants
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
+import { wrapWithShell } from './org-branding.js';
 
 export class ParticipantsPage {
   constructor() {
@@ -11,7 +12,7 @@ export class ParticipantsPage {
     this.onBack = null;
   }
 
-  async render(eventId, currentUser, onBack) {
+  async render(eventId, currentUser, onBack, onOpenClubSettings) {
     this.currentEvent = eventId;
     this.currentUser = currentUser;
     this.onBack = onBack;
@@ -19,11 +20,10 @@ export class ParticipantsPage {
     const container = document.getElementById('app');
 
     // Render navbar
-    const navbar = new Navbar(currentUser, () => {});
+    const navbar = new Navbar(currentUser, () => {}, null, onOpenClubSettings);
     const navbarHtml = navbar.render();
 
     const participantsHtml = `
-      ${navbarHtml}
       <div class="participants-dashboard">
         <div class="participants-header">
           <div class="participants-header-top">
@@ -261,7 +261,7 @@ export class ParticipantsPage {
       </div>
     `;
 
-    container.innerHTML = participantsHtml;
+    container.innerHTML = wrapWithShell(navbarHtml, participantsHtml);
 
     // Add styles
     this.addStyles();

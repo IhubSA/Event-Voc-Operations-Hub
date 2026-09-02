@@ -1,5 +1,7 @@
 // Security Module - Dashboard Page
 import { supabase } from './supabase.js';
+import { Navbar } from './navbar.js';
+import { wrapWithShell } from './org-branding.js';
 
 export class SecurityPage {
   constructor() {
@@ -12,7 +14,7 @@ export class SecurityPage {
     this.overallThreatLevel = 'green';
   }
 
-  async render(eventId, onBack) {
+  async render(eventId, onBack, currentUser, onOpenClubSettings) {
     this.currentEvent = eventId;
     this.onBack = onBack;
     const container = document.getElementById('app');
@@ -20,7 +22,10 @@ export class SecurityPage {
     // Fetch the Security incident category ID
     await this.fetchSecurityCategoryId();
 
-    container.innerHTML = `
+    const navbar = new Navbar(currentUser, () => {}, null, onOpenClubSettings);
+    const navbarHtml = navbar.render();
+
+    const bodyHtml = `
       <div class="security-dashboard">
         <div class="security-header">
           <div class="security-header-top">
@@ -151,6 +156,8 @@ export class SecurityPage {
         </div>
       </div>
     `;
+
+    container.innerHTML = wrapWithShell(navbarHtml, bodyHtml);
 
     // Load data
     await this.loadSecurityIncidents();
