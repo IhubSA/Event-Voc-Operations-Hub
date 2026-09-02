@@ -163,7 +163,7 @@ export function injectShellStyles() {
     .app-shell {
       display: flex;
       align-items: flex-start;
-      min-height: calc(100vh - 73px);
+      min-height: calc(100vh - 105px);
       background: linear-gradient(135deg, #0F1419 0%, #1A2332 100%);
     }
 
@@ -174,9 +174,9 @@ export function injectShellStyles() {
       border-right: 2px solid #334455;
       padding: 2rem 1.5rem;
       position: sticky;
-      top: 73px;
+      top: 105px;
       align-self: flex-start;
-      max-height: calc(100vh - 73px);
+      max-height: calc(100vh - 105px);
       overflow-y: auto;
       display: flex;
       flex-direction: column;

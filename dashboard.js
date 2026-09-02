@@ -1,7 +1,8 @@
 // Dashboard Page Component
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
-import { wrapWithShell } from './org-branding.js';
+import { wrapWithShell, canEditClubSettings } from './org-branding.js';
+import { AddEventModal } from './add-event-fixed.js';
 
 export class DashboardPage {
   constructor() {
@@ -70,23 +71,37 @@ export class DashboardPage {
     const container = document.getElementById('app');
     const dashboardContent = container.querySelector('.dashboard-content');
 
+    const canAddEvent = canEditClubSettings();
+    const addEventButton = canAddEvent
+      ? `<button class="btn btn-primary" id="add-event-btn">+ Add Event</button>`
+      : '';
+
     if (this.events.length === 0) {
       dashboardContent.innerHTML = `
         <div class="dashboard-header">
-          <h1>📅 Events</h1>
-          <p>Select an event to manage</p>
+          <div>
+            <h1>📅 Events</h1>
+            <p>Select an event to manage</p>
+          </div>
+          ${addEventButton}
         </div>
         <div class="empty-state">
-          <p>No events available</p>
+          <p>No events available${canAddEvent ? ' yet' : ''}</p>
+          ${canAddEvent ? `<p class="empty-state-hint">Click "+ Add Event" above to create your first one.</p>` : ''}
         </div>
       `;
+      this.addStyles();
+      this.attachAddEventListener();
       return;
     }
 
     dashboardContent.innerHTML = `
       <div class="dashboard-header">
-        <h1>📅 Events</h1>
-        <p>Select an event to manage</p>
+        <div>
+          <h1>📅 Events</h1>
+          <p>Select an event to manage</p>
+        </div>
+        ${addEventButton}
       </div>
 
       <div class="events-grid">
@@ -133,6 +148,7 @@ export class DashboardPage {
     `;
 
     this.addStyles();
+    this.attachAddEventListener();
 
     // Add event listeners
     document.querySelectorAll('.event-card').forEach(card => {
@@ -144,6 +160,21 @@ export class DashboardPage {
           this.onEventSelected(event);
         }
       });
+    });
+  }
+
+  attachAddEventListener() {
+    document.getElementById('add-event-btn')?.addEventListener('click', () => {
+      const modal = new AddEventModal();
+      modal.render(
+        (newEvent) => {
+          // Event created -- refresh the list so it appears immediately
+          this.loadEvents();
+        },
+        () => {
+          // Cancelled -- nothing to do
+        }
+      );
     });
   }
 
@@ -192,6 +223,21 @@ export class DashboardPage {
       .dashboard-header {
         margin-bottom: 3rem;
         animation: slideUp 0.5s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+      }
+
+      .dashboard-header #add-event-btn {
+        flex-shrink: 0;
+      }
+
+      .empty-state-hint {
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+        color: var(--text-muted);
       }
 
       .dashboard-header h1 {

@@ -13,11 +13,12 @@ export class Navbar {
     const userEmail = this.currentUser?.email || 'User';
     const branding = getOrgBranding();
 
+    // The club's own logo/name only ever replaces the club row below -- the
+    // VOC system bar above it is fixed system branding and always shows the
+    // real VOC logo, regardless of what any club has white-labeled.
+    const hasClubLogo = !!branding?.logo_url;
     const logoSrc = branding?.logo_url || './voc-logo.png';
     const brandTitle = branding?.name || 'Venue Operations Centre';
-    const poweredBy = branding?.logo_url
-      ? `<span class="navbar-powered-by">Powered by VOC</span>`
-      : '';
 
     const showSettingsBtn = this.onOpenClubSettings && canEditClubSettings();
     const settingsButton = showSettingsBtn
@@ -26,12 +27,16 @@ export class Navbar {
     const adminButton = this.onSwitchToAdmin ? `<button class="btn btn-primary btn-sm" id="switch-to-admin-btn">→ Admin Dashboard</button>` : '';
 
     const html = `
+      <div class="voc-topbar">
+        <img src="./voc-logo.png" alt="VOC Logo" class="voc-topbar-logo" />
+        <span class="voc-topbar-title">Venue Operations Centre</span>
+      </div>
       <nav class="navbar">
         <div class="navbar-brand">
           <img src="${logoSrc}" alt="${brandTitle} Logo" class="navbar-logo" onerror="this.onerror=null;this.src='./voc-logo.png';" />
           <div class="navbar-brand-text">
             <span class="navbar-title">${brandTitle}</span>
-            ${poweredBy}
+            ${hasClubLogo ? `<span class="navbar-powered-by">Powered by VOC</span>` : ''}
           </div>
         </div>
         <div class="navbar-end">
@@ -46,6 +51,47 @@ export class Navbar {
     // Add navbar logo styles
     const style = document.createElement('style');
     style.textContent = `
+      .voc-topbar {
+        height: 32px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0 1.5rem;
+        background: #0F1419;
+        border-bottom: 1px solid #334455;
+        position: sticky;
+        top: 0;
+        z-index: 101;
+      }
+
+      /* Stack the club navbar directly under the fixed 32px VOC system bar
+         (main.css gives .navbar its own position:sticky; top:0 -- this
+         override wins by source order since it's injected after that stylesheet) */
+      .navbar {
+        position: sticky;
+        top: 32px;
+      }
+
+      .voc-topbar-logo {
+        height: 16px;
+        width: auto;
+        object-fit: contain;
+      }
+
+      .voc-topbar-title {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #78909C;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+
+      @media (max-width: 768px) {
+        .voc-topbar-title {
+          font-size: 0.6rem;
+        }
+      }
+
       .navbar-brand {
         display: flex;
         align-items: center;
