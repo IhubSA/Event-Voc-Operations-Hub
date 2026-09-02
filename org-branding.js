@@ -103,6 +103,12 @@ export async function uploadOrgLogo(orgId, file) {
 
 // ---------- Sidebar + shell rendering ----------
 
+export function getRegistrationLink() {
+  if (!cachedOrgId) return null;
+  const base = `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}`;
+  return `${base}register.html?org=${cachedOrgId}`;
+}
+
 export function renderSidebarHtml() {
   const b = cachedBranding;
   if (!b) return '';
@@ -121,6 +127,16 @@ export function renderSidebarHtml() {
     addressParts.length ? `<div class="org-sidebar-row"><span class="org-sidebar-icon">📍</span><span>${escapeHtml(addressParts.join(', '))}</span></div>` : ''
   ].filter(Boolean).join('');
 
+  const regLink = canEditClubSettings() ? getRegistrationLink() : null;
+  const regSection = regLink ? `
+    <div class="org-sidebar-section org-sidebar-reglink">
+      <h3>Participant Registration</h3>
+      <p class="org-sidebar-reglink-hint">Share this link so participants can register themselves.</p>
+      <input type="text" class="org-sidebar-reglink-input" id="sidebar-registration-link" value="${escapeHtml(regLink)}" readonly />
+      <button type="button" class="btn btn-secondary btn-sm btn-full" id="sidebar-copy-registration-link">📋 Copy Link</button>
+    </div>
+  ` : '';
+
   return `
     <aside class="org-sidebar">
       <div class="org-sidebar-brand">
@@ -129,12 +145,42 @@ export function renderSidebarHtml() {
         ${b.description ? `<p class="org-sidebar-desc">${escapeHtml(b.description)}</p>` : ''}
       </div>
       ${rows ? `<div class="org-sidebar-section"><h3>Club Details</h3>${rows}</div>` : ''}
+      ${regSection}
     </aside>
   `;
 }
 
 export function wrapWithShell(navbarHtml, bodyHtml) {
   injectShellStyles();
+
+  // Wire up the sidebar's copy-link button. The sidebar HTML returned here
+  // isn't in the DOM yet at this point (the caller still has to assign it to
+  // innerHTML), so defer wiring to the next tick -- same pattern navbar.js
+  // uses for its own buttons.
+  setTimeout(() => {
+    const copyBtn = document.getElementById('sidebar-copy-registration-link');
+    const linkInput = document.getElementById('sidebar-registration-link');
+    if (copyBtn && linkInput) {
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(linkInput.value);
+        } catch (err) {
+          // Clipboard API can fail (permissions, non-secure context) --
+          // fall back to a manual select so the user can still copy.
+          linkInput.select();
+          document.execCommand('copy');
+        }
+        const original = copyBtn.textContent;
+        copyBtn.textContent = '✅ Copied!';
+        copyBtn.disabled = true;
+        setTimeout(() => {
+          copyBtn.textContent = original;
+          copyBtn.disabled = false;
+        }, 1800);
+      });
+    }
+  }, 0);
+
   return `
     ${navbarHtml}
     <div class="app-shell">
@@ -262,6 +308,25 @@ export function injectShellStyles() {
 
     .org-sidebar-icon {
       flex-shrink: 0;
+    }
+
+    .org-sidebar-reglink-hint {
+      font-size: 0.78rem;
+      color: #78909C;
+      margin: 0 0 0.75rem 0;
+      line-height: 1.4;
+    }
+
+    .org-sidebar-reglink-input {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      margin-bottom: 0.6rem;
+      border: 1px solid #334455;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #B0BEC5;
+      font-size: 0.75rem;
+      font-family: monospace;
     }
 
     .btn-full {

@@ -8,7 +8,8 @@ import {
   setOrgBranding,
   canEditClubSettings,
   uploadOrgLogo,
-  wrapWithShell
+  wrapWithShell,
+  getRegistrationLink
 } from './org-branding.js';
 
 export class ClubSettingsPage {
@@ -182,8 +183,9 @@ export class ClubSettingsPage {
   }
 
   registrationLink() {
-    const base = `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}`;
-    return `${base}register.html?org=${this.orgId}`;
+    // Shared with the sidebar's own copy-link box (org-branding.js) so both
+    // always point to the exact same URL.
+    return getRegistrationLink() || `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}register.html?org=${this.orgId}`;
   }
 
   attachEvents() {
