@@ -914,6 +914,7 @@ export class RouteMapConsole {
 
   displayRoutesOnMap() {
     this.routes.forEach(route => {
+      // Display waypoints and polyline
       if (route.waypoints && route.waypoints.length > 0) {
         const path = route.waypoints.map(wp => ({
           lat: wp.lat,
@@ -945,6 +946,124 @@ export class RouteMapConsole {
             }
           });
         });
+      }
+
+      // Display marshals
+      if (route.marshals && Array.isArray(route.marshals) && route.marshals.length > 0) {
+        route.marshals.forEach((marshal, i) => {
+          if (marshal.lat && marshal.lng) {
+            new google.maps.Marker({
+              position: { lat: marshal.lat, lng: marshal.lng },
+              map: this.map,
+              title: `${route.name} - Marshal ${i + 1}`,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 7,
+                fillColor: this.colors.marshal,
+                fillOpacity: 0.8,
+                strokeColor: '#fff',
+                strokeWeight: 2
+              }
+            });
+          }
+        });
+      }
+
+      // Display water tables
+      if (route.water_tables && Array.isArray(route.water_tables) && route.water_tables.length > 0) {
+        route.water_tables.forEach((wt, i) => {
+          if (wt.lat && wt.lng) {
+            new google.maps.Marker({
+              position: { lat: wt.lat, lng: wt.lng },
+              map: this.map,
+              title: `${route.name} - Water Table ${i + 1}`,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 7,
+                fillColor: this.colors.water_table,
+                fillOpacity: 0.8,
+                strokeColor: '#fff',
+                strokeWeight: 2
+              }
+            });
+          }
+        });
+      }
+
+      // Display medical stations
+      if (route.medical_stations && Array.isArray(route.medical_stations) && route.medical_stations.length > 0) {
+        route.medical_stations.forEach((ms, i) => {
+          if (ms.lat && ms.lng) {
+            new google.maps.Marker({
+              position: { lat: ms.lat, lng: ms.lng },
+              map: this.map,
+              title: `${route.name} - Medical Station ${i + 1}`,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 7,
+                fillColor: this.colors.medical_station,
+                fillOpacity: 0.8,
+                strokeColor: '#fff',
+                strokeWeight: 2
+              }
+            });
+          }
+        });
+      }
+
+      // Display security vehicles
+      if (route.security_vehicles && Array.isArray(route.security_vehicles) && route.security_vehicles.length > 0) {
+        route.security_vehicles.forEach((sv, i) => {
+          if (sv.lat && sv.lng) {
+            new google.maps.Marker({
+              position: { lat: sv.lat, lng: sv.lng },
+              map: this.map,
+              title: `${route.name} - Security Vehicle ${i + 1}`,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 7,
+                fillColor: this.colors.security_vehicle,
+                fillOpacity: 0.8,
+                strokeColor: '#fff',
+                strokeWeight: 2
+              }
+            });
+          }
+        });
+      }
+
+      // Display start/finish points
+      if (route.start_finish) {
+        if (route.start_finish.start && route.start_finish.start.lat && route.start_finish.start.lng) {
+          new google.maps.Marker({
+            position: { lat: route.start_finish.start.lat, lng: route.start_finish.start.lng },
+            map: this.map,
+            title: `${route.name} - Start`,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 8,
+              fillColor: this.colors.start,
+              fillOpacity: 0.9,
+              strokeColor: '#fff',
+              strokeWeight: 2
+            }
+          });
+        }
+        if (route.start_finish.finish && route.start_finish.finish.lat && route.start_finish.finish.lng) {
+          new google.maps.Marker({
+            position: { lat: route.start_finish.finish.lat, lng: route.start_finish.finish.lng },
+            map: this.map,
+            title: `${route.name} - Finish`,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 8,
+              fillColor: this.colors.finish,
+              fillOpacity: 0.9,
+              strokeColor: '#fff',
+              strokeWeight: 2
+            }
+          });
+        }
       }
     });
   }
