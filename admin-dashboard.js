@@ -15,7 +15,7 @@ export class AdminDashboard {
     this.onSwitchToOrg = onSwitchToOrg;
     const container = document.getElementById('app');
 
-    const switchOrgButton = onSwitchToOrg ? `<button class="btn btn-primary" id="switch-to-org-btn" style="margin-right: 1rem;">→ Go to Organization</button>` : '';
+    const switchOrgButton = onSwitchToOrg ? `<button class="btn btn-primary" id="switch-to-org-btn" style="margin-right: 1rem;">→ Go to Events</button>` : '';
 
     const adminHtml = `
       <div class="admin-container">
