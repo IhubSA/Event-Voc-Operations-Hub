@@ -7,10 +7,12 @@ export class ParticipantRegistration {
     this.eventId = null;
     this.eventData = null;
     this.isSubmitting = false;
+    this.lookupTimeout = null;
   }
 
-  async render(eventId, onSuccess) {
+  async render(eventId, onSuccess, onBack) {
     this.eventId = eventId;
+    this.onBack = onBack;
 
     // Fetch event details
     try {
@@ -35,6 +37,7 @@ export class ParticipantRegistration {
         <div class="registration-background"></div>
 
         <div class="registration-content">
+          ${onBack ? `<button type="button" class="btn-back-link" id="reg-back-link">← Back to races</button>` : ''}
           <div class="registration-card">
             <div class="registration-header">
               <div class="event-info">
@@ -73,6 +76,7 @@ export class ParticipantRegistration {
                   <div class="form-group">
                     <label for="email">Email Address *</label>
                     <input type="email" id="email" name="email" required />
+                    <p class="field-hint">Registered with us before? We'll fill in your contact details automatically.</p>
                   </div>
                   <div class="form-group">
                     <label for="phone">Phone Number</label>
@@ -80,6 +84,8 @@ export class ParticipantRegistration {
                   </div>
                 </div>
               </div>
+
+              <div id="returning-participant-banner" class="returning-banner" style="display:none;"></div>
 
               <div class="form-section">
                 <h3>Event Details</h3>
@@ -111,21 +117,6 @@ export class ParticipantRegistration {
                       <option value="56-65">56-65</option>
                       <option value="65+">65+</option>
                     </select>
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-section">
-                <h3>Emergency Contact</h3>
-
-                <div class="form-row">
-                  <div class="form-group">
-                    <label for="emergency-name">Emergency Contact Name</label>
-                    <input type="text" id="emergency-name" name="emergencyContactName" />
-                  </div>
-                  <div class="form-group">
-                    <label for="emergency-phone">Emergency Contact Phone</label>
-                    <input type="tel" id="emergency-phone" name="emergencyContactPhone" />
                   </div>
                 </div>
               </div>
@@ -307,109 +298,73 @@ export class ParticipantRegistration {
 
     // Get form data
     const formData = new FormData(form);
-    const data = {
-      event_id: this.eventId,
-      first_name: formData.get('firstName'),
-      last_name: formData.get('lastName'),
-      email: formData.get('email'),
-      phone: formData.get('phone') || null,
-      category: formData.get('category'),
-      age_group: formData.get('ageGroup') || null,
-      // Emergency contact details
-      emergency_contact_name: formData.get('emergencyContactName') || null,
-      emergency_contact_phone: formData.get('emergencyContactPhone') || null,
-      emergency_contact_relationship: formData.get('emergencyContactRelationship') || null,
-      // Medical information
-      blood_type: formData.get('bloodType') || null,
-      medical_conditions: formData.get('medicalConditions') || null,
-      allergies: formData.get('allergies') || null,
-      medications: formData.get('medications') || null,
-      // Medical aid & doctor details
-      medical_aid_provider: formData.get('medicalAidProvider') || null,
-      medical_aid_member_number: formData.get('medicalAidMemberNumber') || null,
-      doctor_name: formData.get('doctorName') || null,
-      doctor_phone: formData.get('doctorPhone') || null,
-      // Terms & conditions acceptance
-      race_rules_accepted: formData.get('raceRules') ? true : false,
-      terms_accepted: formData.get('terms') ? true : false,
-      privacy_policy_accepted: formData.get('privacy') ? true : false,
-      accepted_at: new Date().toISOString()
-    };
+    const firstName = formData.get('firstName');
+    const email = formData.get('email');
 
     this.isSubmitting = true;
     submitBtn.disabled = true;
     submitBtn.textContent = 'Registering...';
 
     try {
-      // Check if email already registered for this event
-      const { data: existing, error: checkError } = await supabase
-        .from('participants')
-        .select('id')
-        .eq('event_id', this.eventId)
-        .eq('email', data.email)
-        .single();
+      // Registration number, duplicate check, and the insert itself all happen
+      // atomically server-side so this public form never gets direct table access.
+      const { data: result, error } = await supabase.rpc('register_participant', {
+        p_event_id: this.eventId,
+        p_first_name: firstName,
+        p_last_name: formData.get('lastName'),
+        p_email: email,
+        p_phone: formData.get('phone') || null,
+        p_category: formData.get('category'),
+        p_age_group: formData.get('ageGroup') || null,
+        p_emergency_contact_name: formData.get('emergencyContactName') || null,
+        p_emergency_contact_relationship: formData.get('emergencyContactRelationship') || null,
+        p_emergency_contact_phone: formData.get('emergencyContactPhone') || null,
+        p_medical_conditions: formData.get('medicalConditions') || null,
+        p_medical_aid_provider: formData.get('medicalAidProvider') || null,
+        p_medical_aid_member_number: formData.get('medicalAidMemberNumber') || null,
+        p_doctor_name: formData.get('doctorName') || null,
+        p_doctor_phone: formData.get('doctorPhone') || null,
+        p_allergies: formData.get('allergies') || null,
+        p_medications: formData.get('medications') || null,
+        p_blood_type: formData.get('bloodType') || null,
+        p_terms_accepted: formData.get('terms') ? true : false,
+        p_privacy_policy_accepted: formData.get('privacy') ? true : false,
+        p_race_rules_accepted: formData.get('raceRules') ? true : false
+      });
 
-      if (existing) {
-        throw new Error('This email is already registered for this event');
-      }
+      if (error) throw error;
 
-      // Generate registration number using custom format
-      const { data: registrationNum, error: numError } = await supabase
-        .rpc('get_next_registration_number_custom', { p_event_id: this.eventId });
-
-      if (numError) throw numError;
-
-      data.registration_number = registrationNum;
-
-      // Auto-assign bib number if enabled in settings
-      const { data: settings } = await supabase
-        .from('event_settings')
-        .select('auto_assign_bibs')
-        .eq('event_id', this.eventId)
-        .single();
-
-      if (settings?.auto_assign_bibs) {
-        const { data: bibNum } = await supabase
-          .rpc('get_next_bib_number', { p_event_id: this.eventId });
-        data.bib_number = bibNum;
-      }
-
-      // Insert participant
-      const { data: participant, error: insertError } = await supabase
-        .from('participants')
-        .insert([data])
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
+      const participant = Array.isArray(result) ? result[0] : result;
 
       // Show success message
       messageDiv.className = 'submission-message success';
       messageDiv.innerHTML = `
         <div class="success-content">
           <h3>✓ Registration Successful!</h3>
-          <p>Thank you for registering, ${data.first_name}!</p>
+          <p>Thank you for registering, ${firstName}!</p>
           <div class="registration-details">
-            <p><strong>Registration Number:</strong> ${participant.registration_number}</p>
-            <p><strong>Confirmation:</strong> A confirmation email has been sent to ${data.email}</p>
+            <p><strong>Registration Number:</strong> ${participant?.registration_number || ''}</p>
           </div>
           <p style="margin-top: 1.5rem; font-size: 0.95rem;">
-            Please bring this registration number to the event check-in.
+            Please save your registration number and bring it to the event check-in.
           </p>
         </div>
       `;
 
       // Reset form
       form.reset();
+      const banner = document.getElementById('returning-participant-banner');
+      if (banner) banner.style.display = 'none';
 
       // Call success callback after delay
       setTimeout(() => {
         if (onSuccess) onSuccess(participant);
-      }, 2000);
+      }, 2500);
     } catch (error) {
       console.error('Registration error:', error);
       messageDiv.className = 'submission-message error';
       messageDiv.textContent = error.message || 'Registration failed. Please try again.';
+      messageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } finally {
       this.isSubmitting = false;
       submitBtn.disabled = false;
@@ -417,10 +372,65 @@ export class ParticipantRegistration {
     }
   }
 
+  async handleEmailLookup() {
+    const emailInput = document.getElementById('email');
+    const email = emailInput.value.trim();
+    const banner = document.getElementById('returning-participant-banner');
+    if (!email || !banner) return;
+
+    try {
+      const { data, error } = await supabase.rpc('lookup_returning_participant', { p_email: email });
+      if (error) throw error;
+
+      const match = Array.isArray(data) ? data[0] : data;
+      if (!match) {
+        banner.style.display = 'none';
+        return;
+      }
+
+      // Only fill fields the participant hasn't already typed something into
+      const fillIfEmpty = (id, value) => {
+        const el = document.getElementById(id);
+        if (el && !el.value && value) el.value = value;
+      };
+
+      fillIfEmpty('first-name', match.first_name);
+      fillIfEmpty('last-name', match.last_name);
+      fillIfEmpty('phone', match.phone);
+      fillIfEmpty('emergency-name', match.emergency_contact_name);
+      fillIfEmpty('emergency-phone', match.emergency_contact_phone);
+      if (match.emergency_contact_relationship) {
+        const relSelect = document.getElementById('emergency-relationship');
+        if (relSelect && !relSelect.value) relSelect.value = match.emergency_contact_relationship;
+      }
+      if (match.age_group) {
+        const ageSelect = document.getElementById('age-group');
+        if (ageSelect && !ageSelect.value) ageSelect.value = match.age_group;
+      }
+
+      banner.style.display = 'block';
+      banner.innerHTML = `👋 Welcome back${match.first_name ? ', ' + match.first_name : ''}! We've filled in your contact details from a previous registration — medical info still needs to be entered fresh each time.`;
+    } catch (error) {
+      console.error('Returning participant lookup failed:', error);
+    }
+  }
+
   setupEventListeners(onSuccess) {
     document.getElementById('registration-form').addEventListener('submit', (e) => {
       e.preventDefault();
       this.handleSubmit(onSuccess);
+    });
+
+    // Look up returning participants by email (debounced) to prefill contact details
+    const emailInput = document.getElementById('email');
+    emailInput?.addEventListener('blur', () => this.handleEmailLookup());
+    emailInput?.addEventListener('input', () => {
+      clearTimeout(this.lookupTimeout);
+      this.lookupTimeout = setTimeout(() => this.handleEmailLookup(), 900);
+    });
+
+    document.getElementById('reg-back-link')?.addEventListener('click', () => {
+      if (this.onBack) this.onBack();
     });
 
     // Setup global modal functions for policy/rules display
@@ -695,6 +705,41 @@ export class ParticipantRegistration {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         padding: 2rem 1rem;
         font-family: inherit;
+      }
+
+      .btn-back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: #fff;
+        font-size: 0.9rem;
+        font-weight: 600;
+        padding: 0.6rem 1.1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-bottom: 1rem;
+      }
+
+      .btn-back-link:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+
+      .field-hint {
+        margin: 0.4rem 0 0 0;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+      }
+
+      .returning-banner {
+        background: rgba(76, 175, 80, 0.12);
+        border: 1px solid #4CAF50;
+        color: #2E7D32;
+        padding: 0.9rem 1.1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        margin: -0.5rem 0 1.5rem 0;
       }
 
       .registration-background {

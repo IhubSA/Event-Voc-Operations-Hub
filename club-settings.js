@@ -62,6 +62,15 @@ export class ClubSettingsPage {
 
         <div id="cs-message" class="cs-message" style="display: none;"></div>
 
+        <div class="cs-card">
+          <h2>🌐 Public Registration Link</h2>
+          <p class="cs-hint" style="margin:0 0 1rem 0;">Share this one link and it will always show whichever of your races currently have public self-registration switched on. Turn registration on or off per race from that race's Event Settings.</p>
+          <div class="cs-color-input">
+            <input type="text" id="cs-registration-link" class="cs-link-input" readonly value="${escapeAttr(this.registrationLink())}" />
+            <button type="button" class="btn btn-secondary btn-sm" id="cs-copy-registration-link">📋 Copy</button>
+          </div>
+        </div>
+
         <form id="cs-form" class="cs-form">
           <div class="cs-card">
             <h2>Logo</h2>
@@ -172,9 +181,24 @@ export class ClubSettingsPage {
     this.attachEvents();
   }
 
+  registrationLink() {
+    const base = `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}`;
+    return `${base}register.html?org=${this.orgId}`;
+  }
+
   attachEvents() {
     document.getElementById('cs-back-btn')?.addEventListener('click', () => this.onBack?.());
     document.getElementById('cs-cancel-btn')?.addEventListener('click', () => this.onBack?.());
+
+    document.getElementById('cs-copy-registration-link')?.addEventListener('click', () => {
+      const input = document.getElementById('cs-registration-link');
+      input.select();
+      navigator.clipboard?.writeText(input.value).then(() => {
+        this.showMessage('✓ Registration link copied to clipboard!', 'success');
+      }).catch(() => {
+        this.showMessage('Could not copy automatically — please copy the link manually.', 'error');
+      });
+    });
 
     const logoInput = document.getElementById('cs-logo-input');
     logoInput?.addEventListener('change', (e) => {
@@ -469,6 +493,19 @@ export class ClubSettingsPage {
       .cs-form .form-group textarea:focus {
         outline: none;
         border-color: #0099FF;
+      }
+
+      .cs-link-input {
+        flex: 1;
+        padding: 0.65rem 0.85rem;
+        border-radius: 8px;
+        border: 1px solid #334455;
+        background: #0F1419;
+        color: #fff;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        box-sizing: border-box;
+        min-width: 0;
       }
 
       .cs-actions {

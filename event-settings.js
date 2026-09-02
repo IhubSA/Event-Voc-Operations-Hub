@@ -2,13 +2,14 @@
 // Allows organizers to configure registration and bib number sequences
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
-import { wrapWithShell } from './org-branding.js';
+import { wrapWithShell, getOrgId } from './org-branding.js';
 
 export class EventSettings {
   constructor() {
     this.eventId = null;
     this.settings = null;
     this.isSaving = false;
+    this.registrationOpen = false;
   }
 
   async render(eventId, onBack, currentUser, onOpenClubSettings) {
@@ -27,6 +28,25 @@ export class EventSettings {
         </div>
 
         <div class="settings-content">
+          <div class="settings-card">
+            <h2>🌐 Public Registration</h2>
+            <p class="setting-description">Let participants sign themselves up for this race with a public link — no login required.</p>
+
+            <div class="form-group checkbox-group">
+              <input type="checkbox" id="registration-open-toggle" />
+              <label for="registration-open-toggle">Open this event for public self-registration</label>
+            </div>
+
+            <div id="registration-link-box" class="setting-preview" style="display:none;">
+              <strong>Public link:</strong>
+              <div class="reg-link-row">
+                <input type="text" id="registration-link-input" class="setting-input" readonly />
+                <button type="button" class="btn btn-secondary btn-sm" id="copy-registration-link-btn">📋 Copy</button>
+              </div>
+              <p class="setting-description" style="margin-top:0.75rem;">This one link lists every race your club currently has open for registration — share it once and reuse it for future races.</p>
+            </div>
+          </div>
+
           <div class="settings-card">
             <h2>Registration Number Format</h2>
             <p class="setting-description">Customize how registration numbers are formatted and numbered</p>
@@ -123,6 +143,16 @@ export class EventSettings {
 
   async loadSettings() {
     try {
+      // Public registration flag lives on the event itself
+      const { data: eventRow, error: eventError } = await supabase
+        .from('events')
+        .select('registration_open')
+        .eq('id', this.eventId)
+        .single();
+
+      if (eventError) throw eventError;
+      this.registrationOpen = eventRow?.registration_open || false;
+
       // Try to get existing settings
       let { data: settings, error } = await supabase
         .from('event_settings')
@@ -170,6 +200,25 @@ export class EventSettings {
     document.getElementById('bib-prefix').value = this.settings.bib_prefix || 'BIB';
     document.getElementById('bib-start').value = this.settings.bib_start_number || 1;
     document.getElementById('auto-assign-bibs').checked = this.settings.auto_assign_bibs || false;
+
+    document.getElementById('registration-open-toggle').checked = this.registrationOpen;
+    this.updateRegistrationLinkBox();
+  }
+
+  updateRegistrationLinkBox() {
+    const box = document.getElementById('registration-link-box');
+    const linkInput = document.getElementById('registration-link-input');
+    if (!box || !linkInput) return;
+
+    if (!this.registrationOpen) {
+      box.style.display = 'none';
+      return;
+    }
+
+    const orgId = getOrgId();
+    const link = `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}register.html?org=${orgId}`;
+    linkInput.value = link;
+    box.style.display = 'block';
   }
 
   updatePreviews() {
@@ -182,6 +231,29 @@ export class EventSettings {
     const bibStart = document.getElementById('bib-start').value || 1;
     document.getElementById('bib-preview').textContent =
       `${bibPrefix}-${String(bibStart).padStart(3, '0')}`;
+  }
+
+  async handleToggleRegistration(isOpen) {
+    const toggle = document.getElementById('registration-open-toggle');
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({ registration_open: isOpen, updated_at: new Date().toISOString() })
+        .eq('id', this.eventId);
+
+      if (error) throw error;
+
+      this.registrationOpen = isOpen;
+      this.updateRegistrationLinkBox();
+      this.showMessage(
+        isOpen ? '✓ Public registration is now open for this race!' : '✓ Public registration closed for this race.',
+        'success'
+      );
+    } catch (error) {
+      console.error('Error toggling registration:', error);
+      this.showMessage(error.message || 'Failed to update registration status', 'error');
+      if (toggle) toggle.checked = !isOpen;
+    }
   }
 
   async handleSaveSettings() {
@@ -277,6 +349,21 @@ export class EventSettings {
     // Back button
     document.getElementById('back-settings-btn').addEventListener('click', () => {
       if (onBack) onBack();
+    });
+
+    // Public registration toggle
+    document.getElementById('registration-open-toggle').addEventListener('change', (e) => {
+      this.handleToggleRegistration(e.target.checked);
+    });
+
+    document.getElementById('copy-registration-link-btn')?.addEventListener('click', () => {
+      const linkInput = document.getElementById('registration-link-input');
+      linkInput.select();
+      navigator.clipboard?.writeText(linkInput.value).then(() => {
+        this.showMessage('✓ Link copied to clipboard!', 'success');
+      }).catch(() => {
+        this.showMessage('Could not copy automatically — please copy the link manually.', 'error');
+      });
     });
 
     // Preview updates
@@ -473,6 +560,18 @@ export class EventSettings {
 
       .setting-preview strong {
         color: var(--primary);
+      }
+
+      .reg-link-row {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+      }
+
+      .reg-link-row .setting-input {
+        flex: 1;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
       }
 
       .setting-preview span {
