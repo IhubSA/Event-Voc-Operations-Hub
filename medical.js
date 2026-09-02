@@ -75,7 +75,7 @@ export class MedicalPage {
           <div class="medical-sidebar">
             <div class="resources-section">
               <div class="resources-section-header">
-                <h3>Medical Resources</h3>
+                <h3>Medical Resources <span class="box-count-badge" id="resources-total-badge">0</span></h3>
                 <button type="button" class="btn btn-sm btn-primary" id="add-resource-btn">+ Add Resource</button>
               </div>
               <div class="resources-list" id="resources-container">
@@ -429,6 +429,17 @@ export class MedicalPage {
   renderResources() {
     const container = document.getElementById('resources-container');
 
+    // Total logged units (all statuses) shown on the box header, and total
+    // available units shown on the "Resources Available" stat card up top --
+    // both need to update even when the list is empty (e.g. after deleting
+    // the last resource), so compute them before the early return.
+    const totalQty = this.medicalResources.reduce((sum, r) => sum + (r.quantity || 1), 0);
+    const availableQty = this.medicalResources
+      .filter(r => r.status === 'available')
+      .reduce((sum, r) => sum + (r.quantity || 1), 0);
+    document.getElementById('resources-total-badge').textContent = totalQty;
+    document.getElementById('resources-count').textContent = availableQty;
+
     if (this.medicalResources.length === 0) {
       container.innerHTML = `<div class="empty-state">No resources logged yet. Click "+ Add Resource" to add ambulances, personnel, equipment etc.</div>`;
       return;
@@ -472,12 +483,6 @@ export class MedicalPage {
     document.querySelectorAll('[data-delete-resource]').forEach(btn => {
       btn.addEventListener('click', () => this.deleteResource(btn.dataset.deleteResource));
     });
-
-    // "Resources Available" = total quantity of resources currently marked available
-    const availableQty = this.medicalResources
-      .filter(r => r.status === 'available')
-      .reduce((sum, r) => sum + (r.quantity || 1), 0);
-    document.getElementById('resources-count').textContent = availableQty;
   }
 
   openResourceModal(resourceId) {

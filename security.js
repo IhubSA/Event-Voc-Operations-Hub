@@ -91,7 +91,7 @@ export class SecurityPage {
             </div>
             <div class="checkpoints-section">
               <div class="resources-section-header">
-                <h3>Security Resources</h3>
+                <h3>Security Resources <span class="box-count-badge" id="security-resources-total-badge">0</span></h3>
                 <button type="button" class="btn btn-sm btn-primary" id="add-resource-btn">+ Add Resource</button>
               </div>
               <div class="checkpoints-list" id="security-resources-container">
@@ -555,9 +555,11 @@ export class SecurityPage {
       });
     }
 
+    const totalQty = this.securityResources.reduce((sum, r) => sum + (r.quantity || 1), 0);
     const availableQty = this.securityResources
       .filter(r => r.status === 'available')
       .reduce((sum, r) => sum + (r.quantity || 1), 0);
+    document.getElementById('security-resources-total-badge').textContent = totalQty;
     document.getElementById('security-resources-count').textContent = availableQty;
   }
 
