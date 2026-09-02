@@ -44,6 +44,90 @@ export class RouteMapConsole {
     this.routeMapElements = {}; // { routeId: { markers: [], polylines: [] } }
   }
 
+  // Calculate distance between two lat/lng points in kilometers (Haversine formula)
+  calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  // Create emoji marker icon for map markers
+  createEmojiMarker(emoji, scale = 1.5) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const size = 40 * scale;
+    canvas.width = size;
+    canvas.height = size;
+
+    // Draw background circle
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Draw emoji
+    ctx.font = `${size * 0.6}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, size / 2, size / 2);
+
+    return {
+      url: canvas.toDataURL(),
+      scaledSize: new google.maps.Size(size, size),
+      origin: new google.maps.Point(0, 0),
+      anchor: new google.maps.Point(size / 2, size / 2)
+    };
+  }
+
+  // Create kilometer marker label icon
+  createKilometerMarkerLabel(kilometers) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const size = 50;
+    canvas.width = size;
+    canvas.height = size;
+
+    // Draw background circle (slightly transparent)
+    ctx.fillStyle = 'rgba(0, 153, 255, 0.9)';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Draw text
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${kilometers.toFixed(1)}km`, size / 2, size / 2);
+
+    return {
+      url: canvas.toDataURL(),
+      scaledSize: new google.maps.Size(size, size),
+      origin: new google.maps.Point(0, 0),
+      anchor: new google.maps.Point(size / 2, size / 2)
+    };
+  }
+
   async render(eventId, onBack) {
     this.eventId = eventId;
     this.onBack = onBack;
@@ -1068,12 +1152,24 @@ export class RouteMapConsole {
 
         this.routeMapElements[route.id].polylines.push(polyline);
 
-        // Add markers for waypoints
+        // Calculate cumulative distance and add waypoint markers with mile labels
+        let cumulativeDistance = 0;
         route.waypoints.forEach((wp, i) => {
+          // Calculate distance from previous waypoint
+          if (i > 0) {
+            const prevWp = route.waypoints[i - 1];
+            const segmentDistance = this.calculateDistance(
+              prevWp.lat, prevWp.lng,
+              wp.lat, wp.lng
+            );
+            cumulativeDistance += segmentDistance;
+          }
+
+          // Add waypoint circle marker
           const marker = new google.maps.Marker({
             position: { lat: wp.lat, lng: wp.lng },
             map: this.map,
-            title: `${route.name} - Waypoint ${wp.order}`,
+            title: `${route.name} - Waypoint ${wp.order} (${cumulativeDistance.toFixed(1)} km)`,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
               scale: 6,
@@ -1081,10 +1177,28 @@ export class RouteMapConsole {
               fillOpacity: 0.6,
               strokeColor: '#fff',
               strokeWeight: 1
-            }
+            },
+            zIndex: 10
           });
           this.routeMapElements[route.id].markers.push(marker);
+
+          // Add kilometer marker label (offset slightly from the waypoint)
+          if (i > 0) { // Don't show for first point (cumulative is 0)
+            const kmMarker = new google.maps.Marker({
+              position: { lat: wp.lat, lng: wp.lng },
+              map: this.map,
+              title: `${cumulativeDistance.toFixed(1)} kilometers`,
+              icon: this.createKilometerMarkerLabel(cumulativeDistance),
+              zIndex: 5
+            });
+            this.routeMapElements[route.id].markers.push(kmMarker);
+          }
         });
+
+        // Add total distance label if route has waypoints
+        if (route.waypoints.length > 1) {
+          console.log(`${route.name} total distance: ${cumulativeDistance.toFixed(1)} km`);
+        }
       }
 
       // Display marshals
@@ -1095,14 +1209,7 @@ export class RouteMapConsole {
               position: { lat: marshal.lat, lng: marshal.lng },
               map: this.map,
               title: `${route.name} - Marshal ${i + 1}`,
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 7,
-                fillColor: this.colors.marshal,
-                fillOpacity: 0.8,
-                strokeColor: '#fff',
-                strokeWeight: 2
-              }
+              icon: this.createEmojiMarker('👮')
             });
             this.routeMapElements[route.id].markers.push(marker);
           }
@@ -1117,14 +1224,7 @@ export class RouteMapConsole {
               position: { lat: wt.lat, lng: wt.lng },
               map: this.map,
               title: `${route.name} - Water Table ${i + 1}`,
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 7,
-                fillColor: this.colors.water_table,
-                fillOpacity: 0.8,
-                strokeColor: '#fff',
-                strokeWeight: 2
-              }
+              icon: this.createEmojiMarker('💧')
             });
             this.routeMapElements[route.id].markers.push(marker);
           }
@@ -1139,14 +1239,7 @@ export class RouteMapConsole {
               position: { lat: ms.lat, lng: ms.lng },
               map: this.map,
               title: `${route.name} - Medical Station ${i + 1}`,
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 7,
-                fillColor: this.colors.medical_station,
-                fillOpacity: 0.8,
-                strokeColor: '#fff',
-                strokeWeight: 2
-              }
+              icon: this.createEmojiMarker('🏥')
             });
             this.routeMapElements[route.id].markers.push(marker);
           }
@@ -1161,14 +1254,7 @@ export class RouteMapConsole {
               position: { lat: sv.lat, lng: sv.lng },
               map: this.map,
               title: `${route.name} - Security Vehicle ${i + 1}`,
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 7,
-                fillColor: this.colors.security_vehicle,
-                fillOpacity: 0.8,
-                strokeColor: '#fff',
-                strokeWeight: 2
-              }
+              icon: this.createEmojiMarker('🚔')
             });
             this.routeMapElements[route.id].markers.push(marker);
           }
@@ -1182,14 +1268,7 @@ export class RouteMapConsole {
             position: { lat: route.start_finish.start.lat, lng: route.start_finish.start.lng },
             map: this.map,
             title: `${route.name} - Start`,
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: this.colors.start,
-              fillOpacity: 0.9,
-              strokeColor: '#fff',
-              strokeWeight: 2
-            }
+            icon: this.createEmojiMarker('🚩', 1.8)
           });
           this.routeMapElements[route.id].markers.push(marker);
         }
@@ -1198,14 +1277,7 @@ export class RouteMapConsole {
             position: { lat: route.start_finish.finish.lat, lng: route.start_finish.finish.lng },
             map: this.map,
             title: `${route.name} - Finish`,
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: this.colors.finish,
-              fillOpacity: 0.9,
-              strokeColor: '#fff',
-              strokeWeight: 2
-            }
+            icon: this.createEmojiMarker('🏁', 1.8)
           });
           this.routeMapElements[route.id].markers.push(marker);
         }
