@@ -1,5 +1,7 @@
 // Safety Compliance Module - Dashboard Page
 import { supabase } from './supabase.js';
+import { RiskCategorization } from './risk-categorization.js';
+import { InspectionChecklists } from './inspection-checklists.js';
 
 export class SafetyPage {
   constructor() {
@@ -21,7 +23,11 @@ export class SafetyPage {
         <div class="safety-header">
           <div class="safety-header-top">
             <h1>Safety & Compliance</h1>
-            <button class="btn btn-secondary btn-small" id="back-btn-safety">← Back to Dashboard</button>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <button class="btn btn-primary btn-small" id="risk-cat-btn">🎯 Risk Categorization</button>
+              <button class="btn btn-primary btn-small" id="inspection-checklists-btn">📋 Inspection Checklists</button>
+              <button class="btn btn-secondary btn-small" id="back-btn-safety">← Back to Dashboard</button>
+            </div>
           </div>
           <div class="compliance-score-indicator" id="compliance-indicator">
             <div class="compliance-score">--</div>
@@ -98,24 +104,16 @@ export class SafetyPage {
             </div>
 
             <div class="compliance-checklist">
-              <h3>Compliance Status</h3>
-              <div class="compliance-items">
-                <div class="compliance-item">
-                  <span class="check-box"></span>
-                  <span>Pre-event Inspection</span>
-                </div>
-                <div class="compliance-item">
-                  <span class="check-box"></span>
-                  <span>Hazard Assessment</span>
-                </div>
-                <div class="compliance-item">
-                  <span class="check-box"></span>
-                  <span>Mitigation Plans</span>
-                </div>
-                <div class="compliance-item">
-                  <span class="check-box"></span>
-                  <span>Inspector Sign-off</span>
-                </div>
+              <h3>Risk Categorization</h3>
+              <div id="risk-cat-summary" class="risk-cat-summary">
+                <div class="loading">Loading...</div>
+              </div>
+            </div>
+
+            <div class="compliance-checklist">
+              <h3>Inspection Checklists</h3>
+              <div id="checklist-summary" class="checklist-summary">
+                <div class="loading">Loading...</div>
               </div>
             </div>
           </div>
@@ -222,6 +220,7 @@ export class SafetyPage {
     // Load data
     await this.loadHazards();
     await this.loadInspections();
+    await this.loadComplianceSummary();
 
     // Setup event listeners
     this.setupEventListeners();
@@ -268,6 +267,82 @@ export class SafetyPage {
       document.getElementById('inspections-container').innerHTML =
         `<div class="error">Failed to load inspections: ${error.message}</div>`;
     }
+  }
+
+  async loadComplianceSummary() {
+    // Risk categorization summary
+    try {
+      const { data: risk } = await supabase
+        .from('event_risk_categorization')
+        .select('*')
+        .eq('event_id', this.currentEvent)
+        .maybeSingle();
+
+      const riskEl = document.getElementById('risk-cat-summary');
+      if (riskEl) {
+        if (!risk) {
+          riskEl.innerHTML = `
+            <div class="summary-empty">No risk assessment completed yet</div>
+            <button class="btn btn-small btn-primary btn-full" id="risk-cat-cta">Start Assessment</button>
+          `;
+        } else {
+          const cat = risk.risk_category || 'low';
+          riskEl.innerHTML = `
+            <div class="risk-summary-badge risk-${cat}">
+              <span class="risk-summary-score">${risk.risk_score ?? 0}%</span>
+              <span class="risk-summary-label">${cat.toUpperCase()} RISK</span>
+            </div>
+            <div class="summary-meta">${risk.status === 'submitted' ? '✓ Finalized' : '📝 Draft'} ${risk.assessment_date ? '· ' + new Date(risk.assessment_date).toLocaleDateString() : ''}</div>
+          `;
+        }
+        document.getElementById('risk-cat-cta')?.addEventListener('click', () => this.openRiskCategorization());
+      }
+    } catch (error) {
+      console.error('Error loading risk categorization summary:', error);
+    }
+
+    // Inspection checklists summary
+    try {
+      const { data: checklists } = await supabase
+        .from('compliance_checklists')
+        .select('checklist_type, compliance_score')
+        .eq('event_id', this.currentEvent);
+
+      const checklistEl = document.getElementById('checklist-summary');
+      if (checklistEl) {
+        if (!checklists || checklists.length === 0) {
+          checklistEl.innerHTML = `
+            <div class="summary-empty">No checklists completed yet</div>
+            <button class="btn btn-small btn-primary btn-full" id="checklist-cta">Start Checklist</button>
+          `;
+        } else {
+          const avgScore = Math.round(checklists.reduce((sum, c) => sum + (c.compliance_score || 0), 0) / checklists.length);
+          checklistEl.innerHTML = `
+            <div class="checklist-summary-stat">
+              <span class="checklist-summary-num">${checklists.length}</span>
+              <span>Completed</span>
+            </div>
+            <div class="checklist-summary-stat">
+              <span class="checklist-summary-num">${avgScore}%</span>
+              <span>Avg. Compliance</span>
+            </div>
+          `;
+        }
+        document.getElementById('checklist-cta')?.addEventListener('click', () => this.openInspectionChecklists());
+      }
+    } catch (error) {
+      console.error('Error loading checklist summary:', error);
+    }
+  }
+
+  openRiskCategorization() {
+    const riskCat = new RiskCategorization();
+    riskCat.render(this.currentEvent, () => this.render(this.currentEvent, this.onBack));
+  }
+
+  openInspectionChecklists() {
+    const checklists = new InspectionChecklists();
+    checklists.render(this.currentEvent, () => this.render(this.currentEvent, this.onBack));
   }
 
   renderHazards() {
@@ -503,6 +578,14 @@ export class SafetyPage {
         this.onBack();
       });
     }
+
+    document.getElementById('risk-cat-btn')?.addEventListener('click', () => {
+      this.openRiskCategorization();
+    });
+
+    document.getElementById('inspection-checklists-btn')?.addEventListener('click', () => {
+      this.openInspectionChecklists();
+    });
 
     document.getElementById('new-hazard-btn').addEventListener('click', () => {
       document.getElementById('new-hazard-modal').style.display = 'flex';

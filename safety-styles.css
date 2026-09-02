@@ -953,3 +953,109 @@
     box-shadow: 0 25px 70px rgba(0, 0, 0, 0.5);
   }
 }
+
+/* Risk Categorization & Inspection Checklist summary cards (sidebar) */
+.compliance-checklist {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1.75rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.compliance-checklist:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.compliance-checklist h3 {
+  font-size: 1.15rem;
+  margin: 0 0 1.25rem 0;
+  color: var(--text-primary);
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+  font-weight: 600;
+}
+
+.summary-empty {
+  text-align: center;
+  color: var(--text-muted, #78909C);
+  font-size: 0.9rem;
+  padding: 1rem 0;
+  margin-bottom: 1rem;
+}
+
+.summary-meta {
+  text-align: center;
+  color: var(--text-muted, #78909C);
+  font-size: 0.8rem;
+  margin-top: 0.75rem;
+}
+
+.risk-summary-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 1.25rem;
+  border-radius: 10px;
+  border: 2px solid;
+}
+
+.risk-summary-score {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.risk-summary-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.risk-summary-badge.risk-low {
+  background: rgba(76, 175, 80, 0.12);
+  border-color: #4CAF50;
+  color: #4CAF50;
+}
+
+.risk-summary-badge.risk-medium {
+  background: rgba(255, 152, 0, 0.12);
+  border-color: #FF9800;
+  color: #FF9800;
+}
+
+.risk-summary-badge.risk-high {
+  background: rgba(255, 82, 82, 0.12);
+  border-color: #FF6B6B;
+  color: #FF6B6B;
+}
+
+.checklist-summary {
+  display: flex;
+  gap: 1rem;
+}
+
+.checklist-summary-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.checklist-summary-num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.btn-full {
+  width: 100%;
+}
