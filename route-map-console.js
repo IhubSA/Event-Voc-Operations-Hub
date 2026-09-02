@@ -36,6 +36,12 @@ export class RouteMapConsole {
     this.isAddingSecurity = false;
     this.isAddingStart = false;
     this.isAddingFinish = false;
+
+    // Track visibility of saved routes and their special locations
+    this.routeVisibility = {}; // { routeId: { waypoints: true, marshals: true, water: true, medical: true, security: true, startFinish: true } }
+
+    // Track markers and polylines per route for cleanup
+    this.routeMapElements = {}; // { routeId: { markers: [], polylines: [] } }
   }
 
   async render(eventId, onBack) {
@@ -861,6 +867,21 @@ export class RouteMapConsole {
       if (error) throw error;
 
       this.routes = data || [];
+
+      // Initialize visibility for new routes
+      this.routes.forEach(route => {
+        if (!this.routeVisibility[route.id]) {
+          this.routeVisibility[route.id] = {
+            waypoints: true,
+            marshals: true,
+            water: true,
+            medical: true,
+            security: true,
+            startFinish: true
+          };
+        }
+      });
+
       this.renderRoutesList();
       this.displayRoutesOnMap();
     } catch (error) {
@@ -879,22 +900,74 @@ export class RouteMapConsole {
 
     list.innerHTML = `
       <div class="routes-items">
-        ${this.routes.map(route => `
-          <div class="route-item">
-            <div class="route-header">
-              <span class="route-name">${route.name}</span>
-              <span class="route-type" style="background-color: ${this.colors[route.type]}">${route.type.replace('_', ' ')}</span>
+        ${this.routes.map(route => {
+          const visibility = this.routeVisibility[route.id] || {};
+          const hasWaypoints = route.waypoints && route.waypoints.length > 0;
+          const hasMarshal = route.marshals && route.marshals.length > 0;
+          const hasWater = route.water_tables && route.water_tables.length > 0;
+          const hasMedical = route.medical_stations && route.medical_stations.length > 0;
+          const hasSecurity = route.security_vehicles && route.security_vehicles.length > 0;
+          const hasStartFinish = route.start_finish && (route.start_finish.start || route.start_finish.finish);
+
+          return `
+            <div class="route-item">
+              <div class="route-header">
+                <span class="route-name">${route.name}</span>
+                <span class="route-type" style="background-color: ${this.colors[route.type]}">${route.type.replace('_', ' ')}</span>
+              </div>
+
+              <div class="route-toggles">
+                ${hasWaypoints ? `
+                  <label class="route-toggle">
+                    <input type="checkbox" class="toggle-waypoints" data-route-id="${route.id}" ${visibility.waypoints ? 'checked' : ''} />
+                    <span>🛣️ Routes</span>
+                  </label>
+                ` : ''}
+                ${hasMarshal ? `
+                  <label class="route-toggle">
+                    <input type="checkbox" class="toggle-marshals" data-route-id="${route.id}" ${visibility.marshals ? 'checked' : ''} />
+                    <span>👮 Marshals</span>
+                  </label>
+                ` : ''}
+                ${hasWater ? `
+                  <label class="route-toggle">
+                    <input type="checkbox" class="toggle-water" data-route-id="${route.id}" ${visibility.water ? 'checked' : ''} />
+                    <span>💧 Water</span>
+                  </label>
+                ` : ''}
+                ${hasMedical ? `
+                  <label class="route-toggle">
+                    <input type="checkbox" class="toggle-medical" data-route-id="${route.id}" ${visibility.medical ? 'checked' : ''} />
+                    <span>🏥 Medical</span>
+                  </label>
+                ` : ''}
+                ${hasSecurity ? `
+                  <label class="route-toggle">
+                    <input type="checkbox" class="toggle-security" data-route-id="${route.id}" ${visibility.security ? 'checked' : ''} />
+                    <span>🚔 Security</span>
+                  </label>
+                ` : ''}
+                ${hasStartFinish ? `
+                  <label class="route-toggle">
+                    <input type="checkbox" class="toggle-startfinish" data-route-id="${route.id}" ${visibility.startFinish ? 'checked' : ''} />
+                    <span>🚩 Start/Finish</span>
+                  </label>
+                ` : ''}
+              </div>
+
+              <div class="route-details">
+                <small>Waypoints: ${(route.waypoints || []).length}</small>
+                <small>Marshals: ${(route.marshals || []).length}</small>
+                <small>Water: ${(route.water_tables || []).length}</small>
+              </div>
+
+              <div class="route-actions">
+                <button class="btn-small btn-primary" data-route-id="${route.id}" data-action="view">View</button>
+                <button class="btn-small btn-secondary" data-route-id="${route.id}" data-action="edit">Edit</button>
+              </div>
             </div>
-            <div class="route-details">
-              <small>Waypoints: ${(route.waypoints || []).length}</small>
-              <small>Status: ${route.status}</small>
-            </div>
-            <div class="route-actions">
-              <button class="btn-small btn-primary" data-route-id="${route.id}" data-action="view">View</button>
-              <button class="btn-small btn-secondary" data-route-id="${route.id}" data-action="edit">Edit</button>
-            </div>
-          </div>
-        `).join('')}
+          `;
+        }).join('')}
       </div>
     `;
 
@@ -910,12 +983,75 @@ export class RouteMapConsole {
         }
       });
     });
+
+    // Attach event listeners to toggles
+    list.querySelectorAll('.toggle-waypoints').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const routeId = e.target.dataset.routeId;
+        this.routeVisibility[routeId].waypoints = e.target.checked;
+        this.displayRoutesOnMap();
+      });
+    });
+
+    list.querySelectorAll('.toggle-marshals').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const routeId = e.target.dataset.routeId;
+        this.routeVisibility[routeId].marshals = e.target.checked;
+        this.displayRoutesOnMap();
+      });
+    });
+
+    list.querySelectorAll('.toggle-water').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const routeId = e.target.dataset.routeId;
+        this.routeVisibility[routeId].water = e.target.checked;
+        this.displayRoutesOnMap();
+      });
+    });
+
+    list.querySelectorAll('.toggle-medical').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const routeId = e.target.dataset.routeId;
+        this.routeVisibility[routeId].medical = e.target.checked;
+        this.displayRoutesOnMap();
+      });
+    });
+
+    list.querySelectorAll('.toggle-security').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const routeId = e.target.dataset.routeId;
+        this.routeVisibility[routeId].security = e.target.checked;
+        this.displayRoutesOnMap();
+      });
+    });
+
+    list.querySelectorAll('.toggle-startfinish').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const routeId = e.target.dataset.routeId;
+        this.routeVisibility[routeId].startFinish = e.target.checked;
+        this.displayRoutesOnMap();
+      });
+    });
   }
 
   displayRoutesOnMap() {
+    // Clear all existing route markers and polylines
+    Object.values(this.routeMapElements).forEach(elements => {
+      elements.markers.forEach(marker => marker.setMap(null));
+      elements.polylines.forEach(polyline => polyline.setMap(null));
+    });
+    this.routeMapElements = {};
+
     this.routes.forEach(route => {
+      const visibility = this.routeVisibility[route.id] || {};
+
+      // Initialize storage for this route's elements
+      if (!this.routeMapElements[route.id]) {
+        this.routeMapElements[route.id] = { markers: [], polylines: [] };
+      }
+
       // Display waypoints and polyline
-      if (route.waypoints && route.waypoints.length > 0) {
+      if (visibility.waypoints && route.waypoints && route.waypoints.length > 0) {
         const path = route.waypoints.map(wp => ({
           lat: wp.lat,
           lng: wp.lng
@@ -930,9 +1066,11 @@ export class RouteMapConsole {
           map: this.map
         });
 
+        this.routeMapElements[route.id].polylines.push(polyline);
+
         // Add markers for waypoints
         route.waypoints.forEach((wp, i) => {
-          new google.maps.Marker({
+          const marker = new google.maps.Marker({
             position: { lat: wp.lat, lng: wp.lng },
             map: this.map,
             title: `${route.name} - Waypoint ${wp.order}`,
@@ -945,14 +1083,15 @@ export class RouteMapConsole {
               strokeWeight: 1
             }
           });
+          this.routeMapElements[route.id].markers.push(marker);
         });
       }
 
       // Display marshals
-      if (route.marshals && Array.isArray(route.marshals) && route.marshals.length > 0) {
+      if (visibility.marshals && route.marshals && Array.isArray(route.marshals) && route.marshals.length > 0) {
         route.marshals.forEach((marshal, i) => {
           if (marshal.lat && marshal.lng) {
-            new google.maps.Marker({
+            const marker = new google.maps.Marker({
               position: { lat: marshal.lat, lng: marshal.lng },
               map: this.map,
               title: `${route.name} - Marshal ${i + 1}`,
@@ -965,15 +1104,16 @@ export class RouteMapConsole {
                 strokeWeight: 2
               }
             });
+            this.routeMapElements[route.id].markers.push(marker);
           }
         });
       }
 
       // Display water tables
-      if (route.water_tables && Array.isArray(route.water_tables) && route.water_tables.length > 0) {
+      if (visibility.water && route.water_tables && Array.isArray(route.water_tables) && route.water_tables.length > 0) {
         route.water_tables.forEach((wt, i) => {
           if (wt.lat && wt.lng) {
-            new google.maps.Marker({
+            const marker = new google.maps.Marker({
               position: { lat: wt.lat, lng: wt.lng },
               map: this.map,
               title: `${route.name} - Water Table ${i + 1}`,
@@ -986,15 +1126,16 @@ export class RouteMapConsole {
                 strokeWeight: 2
               }
             });
+            this.routeMapElements[route.id].markers.push(marker);
           }
         });
       }
 
       // Display medical stations
-      if (route.medical_stations && Array.isArray(route.medical_stations) && route.medical_stations.length > 0) {
+      if (visibility.medical && route.medical_stations && Array.isArray(route.medical_stations) && route.medical_stations.length > 0) {
         route.medical_stations.forEach((ms, i) => {
           if (ms.lat && ms.lng) {
-            new google.maps.Marker({
+            const marker = new google.maps.Marker({
               position: { lat: ms.lat, lng: ms.lng },
               map: this.map,
               title: `${route.name} - Medical Station ${i + 1}`,
@@ -1007,15 +1148,16 @@ export class RouteMapConsole {
                 strokeWeight: 2
               }
             });
+            this.routeMapElements[route.id].markers.push(marker);
           }
         });
       }
 
       // Display security vehicles
-      if (route.security_vehicles && Array.isArray(route.security_vehicles) && route.security_vehicles.length > 0) {
+      if (visibility.security && route.security_vehicles && Array.isArray(route.security_vehicles) && route.security_vehicles.length > 0) {
         route.security_vehicles.forEach((sv, i) => {
           if (sv.lat && sv.lng) {
-            new google.maps.Marker({
+            const marker = new google.maps.Marker({
               position: { lat: sv.lat, lng: sv.lng },
               map: this.map,
               title: `${route.name} - Security Vehicle ${i + 1}`,
@@ -1028,14 +1170,15 @@ export class RouteMapConsole {
                 strokeWeight: 2
               }
             });
+            this.routeMapElements[route.id].markers.push(marker);
           }
         });
       }
 
       // Display start/finish points
-      if (route.start_finish) {
+      if (visibility.startFinish && route.start_finish) {
         if (route.start_finish.start && route.start_finish.start.lat && route.start_finish.start.lng) {
-          new google.maps.Marker({
+          const marker = new google.maps.Marker({
             position: { lat: route.start_finish.start.lat, lng: route.start_finish.start.lng },
             map: this.map,
             title: `${route.name} - Start`,
@@ -1048,9 +1191,10 @@ export class RouteMapConsole {
               strokeWeight: 2
             }
           });
+          this.routeMapElements[route.id].markers.push(marker);
         }
         if (route.start_finish.finish && route.start_finish.finish.lat && route.start_finish.finish.lng) {
-          new google.maps.Marker({
+          const marker = new google.maps.Marker({
             position: { lat: route.start_finish.finish.lat, lng: route.start_finish.finish.lng },
             map: this.map,
             title: `${route.name} - Finish`,
@@ -1063,6 +1207,7 @@ export class RouteMapConsole {
               strokeWeight: 2
             }
           });
+          this.routeMapElements[route.id].markers.push(marker);
         }
       }
     });
@@ -1355,6 +1500,44 @@ export class RouteMapConsole {
         border-radius: 3px;
         font-size: 0.75rem;
         font-weight: 600;
+      }
+
+      .route-toggles {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.75rem;
+        padding: 0.5rem 0;
+      }
+
+      .route-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.8rem;
+        cursor: pointer;
+        user-select: none;
+        padding: 0.25rem 0.5rem;
+        background: rgba(0, 153, 255, 0.08);
+        border: 1px solid rgba(0, 153, 255, 0.2);
+        border-radius: 4px;
+        transition: all 0.2s ease;
+      }
+
+      .route-toggle:hover {
+        background: rgba(0, 153, 255, 0.15);
+        border-color: rgba(0, 153, 255, 0.4);
+      }
+
+      .route-toggle input[type="checkbox"] {
+        cursor: pointer;
+        width: 14px;
+        height: 14px;
+      }
+
+      .route-toggle span {
+        color: #333;
+        font-weight: 500;
       }
 
       .route-details {
