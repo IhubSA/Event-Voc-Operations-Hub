@@ -10,9 +10,10 @@ export class AdminDashboard {
     this.adminUsers = [];
   }
 
-  async render(onBack, onSwitchToOrg) {
+  async render(onBack, onSwitchToOrg, onViewOrgEvents) {
     this.onBack = onBack;
     this.onSwitchToOrg = onSwitchToOrg;
+    this.onViewOrgEvents = onViewOrgEvents;
     const container = document.getElementById('app');
 
     const switchOrgButton = onSwitchToOrg ? `<button class="btn btn-primary" id="switch-to-org-btn" style="margin-right: 1rem;">→ Go to Events</button>` : '';
@@ -432,6 +433,7 @@ export class AdminDashboard {
           <p><strong>Created:</strong> ${new Date(org.created_at).toLocaleDateString()}</p>
         </div>
         <div class="card-actions">
+          ${this.onViewOrgEvents ? `<button class="btn btn-small btn-primary" data-view-events-org="${org.id}">📅 View Events</button>` : ''}
           <button class="btn btn-small" onclick="this.closest('.admin-card').dataset.edit='${org.id}'" data-edit-org="${org.id}">Edit</button>
           <button class="btn btn-small btn-danger" data-delete-org="${org.id}">Delete</button>
         </div>
@@ -439,6 +441,14 @@ export class AdminDashboard {
     `).join('');
 
     list.innerHTML = html;
+
+    // View Events buttons
+    list.querySelectorAll('[data-view-events-org]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const orgId = btn.dataset.viewEventsOrg;
+        if (this.onViewOrgEvents) this.onViewOrgEvents(orgId);
+      });
+    });
 
     // Edit buttons
     list.querySelectorAll('[data-edit-org]').forEach(btn => {

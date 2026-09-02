@@ -157,7 +157,7 @@ function renderLogin() {
   }
 }
 
-function renderDashboard() {
+function renderDashboard(filterOrgId) {
   try {
     console.log('🎨 Rendering organization dashboard');
     const container = document.getElementById('app');
@@ -174,11 +174,25 @@ function renderDashboard() {
 
     // Pass callback to switch to admin dashboard if user is admin
     const onSwitchToAdmin = isAdmin ? renderAdminDashboard : null;
-    dashboardPage.render(currentUser, onEventSelected, onLogout, onSwitchToAdmin, onOpenClubSettings);
+    dashboardPage.render(currentUser, onEventSelected, onLogout, onSwitchToAdmin, onOpenClubSettings, filterOrgId);
     currentPage = dashboardPage;
     console.log('✓ Organization dashboard rendered');
   } catch (error) {
     console.error('❌ Error rendering dashboard:', error);
+  }
+}
+
+// An admin drilling into a specific club's card from the Organizations page
+// (rather than the top "Go to Events" button, which stays unfiltered and
+// shows every club's events). Loads that club's branding so the sidebar/navbar
+// reflect the right club, then renders the dashboard scoped to just its events.
+async function viewClubEvents(orgId) {
+  try {
+    currentOrg = orgId;
+    await loadOrgBranding(orgId, currentUser?.id);
+    renderDashboard(orgId);
+  } catch (error) {
+    console.error('❌ Error switching to club events view:', error);
   }
 }
 
@@ -201,7 +215,7 @@ function renderAdminDashboard() {
     const onSwitchToOrg = currentOrg ? renderDashboard : null;
     adminDashboard.render(() => {
       onLogout();
-    }, onSwitchToOrg);
+    }, onSwitchToOrg, viewClubEvents);
 
     currentPage = adminDashboard;
     console.log('✓ Admin dashboard rendered');

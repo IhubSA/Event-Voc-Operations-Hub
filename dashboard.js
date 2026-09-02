@@ -1,7 +1,7 @@
 // Dashboard Page Component
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
-import { wrapWithShell, canEditClubSettings } from './org-branding.js';
+import { wrapWithShell, canEditClubSettings, getOrgDisplayName } from './org-branding.js';
 import { AddEventModal } from './add-event-fixed.js';
 
 export class DashboardPage {
@@ -11,11 +11,15 @@ export class DashboardPage {
     this.currentUser = null;
   }
 
-  async render(currentUser, onEventSelected, onLogout, onSwitchToAdmin, onOpenClubSettings) {
+  async render(currentUser, onEventSelected, onLogout, onSwitchToAdmin, onOpenClubSettings, filterOrgId) {
     this.currentUser = currentUser;
     this.onEventSelected = onEventSelected;
     this.onLogout = onLogout;
     this.onSwitchToAdmin = onSwitchToAdmin;
+    // When set (an admin drilling into one club's card from the Organizations
+    // page), events are scoped to just that org instead of showing everything
+    // the current user/admin can see via RLS.
+    this.filterOrgId = filterOrgId || null;
 
     const container = document.getElementById('app');
 
@@ -40,7 +44,7 @@ export class DashboardPage {
 
   async loadEvents() {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('events')
         .select(`
           id,
@@ -54,6 +58,12 @@ export class DashboardPage {
           organisation_id
         `)
         .order('start_date', { ascending: false });
+
+      if (this.filterOrgId) {
+        query = query.eq('org_id', this.filterOrgId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -76,8 +86,13 @@ export class DashboardPage {
       ? `<button class="btn btn-primary" id="add-event-btn">+ Add Event</button>`
       : '';
 
+    const filterBanner = this.filterOrgId
+      ? `<div class="org-filter-banner">📅 Showing events for <strong>${escapeHtmlLocal(getOrgDisplayName())}</strong> only</div>`
+      : '';
+
     if (this.events.length === 0) {
       dashboardContent.innerHTML = `
+        ${filterBanner}
         <div class="dashboard-header">
           <div>
             <h1>📅 Events</h1>
@@ -96,6 +111,7 @@ export class DashboardPage {
     }
 
     dashboardContent.innerHTML = `
+      ${filterBanner}
       <div class="dashboard-header">
         <div>
           <h1>📅 Events</h1>
@@ -218,6 +234,20 @@ export class DashboardPage {
         max-width: 1400px;
         margin: 0 auto;
         padding: 3rem 2rem;
+      }
+
+      .org-filter-banner {
+        background: rgba(0, 153, 255, 0.1);
+        border: 1px solid rgba(0, 153, 255, 0.3);
+        color: var(--text-secondary);
+        padding: 0.75rem 1.1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .org-filter-banner strong {
+        color: var(--text-primary);
       }
 
       .dashboard-header {
@@ -532,4 +562,9 @@ export class DashboardPage {
 
     document.head.appendChild(style);
   }
+}
+
+function escapeHtmlLocal(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
