@@ -35,6 +35,7 @@ export class RiskCategorization {
     this.eventId = null;
     this.assessment = null;
     this.eventData = null;
+    this.eventStaff = [];
   }
 
   async render(eventId, onBack) {
@@ -161,8 +162,11 @@ export class RiskCategorization {
                 </div>
               </div>
               <div class="form-group" id="rc-safety-officer-name-wrap" style="display:none;">
-                <label>Event Safety Officer Name</label>
-                <input type="text" id="rc-safety-officer-name" placeholder="Full name" />
+                <label>Event Safety Officer</label>
+                <select id="rc-safety-officer-select">
+                  <option value="">Select from Staff Management...</option>
+                </select>
+                <input type="text" id="rc-safety-officer-name" placeholder="Full name" style="display:none; margin-top: 0.6rem;" />
               </div>
             </div>
 
@@ -212,6 +216,7 @@ export class RiskCategorization {
 
     this.addStyles();
     await this.loadEvent();
+    await this.loadEventStaff();
     await this.loadAssessment();
     this.setupEventListeners();
     this.calculateAndRender();
@@ -227,6 +232,63 @@ export class RiskCategorization {
     } catch (error) {
       console.error('Error loading event:', error);
     }
+  }
+
+  async loadEventStaff() {
+    try {
+      const { data, error } = await supabase
+        .from('event_staff')
+        .select(`
+          id,
+          name,
+          staff_roles ( role )
+        `)
+        .eq('event_id', this.eventId)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+
+      this.eventStaff = (data || []).map(s => ({
+        id: s.id,
+        name: s.name,
+        roles: (s.staff_roles || []).map(r => r.role)
+      }));
+
+      this.populateSafetyOfficerDropdown();
+    } catch (error) {
+      console.error('Error loading event staff:', error);
+      this.eventStaff = [];
+    }
+  }
+
+  populateSafetyOfficerDropdown() {
+    const select = document.getElementById('rc-safety-officer-select');
+    if (!select) return;
+
+    const safetyOfficers = this.eventStaff.filter(s => s.roles.includes('Event Safety Officer'));
+    const otherStaff = this.eventStaff.filter(s => !s.roles.includes('Event Safety Officer'));
+
+    let optionsHtml = '<option value="">Select from Staff Management...</option>';
+
+    if (safetyOfficers.length > 0) {
+      optionsHtml += `<optgroup label="Tagged as Event Safety Officer">
+        ${safetyOfficers.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+      </optgroup>`;
+    }
+
+    if (otherStaff.length > 0) {
+      optionsHtml += `<optgroup label="Other Staff">
+        ${otherStaff.map(s => `<option value="${s.id}">${s.name}${s.roles.length ? ' — ' + s.roles.join(', ') : ''}</option>`).join('')}
+      </optgroup>`;
+    }
+
+    if (this.eventStaff.length === 0) {
+      optionsHtml += `<option value="" disabled>No staff loaded yet — add staff in Staff Management</option>`;
+    }
+
+    optionsHtml += '<option value="__other__">Other (enter name manually)</option>';
+
+    select.innerHTML = optionsHtml;
   }
 
   async loadAssessment() {
@@ -256,7 +318,23 @@ export class RiskCategorization {
       document.getElementById('rc-security').value = data.police_security_availability ?? 'full';
       document.getElementById('rc-certified').checked = data.venue_safety_certified !== false;
       document.getElementById('rc-safety-officer').checked = !!data.event_safety_officer_appointed;
-      document.getElementById('rc-safety-officer-name').value = data.event_safety_officer_name ?? '';
+
+      const officerSelect = document.getElementById('rc-safety-officer-select');
+      const officerNameInput = document.getElementById('rc-safety-officer-name');
+      if (data.event_safety_officer_staff_id && this.eventStaff.some(s => s.id === data.event_safety_officer_staff_id)) {
+        officerSelect.value = data.event_safety_officer_staff_id;
+        officerNameInput.style.display = 'none';
+        officerNameInput.value = data.event_safety_officer_name ?? '';
+      } else if (data.event_safety_officer_name) {
+        officerSelect.value = '__other__';
+        officerNameInput.style.display = 'block';
+        officerNameInput.value = data.event_safety_officer_name;
+      } else {
+        officerSelect.value = '';
+        officerNameInput.style.display = 'none';
+        officerNameInput.value = '';
+      }
+
       document.getElementById('rc-notes').value = data.additional_notes ?? '';
       document.getElementById('rc-assessor').value = data.assessed_by_name ?? '';
 
@@ -284,10 +362,30 @@ export class RiskCategorization {
       police_security_availability: document.getElementById('rc-security').value,
       venue_safety_certified: document.getElementById('rc-certified').checked,
       event_safety_officer_appointed: document.getElementById('rc-safety-officer').checked,
-      event_safety_officer_name: document.getElementById('rc-safety-officer-name').value || null,
+      ...this.getSafetyOfficerValues(),
       additional_notes: document.getElementById('rc-notes').value || null,
       assessed_by_name: document.getElementById('rc-assessor').value || null
     };
+  }
+
+  getSafetyOfficerValues() {
+    const select = document.getElementById('rc-safety-officer-select');
+    const manualInput = document.getElementById('rc-safety-officer-name');
+    const selected = select?.value || '';
+
+    if (selected === '__other__') {
+      return { event_safety_officer_name: manualInput.value || null, event_safety_officer_staff_id: null };
+    }
+
+    if (selected) {
+      const staffMember = this.eventStaff.find(s => s.id === selected);
+      return {
+        event_safety_officer_name: staffMember?.name || null,
+        event_safety_officer_staff_id: selected
+      };
+    }
+
+    return { event_safety_officer_name: null, event_safety_officer_staff_id: null };
   }
 
   calculateScore(values) {
@@ -428,6 +526,18 @@ export class RiskCategorization {
 
     document.getElementById('rc-safety-officer').addEventListener('change', (e) => {
       document.getElementById('rc-safety-officer-name-wrap').style.display = e.target.checked ? 'block' : 'none';
+    });
+
+    document.getElementById('rc-safety-officer-select').addEventListener('change', (e) => {
+      const manualInput = document.getElementById('rc-safety-officer-name');
+      if (e.target.value === '__other__') {
+        manualInput.style.display = 'block';
+        manualInput.value = '';
+        manualInput.focus();
+      } else {
+        manualInput.style.display = 'none';
+        manualInput.value = '';
+      }
     });
 
     document.getElementById('rc-save-draft').addEventListener('click', () => {
