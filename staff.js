@@ -8,6 +8,7 @@ export class StaffPage {
     this.currentUser = null;
     this.staffList = [];
     this.assignmentsList = [];
+    this.marshalLocations = [];
     this.onBack = null;
     this.currentAssignmentId = null;
   }
@@ -728,11 +729,49 @@ export class StaffPage {
       if (error) throw error;
 
       this.staffList = data || [];
+      await this.loadMarshalLocations();
       this.renderStaffList();
       this.renderCheckinList();
       await this.loadAssignments();
     } catch (error) {
       console.error('Error loading staff:', error);
+    }
+  }
+
+  async loadMarshalLocations() {
+    try {
+      const { data, error } = await supabase
+        .from('routes')
+        .select('id, marshals, name, type')
+        .eq('event_id', this.currentEvent);
+
+      if (error) throw error;
+
+      console.log('Routes loaded for marshals:', data);
+
+      // Flatten all marshals from all routes
+      this.marshalLocations = [];
+      (data || []).forEach(route => {
+        if (route.marshals && Array.isArray(route.marshals) && route.marshals.length > 0) {
+          route.marshals.forEach((marshal, idx) => {
+            if (marshal.lat && marshal.lng) {
+              this.marshalLocations.push({
+                id: `${route.id}-marshal-${idx}`,
+                name: `Marshal Position ${idx + 1} (${route.name})`,
+                lat: marshal.lat,
+                lng: marshal.lng,
+                routeName: route.name,
+                routeType: route.type
+              });
+            }
+          });
+        }
+      });
+
+      console.log('Marshal locations found:', this.marshalLocations);
+    } catch (error) {
+      console.error('Error loading marshal locations:', error);
+      this.marshalLocations = [];
     }
   }
 
@@ -786,7 +825,25 @@ export class StaffPage {
         staff.staff_roles.some(r => r.role === role)
       );
 
-      if (staffInRole.length === 0) return; // Skip roles with no staff
+      // For Marshal role, also include marshals from routes
+      let marshalCount = staffInRole.length;
+      let marshalLocationCards = '';
+
+      if (role === 'Marshal' && this.marshalLocations.length > 0) {
+        marshalCount += this.marshalLocations.length;
+        marshalLocationCards = this.marshalLocations.map(marshal => `
+          <div class="staff-card marshal-location-card">
+            <div class="staff-name">${marshal.name}</div>
+            <div class="staff-info">📍 Route: ${marshal.routeName}</div>
+            <div class="staff-info">📌 Position: ${marshal.lat.toFixed(4)}, ${marshal.lng.toFixed(4)}</div>
+            <div class="role-badge" style="background: linear-gradient(135deg, #9370DB, #B19CD9); margin-top: 0.75rem;">
+              Position on Map
+            </div>
+          </div>
+        `).join('');
+      }
+
+      if (marshalCount === 0) return; // Skip roles with no staff or positions
 
       // Check if we should display this role (based on filter)
       if (filterRole && filterRole !== role) return;
@@ -794,7 +851,7 @@ export class StaffPage {
       html += `
         <div class="staff-role-section">
           <div class="role-section-header">
-            <h3>${role} (${staffInRole.length})</h3>
+            <h3>${role} (${marshalCount})</h3>
           </div>
           <div class="staff-grid-by-role">
             ${staffInRole.map(staff => {
@@ -821,6 +878,7 @@ export class StaffPage {
                 </div>
               `;
             }).join('')}
+            ${marshalLocationCards}
           </div>
         </div>
       `;
