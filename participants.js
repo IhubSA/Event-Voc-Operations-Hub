@@ -49,6 +49,7 @@ export class ParticipantsPage {
               <option value="">All Categories</option>
             </select>
             <button class="btn btn-secondary" id="export-btn">📥 Export List</button>
+            <button class="btn btn-secondary" id="import-btn">📤 Import List</button>
             <button class="btn btn-primary" id="add-participant-btn">➕ Add Participant</button>
           </div>
         </div>
@@ -256,6 +257,33 @@ export class ParticipantsPage {
                 <button type="submit" class="btn btn-primary" id="submit-add-btn">Add Participant</button>
               </div>
             </form>
+          </div>
+        </div>
+
+        <!-- Import Participants Modal -->
+        <div class="participants-modal" id="import-participants-modal" style="display: none;">
+          <div class="modal-content modal-large">
+            <button class="modal-close" id="close-import-modal">&times;</button>
+            <h2>Import Participants</h2>
+
+            <div class="import-intro">
+              <p>Upload a CSV file to register multiple participants at once. Each row needs at least a First Name, Last Name and Email — everything else is optional.</p>
+              <p>Registration numbers (and bib numbers, if auto-assign is on) are generated automatically; any Registration #, Bib #, Status or acceptance columns in the file are ignored.</p>
+              <button type="button" class="btn btn-secondary btn-small" id="download-import-template-btn">⬇️ Download CSV Template</button>
+            </div>
+
+            <div class="import-file-row">
+              <label for="import-csv-file" class="btn btn-secondary" id="import-file-label">Choose CSV File</label>
+              <input type="file" id="import-csv-file" accept=".csv,text/csv" style="display:none;" />
+              <span id="import-file-name" class="import-file-name">No file selected</span>
+            </div>
+
+            <div id="import-results" class="import-results"></div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn btn-secondary" id="cancel-import-btn">Cancel</button>
+              <button type="button" class="btn btn-primary" id="start-import-btn" disabled>Import</button>
+            </div>
           </div>
         </div>
       </div>
@@ -658,6 +686,284 @@ export class ParticipantsPage {
       e.preventDefault();
       this.handleAddParticipant();
     });
+
+    // Import button
+    document.getElementById('import-btn').addEventListener('click', () => {
+      this.resetImportModal();
+      document.getElementById('import-participants-modal').style.display = 'flex';
+    });
+
+    // Close import modal
+    document.getElementById('close-import-modal').addEventListener('click', () => {
+      document.getElementById('import-participants-modal').style.display = 'none';
+    });
+
+    document.getElementById('cancel-import-btn').addEventListener('click', () => {
+      document.getElementById('import-participants-modal').style.display = 'none';
+    });
+
+    // Close import modal on background click
+    document.getElementById('import-participants-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'import-participants-modal') {
+        document.getElementById('import-participants-modal').style.display = 'none';
+      }
+    });
+
+    // Download blank CSV template
+    document.getElementById('download-import-template-btn').addEventListener('click', () => {
+      this.downloadImportTemplate();
+    });
+
+    // File selection
+    document.getElementById('import-csv-file').addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      const nameEl = document.getElementById('import-file-name');
+      const startBtn = document.getElementById('start-import-btn');
+      if (file) {
+        nameEl.textContent = file.name;
+        startBtn.disabled = false;
+      } else {
+        nameEl.textContent = 'No file selected';
+        startBtn.disabled = true;
+      }
+      document.getElementById('import-results').innerHTML = '';
+      document.getElementById('import-results').className = 'import-results';
+    });
+
+    // Start import
+    document.getElementById('start-import-btn').addEventListener('click', () => {
+      const file = document.getElementById('import-csv-file').files?.[0];
+      if (file) this.handleImportFile(file);
+    });
+  }
+
+  resetImportModal() {
+    const fileInput = document.getElementById('import-csv-file');
+    if (fileInput) fileInput.value = '';
+    const nameEl = document.getElementById('import-file-name');
+    if (nameEl) nameEl.textContent = 'No file selected';
+    const startBtn = document.getElementById('start-import-btn');
+    if (startBtn) { startBtn.disabled = true; startBtn.textContent = 'Import'; }
+    const resultsDiv = document.getElementById('import-results');
+    if (resultsDiv) { resultsDiv.innerHTML = ''; resultsDiv.className = 'import-results'; }
+  }
+
+  downloadImportTemplate() {
+    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Category', 'Age Group', 'Blood Type', 'Medical Conditions', 'Allergies', 'Medications', 'Medical Aid Provider', 'Medical Aid #', 'Doctor Name', 'Doctor Phone', 'Emergency Contact', 'EC Relationship', 'EC Phone'];
+    const csvContent = headers.map(h => `"${h}"`).join(',') + '\n';
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'participants-import-template.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  // Small RFC4180-ish CSV parser -- handles quoted fields, embedded commas,
+  // escaped ("") quotes, and \r\n or \n line endings. Compatible with both
+  // this app's own Export List output and a typical Excel-saved CSV.
+  parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let field = '';
+    let inQuotes = false;
+    let i = 0;
+    const len = text.length;
+
+    while (i < len) {
+      const char = text[i];
+      if (inQuotes) {
+        if (char === '"') {
+          if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+          inQuotes = false; i++; continue;
+        }
+        field += char; i++; continue;
+      } else {
+        if (char === '"') { inQuotes = true; i++; continue; }
+        if (char === ',') { row.push(field); field = ''; i++; continue; }
+        if (char === '\r') { i++; continue; }
+        if (char === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+        field += char; i++; continue;
+      }
+    }
+    if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+
+    return rows.filter(r => !(r.length === 1 && r[0].trim() === ''));
+  }
+
+  async handleImportFile(file) {
+    const resultsDiv = document.getElementById('import-results');
+    const startBtn = document.getElementById('start-import-btn');
+
+    resultsDiv.className = 'import-results';
+    resultsDiv.innerHTML = '';
+
+    let text;
+    try {
+      text = await file.text();
+    } catch (error) {
+      resultsDiv.className = 'import-results error';
+      resultsDiv.textContent = 'Could not read that file. Please choose a CSV file.';
+      return;
+    }
+
+    const rows = this.parseCSV(text);
+    if (rows.length < 2) {
+      resultsDiv.className = 'import-results error';
+      resultsDiv.textContent = 'No data rows found in this file.';
+      return;
+    }
+
+    const IMPORT_HEADER_MAP = {
+      'first name': 'first_name',
+      'last name': 'last_name',
+      'email': 'email',
+      'phone': 'phone',
+      'category': 'category',
+      'age group': 'age_group',
+      'blood type': 'blood_type',
+      'medical conditions': 'medical_conditions',
+      'allergies': 'allergies',
+      'medications': 'medications',
+      'medical aid provider': 'medical_aid_provider',
+      'medical aid #': 'medical_aid_member_number',
+      'doctor name': 'doctor_name',
+      'doctor phone': 'doctor_phone',
+      'emergency contact': 'emergency_contact_name',
+      'ec relationship': 'emergency_contact_relationship',
+      'ec phone': 'emergency_contact_phone'
+    };
+
+    const headers = rows[0].map(h => h.trim().toLowerCase());
+    const fieldIndexes = {};
+    headers.forEach((h, idx) => {
+      const field = IMPORT_HEADER_MAP[h];
+      if (field && fieldIndexes[field] === undefined) fieldIndexes[field] = idx;
+    });
+
+    if (fieldIndexes.first_name === undefined || fieldIndexes.last_name === undefined || fieldIndexes.email === undefined) {
+      resultsDiv.className = 'import-results error';
+      resultsDiv.textContent = 'The file must include First Name, Last Name and Email columns. Download the template above to see the expected format.';
+      return;
+    }
+
+    const dataRows = rows.slice(1).filter(r => r.some(cell => (cell || '').trim() !== ''));
+    if (dataRows.length === 0) {
+      resultsDiv.className = 'import-results error';
+      resultsDiv.textContent = 'No data rows found in this file.';
+      return;
+    }
+
+    startBtn.disabled = true;
+    startBtn.textContent = 'Importing...';
+
+    const existingEmails = new Set(this.participantsList.map(p => (p.email || '').toLowerCase()));
+    const seenInFile = new Set();
+
+    let autoBibs = false;
+    try {
+      const { data: settings } = await supabase
+        .from('event_settings')
+        .select('auto_assign_bibs')
+        .eq('event_id', this.currentEvent)
+        .single();
+      autoBibs = !!settings?.auto_assign_bibs;
+    } catch (error) {
+      // If settings can't be read, just skip auto bib assignment for the import
+      autoBibs = false;
+    }
+
+    let successCount = 0;
+    let skippedCount = 0;
+    const issues = [];
+
+    for (let r = 0; r < dataRows.length; r++) {
+      const row = dataRows[r];
+      const get = (field) => fieldIndexes[field] !== undefined ? (row[fieldIndexes[field]] || '').trim() : '';
+
+      resultsDiv.className = 'import-results';
+      resultsDiv.textContent = `Importing ${r + 1} of ${dataRows.length}...`;
+
+      const firstName = get('first_name');
+      const lastName = get('last_name');
+      const email = get('email');
+
+      if (!firstName || !lastName || !email) {
+        skippedCount++;
+        issues.push(`Row ${r + 2}: missing first name, last name, or email — skipped`);
+        continue;
+      }
+
+      const emailKey = email.toLowerCase();
+      if (existingEmails.has(emailKey) || seenInFile.has(emailKey)) {
+        skippedCount++;
+        issues.push(`Row ${r + 2}: ${email} is already registered for this event — skipped`);
+        continue;
+      }
+
+      const data = {
+        event_id: this.currentEvent,
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        phone: get('phone') || null,
+        category: get('category') || null,
+        age_group: get('age_group') || null,
+        blood_type: get('blood_type') || null,
+        medical_conditions: get('medical_conditions') || null,
+        allergies: get('allergies') || null,
+        medications: get('medications') || null,
+        medical_aid_provider: get('medical_aid_provider') || null,
+        medical_aid_member_number: get('medical_aid_member_number') || null,
+        doctor_name: get('doctor_name') || null,
+        doctor_phone: get('doctor_phone') || null,
+        emergency_contact_name: get('emergency_contact_name') || null,
+        emergency_contact_relationship: get('emergency_contact_relationship') || null,
+        emergency_contact_phone: get('emergency_contact_phone') || null,
+        race_rules_accepted: true,
+        terms_accepted: true,
+        privacy_policy_accepted: true,
+        accepted_at: new Date().toISOString(),
+        status: 'registered'
+      };
+
+      try {
+        const { data: regNum, error: numError } = await supabase
+          .rpc('get_next_registration_number_custom', { p_event_id: this.currentEvent });
+        if (numError) throw numError;
+        data.registration_number = regNum;
+
+        if (autoBibs) {
+          const { data: bibNum, error: bibError } = await supabase
+            .rpc('get_next_bib_number', { p_event_id: this.currentEvent });
+          if (bibError) throw bibError;
+          data.bib_number = bibNum;
+        }
+
+        const { error: insertError } = await supabase.from('participants').insert([data]);
+        if (insertError) throw insertError;
+
+        successCount++;
+        seenInFile.add(emailKey);
+      } catch (error) {
+        skippedCount++;
+        issues.push(`Row ${r + 2}: ${email} — ${error.message || 'failed to import'}`);
+      }
+    }
+
+    startBtn.disabled = false;
+    startBtn.textContent = 'Import';
+
+    resultsDiv.className = `import-results ${issues.length ? 'has-issues' : 'success'}`;
+    resultsDiv.innerHTML = `
+      <p class="import-summary-line">${successCount ? '✓' : ''} ${successCount} participant${successCount === 1 ? '' : 's'} imported successfully.</p>
+      ${issues.length ? `<p>${skippedCount} row${skippedCount === 1 ? '' : 's'} skipped:</p><ul class="import-issues-list">${issues.map(msg => `<li>${escapeHtmlLocal(msg)}</li>`).join('')}</ul>` : ''}
+    `;
+
+    if (successCount > 0) {
+      await this.loadParticipants();
+    }
   }
 
   async checkInParticipant(participantId) {
@@ -1210,6 +1516,82 @@ export class ParticipantsPage {
         color: #ff6b6b;
       }
 
+      .import-intro {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-color);
+      }
+
+      .import-intro p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+
+      .import-file-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .import-file-name {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      .import-results {
+        padding: 0;
+        border-radius: 8px;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      .import-results.error {
+        display: block;
+        padding: 1rem;
+        background: rgba(255, 107, 107, 0.1);
+        border: 2px solid #ff6b6b;
+        color: #ff6b6b;
+      }
+
+      .import-results.success {
+        display: block;
+        padding: 1rem;
+        background: rgba(76, 175, 80, 0.1);
+        border: 2px solid #4CAF50;
+        color: #4CAF50;
+      }
+
+      .import-results.has-issues {
+        display: block;
+        padding: 1rem;
+        background: rgba(255, 152, 0, 0.1);
+        border: 2px solid #FF9800;
+        color: var(--text-primary);
+      }
+
+      .import-summary-line {
+        margin: 0 0 0.5rem 0;
+        font-weight: 600;
+      }
+
+      .import-issues-list {
+        margin: 0;
+        padding-left: 1.25rem;
+        max-height: 220px;
+        overflow-y: auto;
+        color: var(--text-secondary);
+      }
+
+      .import-issues-list li {
+        margin: 0.35rem 0;
+      }
+
       .modal-actions {
         display: flex;
         gap: 1rem;
@@ -1273,4 +1655,9 @@ export class ParticipantsPage {
   destroy() {
     // Cleanup if needed
   }
+}
+
+function escapeHtmlLocal(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
