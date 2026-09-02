@@ -603,13 +603,33 @@ export class StaffPage {
 
       .assignment-actions {
         display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
       }
 
       .assignment-actions button {
-        padding: 0.5rem 1rem;
-        font-size: 0.85rem;
+        flex: 1;
+        padding: 0.7rem 1.2rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+      }
+
+      .assignment-actions button:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 153, 255, 0.2);
+      }
+
+      .assignment-actions button:active {
+        transform: translateY(0);
       }
 
       .staff-modal {
