@@ -10,6 +10,7 @@ import { SecurityPage } from './security.js';
 import { SafetyPage } from './safety.js';
 import { StaffPage } from './staff.js';
 import { ParticipantsPage } from './participants.js';
+import { VendorsPage } from './vendors.js';
 import { EventSettings } from './event-settings.js';
 import { AdminDashboard } from './admin-dashboard.js';
 import { RouteMapConsole } from './route-map-console.js';
@@ -382,6 +383,16 @@ function loadModule(moduleName) {
 
     participantsPage.render(currentEvent?.id || currentEvent, currentUser, backToIntegratedDashboard, onOpenClubSettings);
     currentPage = participantsPage;
+  } else if (moduleName === 'vendors') {
+    const container = document.getElementById('app');
+    const vendorsPage = new VendorsPage();
+
+    if (currentPage) {
+      currentPage.destroy?.();
+    }
+
+    vendorsPage.render(currentEvent?.id || currentEvent, currentUser, backToIntegratedDashboard, onOpenClubSettings);
+    currentPage = vendorsPage;
   } else if (moduleName === 'settings') {
     const container = document.getElementById('app');
     const eventSettings = new EventSettings();

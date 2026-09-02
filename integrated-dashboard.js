@@ -184,6 +184,14 @@ export class IntegratedDashboard {
             </div>
             <button class="btn btn-sm btn-primary" data-module="participants">Manage</button>
           </div>
+
+          <div class="metric-card vendors-card">
+            <div class="metric-header">
+              <h3>🏪 Vendors</h3>
+            </div>
+            <p class="vendors-card-desc">Food, security, medical &amp; other service providers</p>
+            <button class="btn btn-sm btn-primary" data-module="vendors">Manage</button>
+          </div>
         </div>
 
         <div class="routes-section">
@@ -413,6 +421,13 @@ export class IntegratedDashboard {
         margin-bottom: 1.5rem;
         padding-bottom: 1rem;
         border-bottom: 2px solid var(--border-color);
+      }
+
+      .vendors-card-desc {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        margin: 0 0 1.25rem 0;
+        line-height: 1.4;
       }
 
       .metric-header h3 {

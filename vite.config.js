@@ -10,7 +10,8 @@ export default {
       // declared explicitly or it never makes it into dist/ and 404s live.
       input: {
         main: 'index.html',
-        register: 'register.html'
+        register: 'register.html',
+        vendors: 'vendor-registration.html'
       }
     }
   }
