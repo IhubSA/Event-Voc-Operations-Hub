@@ -918,7 +918,8 @@ export class StaffPage {
       this.marshalAssignments = {};
       this.assignmentsList.forEach(assignment => {
         if (assignment.assignment && assignment.assignment.startsWith('MARSHAL-')) {
-          const marshalId = assignment.assignment;
+          // Extract just the position ID (remove 'MARSHAL-' prefix)
+          const marshalId = assignment.assignment.replace('MARSHAL-', '');
           this.marshalAssignments[marshalId] = {
             staffId: assignment.staff_id,
             staffName: assignment.event_staff?.name || 'Unknown',
