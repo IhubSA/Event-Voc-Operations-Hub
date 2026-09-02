@@ -59,9 +59,12 @@ export class AdminDashboard {
           <div id="members-view" class="admin-view">
             <div class="view-header">
               <h2>Organization Members</h2>
-              <select id="member-org-filter" class="filter-select">
-                <option value="">Select organization...</option>
-              </select>
+              <div style="display: flex; gap: 1rem; align-items: center;">
+                <select id="member-org-filter" class="filter-select">
+                  <option value="">Select organization...</option>
+                </select>
+                <button class="btn btn-primary" id="add-member-btn" style="display: none;">+ Add Member</button>
+              </div>
             </div>
             <div id="members-list" class="admin-list">
               <div class="loading">Select an organization to view members</div>
@@ -164,6 +167,39 @@ export class AdminDashboard {
             <div class="form-actions">
               <button type="button" class="btn btn-secondary" data-modal="add-admin-modal">Cancel</button>
               <button type="submit" class="btn btn-primary">Add Admin User</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Add Member Modal -->
+      <div id="add-member-modal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Add Organization Member</h2>
+            <button class="modal-close" data-modal="add-member-modal">&times;</button>
+          </div>
+          <form id="add-member-form">
+            <input type="hidden" name="org_id">
+            <div class="form-group">
+              <label>Member Email *</label>
+              <input type="email" name="member_email" required placeholder="member@example.com">
+            </div>
+
+            <div class="form-group">
+              <label>Role *</label>
+              <select name="role" required>
+                <option value="">Select role...</option>
+                <option value="owner">Owner</option>
+                <option value="admin">Admin</option>
+                <option value="manager">Manager</option>
+                <option value="staff">Staff</option>
+              </select>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" data-modal="add-member-modal">Cancel</button>
+              <button type="submit" class="btn btn-primary">Add Member</button>
             </div>
           </form>
         </div>
@@ -311,10 +347,26 @@ export class AdminDashboard {
     // Member organization filter
     document.getElementById('member-org-filter')?.addEventListener('change', async (e) => {
       if (e.target.value) {
+        this.currentOrgId = e.target.value;
+        document.getElementById('add-member-btn').style.display = 'block';
         await this.loadMembers(e.target.value);
       } else {
         document.getElementById('members-list').innerHTML = '<div class="loading">Select an organization to view members</div>';
+        document.getElementById('add-member-btn').style.display = 'none';
       }
+    });
+
+    // Add member button
+    document.getElementById('add-member-btn')?.addEventListener('click', () => {
+      const form = document.getElementById('add-member-form');
+      form.querySelector('input[name="org_id"]').value = this.currentOrgId;
+      this.showModal('add-member-modal');
+    });
+
+    // Add member form
+    document.getElementById('add-member-form')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleAddMember(new FormData(e.target));
     });
   }
 
@@ -439,17 +491,33 @@ export class AdminDashboard {
         return;
       }
 
-      const html = data.map(member => `
-        <div class="admin-card">
-          <div class="card-content">
-            <p><strong>User: ${member.user_id}</strong></p>
-            <p><span class="badge role-${member.role}">${member.role.toUpperCase()}</span></p>
+      // Fetch user emails from auth
+      const userIds = data.map(m => m.user_id);
+      const { data: usersData } = await supabase.auth.admin.listUsers();
+
+      const userEmailMap = {};
+      if (usersData?.users) {
+        usersData.users.forEach(user => {
+          userEmailMap[user.id] = user.email;
+        });
+      }
+
+      const html = data.map(member => {
+        const email = userEmailMap[member.user_id] || member.user_id;
+        const displayName = email.split('@')[0] || email;
+        return `
+          <div class="admin-card">
+            <div class="card-content">
+              <p><strong>👤 ${displayName}</strong></p>
+              <p style="font-size: 0.9rem; color: var(--text-muted);">${email}</p>
+              <p><span class="badge role-${member.role}">${member.role.toUpperCase()}</span></p>
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-small btn-danger" data-remove-member="${member.user_id}">Remove</button>
+            </div>
           </div>
-          <div class="card-actions">
-            <button class="btn btn-small btn-danger" data-remove-member="${member.user_id}">Remove</button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
 
       list.innerHTML = html;
 
@@ -465,6 +533,52 @@ export class AdminDashboard {
     } catch (error) {
       console.error('Error loading members:', error);
       document.getElementById('members-list').innerHTML = `<div class="error">Error loading members: ${error.message}</div>`;
+    }
+  }
+
+  async handleAddMember(formData) {
+    try {
+      const data = Object.fromEntries(formData);
+      const orgId = data.org_id;
+      const memberEmail = data.member_email;
+      const role = data.role;
+
+      // Find user by email
+      const { data: usersData } = await supabase.auth.admin.listUsers();
+      const user = usersData?.users?.find(u => u.email === memberEmail);
+
+      if (!user) {
+        this.showMessage(`User with email ${memberEmail} not found in the system`, 'error');
+        return;
+      }
+
+      // Add member to organization
+      const { error } = await supabase
+        .from('organization_members')
+        .insert([{
+          org_id: orgId,
+          user_id: user.id,
+          role: role,
+          is_active: true
+        }]);
+
+      if (error) {
+        // Check if member already exists
+        if (error.message.includes('duplicate') || error.message.includes('already')) {
+          this.showMessage('This user is already a member of this organization', 'error');
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      this.hideModal('add-member-modal');
+      document.getElementById('add-member-form').reset();
+      await this.loadMembers(orgId);
+      this.showMessage('Member added successfully!', 'success');
+    } catch (error) {
+      console.error('Error adding member:', error);
+      this.showMessage(`Error: ${error.message}`, 'error');
     }
   }
 
