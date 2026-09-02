@@ -200,6 +200,36 @@ export class IntegratedDashboard {
             </div>
             <button class="btn btn-sm btn-primary" data-module="route-map">Open Routes</button>
           </div>
+
+          <div class="metric-card resources-card">
+            <div class="metric-header">
+              <h3>📍 Route Resources</h3>
+              <span class="metric-count" id="resources-total">0</span>
+            </div>
+            <div class="resources-breakdown">
+              <div class="resource-item">
+                <span class="resource-emoji">👮</span>
+                <span class="resource-label">Marshals</span>
+                <span class="resource-count" id="resources-marshals">0</span>
+              </div>
+              <div class="resource-item">
+                <span class="resource-emoji">🚔</span>
+                <span class="resource-label">Security</span>
+                <span class="resource-count" id="resources-security">0</span>
+              </div>
+              <div class="resource-item">
+                <span class="resource-emoji">💧</span>
+                <span class="resource-label">Water</span>
+                <span class="resource-count" id="resources-water">0</span>
+              </div>
+              <div class="resource-item">
+                <span class="resource-emoji">🏥</span>
+                <span class="resource-label">Medical</span>
+                <span class="resource-count" id="resources-medical">0</span>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-primary" data-module="route-map">Open Routes</button>
+          </div>
         </div>
 
         <div class="alerts-section" id="alerts-section" style="display: none;">
@@ -439,6 +469,43 @@ export class IntegratedDashboard {
 
       .route-count {
         font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .resources-breakdown {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .resource-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        border-radius: 8px;
+        background: rgba(156, 39, 176, 0.08);
+        border: 1px solid rgba(156, 39, 176, 0.3);
+      }
+
+      .resource-emoji {
+        font-size: 1.5rem;
+        min-width: 24px;
+      }
+
+      .resource-label {
+        flex: 1;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      .resource-count {
+        font-size: 1.3rem;
         font-weight: 700;
         color: var(--primary);
       }
@@ -845,6 +912,38 @@ export class IntegratedDashboard {
     document.getElementById('routes-vehicle').textContent = routeTypeMap['vehicle_route'];
     document.getElementById('routes-evacuation').textContent = routeTypeMap['evacuation_route'];
     document.getElementById('routes-race').textContent = routeTypeMap['race_route'];
+
+    // Route resources metrics
+    let totalMarshal = 0;
+    let totalSecurity = 0;
+    let totalWater = 0;
+    let totalMedical = 0;
+
+    this.routes.forEach(route => {
+      // Count marshals
+      if (route.marshals && Array.isArray(route.marshals)) {
+        totalMarshal += route.marshals.length;
+      }
+      // Count security vehicles
+      if (route.security_vehicles && Array.isArray(route.security_vehicles)) {
+        totalSecurity += route.security_vehicles.length;
+      }
+      // Count water tables
+      if (route.water_tables && Array.isArray(route.water_tables)) {
+        totalWater += route.water_tables.length;
+      }
+      // Count medical stations
+      if (route.medical_stations && Array.isArray(route.medical_stations)) {
+        totalMedical += route.medical_stations.length;
+      }
+    });
+
+    const totalResources = totalMarshal + totalSecurity + totalWater + totalMedical;
+    document.getElementById('resources-total').textContent = totalResources;
+    document.getElementById('resources-marshals').textContent = totalMarshal;
+    document.getElementById('resources-security').textContent = totalSecurity;
+    document.getElementById('resources-water').textContent = totalWater;
+    document.getElementById('resources-medical').textContent = totalMedical;
   }
 
   displayAlerts() {
