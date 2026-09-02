@@ -174,7 +174,9 @@ export class IntegratedDashboard {
             </div>
             <button class="btn btn-sm btn-primary" data-module="participants">Manage</button>
           </div>
+        </div>
 
+        <div class="routes-section">
           <div class="metric-card routes-card">
             <div class="metric-header">
               <h3>🗺️ Route Mapping</h3>
@@ -294,6 +296,13 @@ export class IntegratedDashboard {
       }
 
       .metrics-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .routes-section {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 1.5rem;
