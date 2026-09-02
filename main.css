@@ -595,3 +595,10 @@ textarea {
     --border-color: #CFD8DC;
   }
 }
+
+/* ============================================================================
+   MODULE-SPECIFIC STYLES
+   ============================================================================ */
+@import url('./medical-styles.css');
+@import url('./security-styles.css');
+@import url('./safety-styles.css');
