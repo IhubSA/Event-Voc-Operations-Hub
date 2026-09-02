@@ -481,12 +481,20 @@ export class AdminDashboard {
       this.renderAdminUsers();
     } catch (error) {
       console.error('Error loading admin users:', error);
-      document.getElementById('admin-users-list').innerHTML = `<div class="error">Error loading admin users: ${error.message}</div>`;
+      const list = document.getElementById('admin-users-list');
+      if (list) {
+        list.innerHTML = `<div class="error">Error loading admin users: ${error.message}</div>`;
+      }
     }
   }
 
   renderAdminUsers() {
     const list = document.getElementById('admin-users-list');
+
+    if (!list) {
+      console.warn('admin-users-list element not found in DOM');
+      return;
+    }
 
     if (this.adminUsers.length === 0) {
       list.innerHTML = '<div class="empty-state">No admin users yet.</div>';
