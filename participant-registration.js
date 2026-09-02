@@ -8,14 +8,16 @@ export class ParticipantRegistration {
     this.eventId = null;
     this.eventData = null;
     this.isSubmitting = false;
-    this.lookupTimeout = null;
     this.branding = null;
+    this.prefill = {};
   }
 
   async render(eventId, onSuccess, onBack, branding) {
     this.eventId = eventId;
     this.onBack = onBack;
     this.branding = branding || null;
+    this.onSuccess = onSuccess;
+    this.prefill = {};
 
     // Fetch event details
     try {
@@ -33,7 +35,250 @@ export class ParticipantRegistration {
       return;
     }
 
+    // Ask for their email first (Step 1) rather than dropping straight into a
+    // blank form -- if it matches a previous registration, they confirm their
+    // details (Step 2) before landing on the full form (Step 3); otherwise
+    // they go straight to a blank form.
+    this.renderEmailGate();
+  }
+
+  renderEventSummary() {
+    return `
+      <div class="event-info">
+        <h1>${this.eventData.name}</h1>
+        <p class="event-date">
+          📅 ${new Date(this.eventData.start_date).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}
+        </p>
+        <p class="event-location">📍 ${this.eventData.location}</p>
+      </div>
+    `;
+  }
+
+  // Step 1: email-first gate. Nothing else is asked here -- once we know the
+  // email we can decide whether to show the confirm-details step or a blank form.
+  renderEmailGate() {
     const container = document.getElementById('app');
+
+    const html = `
+      <div class="participant-registration-container">
+        <div class="registration-background"></div>
+
+        <div class="registration-content registration-content-single">
+          ${this.renderClubHeader()}
+          ${this.onBack ? `<button type="button" class="btn-back-link" id="reg-back-link">← Back to races</button>` : ''}
+          <div class="registration-card gate-card">
+            <div class="registration-header">
+              ${this.renderEventSummary()}
+              <div class="registration-badge">📝 Event Registration</div>
+            </div>
+
+            <form id="email-gate-form" class="registration-form">
+              <div class="form-section">
+                <h3>Let's Find Your Registration</h3>
+                <p class="gate-intro">Enter your email address to get started. If you've registered with us before, we'll pull in your details for you to confirm.</p>
+
+                <div class="form-group">
+                  <label for="gate-email">Email Address *</label>
+                  <input type="email" id="gate-email" name="email" required autofocus />
+                </div>
+              </div>
+
+              <div id="gate-message" class="submission-message"></div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large" id="gate-submit-btn">Continue</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+    this.addStyles();
+    this.setupGateListeners();
+  }
+
+  setupGateListeners() {
+    document.getElementById('email-gate-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleEmailGateSubmit();
+    });
+
+    document.getElementById('reg-back-link')?.addEventListener('click', () => {
+      if (this.onBack) this.onBack();
+    });
+  }
+
+  async handleEmailGateSubmit() {
+    const emailInput = document.getElementById('gate-email');
+    const messageDiv = document.getElementById('gate-message');
+    const submitBtn = document.getElementById('gate-submit-btn');
+    const email = emailInput.value.trim();
+
+    if (!email) return;
+
+    messageDiv.textContent = '';
+    messageDiv.className = 'submission-message';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Checking...';
+
+    try {
+      const { data, error } = await supabase.rpc('lookup_returning_participant', { p_email: email });
+      if (error) throw error;
+
+      const match = Array.isArray(data) ? data[0] : data;
+
+      if (match) {
+        this.prefill = { email, ...match };
+        this.renderConfirmDetails();
+      } else {
+        this.prefill = { email };
+        this.renderFullForm();
+      }
+    } catch (error) {
+      console.error('Returning participant lookup failed:', error);
+      // Don't let a failed lookup block registration -- fall through to a
+      // blank form with just the email they typed.
+      this.prefill = { email };
+      this.renderFullForm();
+    }
+  }
+
+  // Step 2 (returning participants only): show what's on file and let them
+  // fix anything stale before it carries into the full form. Medical info is
+  // never carried over, so none of that appears here.
+  renderConfirmDetails() {
+    const container = document.getElementById('app');
+    const p = this.prefill;
+
+    const relationshipOptions = ['Spouse', 'Parent', 'Sibling', 'Child', 'Friend', 'Colleague', 'Other']
+      .map(opt => `<option value="${opt}" ${p.emergency_contact_relationship === opt ? 'selected' : ''}>${opt}</option>`)
+      .join('');
+
+    const html = `
+      <div class="participant-registration-container">
+        <div class="registration-background"></div>
+
+        <div class="registration-content registration-content-single">
+          ${this.renderClubHeader()}
+          <button type="button" class="btn-back-link" id="confirm-back-link">← Use a different email</button>
+          <div class="registration-card">
+            <div class="registration-header">
+              ${this.renderEventSummary()}
+              <div class="registration-badge">📝 Event Registration</div>
+            </div>
+
+            <div class="returning-banner">👋 Welcome back${p.first_name ? ', ' + escapeHtml(p.first_name) : ''}! We found your details from a previous registration — please confirm they're still correct. You'll still enter medical info fresh and pick this race's category next.</div>
+
+            <form id="confirm-details-form" class="registration-form">
+              <div class="form-section">
+                <h3>Your Details</h3>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="confirm-first-name">First Name *</label>
+                    <input type="text" id="confirm-first-name" required value="${escapeHtml(p.first_name || '')}" />
+                  </div>
+                  <div class="form-group">
+                    <label for="confirm-last-name">Last Name *</label>
+                    <input type="text" id="confirm-last-name" required value="${escapeHtml(p.last_name || '')}" />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="confirm-email">Email Address *</label>
+                    <input type="email" id="confirm-email" required value="${escapeHtml(p.email || '')}" />
+                  </div>
+                  <div class="form-group">
+                    <label for="confirm-phone">Phone Number</label>
+                    <input type="tel" id="confirm-phone" value="${escapeHtml(p.phone || '')}" />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="confirm-emergency-name">Emergency Contact Name</label>
+                    <input type="text" id="confirm-emergency-name" value="${escapeHtml(p.emergency_contact_name || '')}" />
+                  </div>
+                  <div class="form-group">
+                    <label for="confirm-emergency-relationship">Relationship</label>
+                    <select id="confirm-emergency-relationship">
+                      <option value="">Select relationship</option>
+                      ${relationshipOptions}
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="confirm-emergency-phone">Emergency Contact Phone</label>
+                  <input type="tel" id="confirm-emergency-phone" value="${escapeHtml(p.emergency_contact_phone || '')}" />
+                </div>
+              </div>
+
+              <div class="form-actions confirm-actions">
+                <button type="button" class="btn btn-secondary" id="not-me-btn">That's not me — start fresh</button>
+                <button type="submit" class="btn btn-primary btn-large" id="confirm-submit-btn">Confirm &amp; Continue</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+    this.addStyles();
+    this.setupConfirmListeners();
+  }
+
+  setupConfirmListeners() {
+    document.getElementById('confirm-back-link')?.addEventListener('click', () => {
+      this.renderEmailGate();
+    });
+
+    document.getElementById('not-me-btn')?.addEventListener('click', () => {
+      this.prefill = { email: this.prefill.email };
+      this.renderFullForm();
+    });
+
+    document.getElementById('confirm-details-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      this.prefill = {
+        ...this.prefill,
+        first_name: document.getElementById('confirm-first-name').value.trim(),
+        last_name: document.getElementById('confirm-last-name').value.trim(),
+        email: document.getElementById('confirm-email').value.trim(),
+        phone: document.getElementById('confirm-phone').value.trim(),
+        emergency_contact_name: document.getElementById('confirm-emergency-name').value.trim(),
+        emergency_contact_relationship: document.getElementById('confirm-emergency-relationship').value,
+        emergency_contact_phone: document.getElementById('confirm-emergency-phone').value.trim()
+      };
+
+      this.renderFullForm();
+    });
+  }
+
+  // Step 2 (new participants) / Step 3 (returning participants, after
+  // confirming): the full registration form, prefilled from this.prefill.
+  renderFullForm() {
+    const container = document.getElementById('app');
+    const p = this.prefill || {};
+    const cameFromReturning = !!(p.first_name || p.last_name);
+
+    const relationshipOptions = ['Spouse', 'Parent', 'Sibling', 'Child', 'Friend', 'Colleague', 'Other']
+      .map(opt => `<option value="${opt}" ${p.emergency_contact_relationship === opt ? 'selected' : ''}>${opt}</option>`)
+      .join('');
+
+    const ageGroupOptions = ['Under 18', '18-25', '26-35', '36-45', '46-55', '56-65', '65+']
+      .map(opt => `<option value="${opt}" ${p.age_group === opt ? 'selected' : ''}>${opt}</option>`)
+      .join('');
 
     const registrationHtml = `
       <div class="participant-registration-container">
@@ -41,25 +286,16 @@ export class ParticipantRegistration {
 
         <div class="registration-content">
           ${this.renderClubHeader()}
-          ${onBack ? `<button type="button" class="btn-back-link" id="reg-back-link">← Back to races</button>` : ''}
+          <button type="button" class="btn-back-link" id="form-back-link">← Use a different email</button>
           <div class="registration-card">
             <div class="registration-header">
-              <div class="event-info">
-                <h1>${this.eventData.name}</h1>
-                <p class="event-date">
-                  📅 ${new Date(this.eventData.start_date).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-                <p class="event-location">📍 ${this.eventData.location}</p>
-              </div>
+              ${this.renderEventSummary()}
               <div class="registration-badge">
                 📝 Event Registration
               </div>
             </div>
+
+            ${cameFromReturning ? `<div class="returning-banner">✓ Details confirmed from your previous registration. Please complete the sections below to finish registering.</div>` : ''}
 
             <form id="registration-form" class="registration-form">
               <div class="form-section">
@@ -68,28 +304,25 @@ export class ParticipantRegistration {
                 <div class="form-row">
                   <div class="form-group">
                     <label for="first-name">First Name *</label>
-                    <input type="text" id="first-name" name="firstName" required />
+                    <input type="text" id="first-name" name="firstName" required value="${escapeHtml(p.first_name || '')}" />
                   </div>
                   <div class="form-group">
                     <label for="last-name">Last Name *</label>
-                    <input type="text" id="last-name" name="lastName" required />
+                    <input type="text" id="last-name" name="lastName" required value="${escapeHtml(p.last_name || '')}" />
                   </div>
                 </div>
 
                 <div class="form-row">
                   <div class="form-group">
                     <label for="email">Email Address *</label>
-                    <input type="email" id="email" name="email" required />
-                    <p class="field-hint">Registered with us before? We'll fill in your contact details automatically.</p>
+                    <input type="email" id="email" name="email" required value="${escapeHtml(p.email || '')}" />
                   </div>
                   <div class="form-group">
                     <label for="phone">Phone Number</label>
-                    <input type="tel" id="phone" name="phone" />
+                    <input type="tel" id="phone" name="phone" value="${escapeHtml(p.phone || '')}" />
                   </div>
                 </div>
               </div>
-
-              <div id="returning-participant-banner" class="returning-banner" style="display:none;"></div>
 
               <div class="form-section">
                 <h3>Event Details</h3>
@@ -113,13 +346,7 @@ export class ParticipantRegistration {
                     <label for="age-group">Age Group</label>
                     <select id="age-group" name="ageGroup">
                       <option value="">Select age group</option>
-                      <option value="Under 18">Under 18</option>
-                      <option value="18-25">18-25</option>
-                      <option value="26-35">26-35</option>
-                      <option value="36-45">36-45</option>
-                      <option value="46-55">46-55</option>
-                      <option value="56-65">56-65</option>
-                      <option value="65+">65+</option>
+                      ${ageGroupOptions}
                     </select>
                   </div>
                 </div>
@@ -193,19 +420,13 @@ export class ParticipantRegistration {
                 <div class="form-row">
                   <div class="form-group">
                     <label for="emergency-name">Emergency Contact Name</label>
-                    <input type="text" id="emergency-name" name="emergencyContactName" />
+                    <input type="text" id="emergency-name" name="emergencyContactName" value="${escapeHtml(p.emergency_contact_name || '')}" />
                   </div>
                   <div class="form-group">
                     <label for="emergency-relationship">Relationship</label>
                     <select id="emergency-relationship" name="emergencyContactRelationship">
                       <option value="">Select relationship</option>
-                      <option value="Spouse">Spouse</option>
-                      <option value="Parent">Parent</option>
-                      <option value="Sibling">Sibling</option>
-                      <option value="Child">Child</option>
-                      <option value="Friend">Friend</option>
-                      <option value="Colleague">Colleague</option>
-                      <option value="Other">Other</option>
+                      ${relationshipOptions}
                     </select>
                   </div>
                 </div>
@@ -213,7 +434,7 @@ export class ParticipantRegistration {
                 <div class="form-row">
                   <div class="form-group">
                     <label for="emergency-phone">Emergency Contact Phone</label>
-                    <input type="tel" id="emergency-phone" name="emergencyContactPhone" />
+                    <input type="tel" id="emergency-phone" name="emergencyContactPhone" value="${escapeHtml(p.emergency_contact_phone || '')}" />
                   </div>
                 </div>
               </div>
@@ -280,7 +501,7 @@ export class ParticipantRegistration {
 
     container.innerHTML = registrationHtml;
     this.addStyles();
-    this.setupEventListeners(onSuccess);
+    this.setupFormListeners(this.onSuccess);
   }
 
   renderClubHeader() {
@@ -395,65 +616,14 @@ export class ParticipantRegistration {
     }
   }
 
-  async handleEmailLookup() {
-    const emailInput = document.getElementById('email');
-    const email = emailInput.value.trim();
-    const banner = document.getElementById('returning-participant-banner');
-    if (!email || !banner) return;
-
-    try {
-      const { data, error } = await supabase.rpc('lookup_returning_participant', { p_email: email });
-      if (error) throw error;
-
-      const match = Array.isArray(data) ? data[0] : data;
-      if (!match) {
-        banner.style.display = 'none';
-        return;
-      }
-
-      // Only fill fields the participant hasn't already typed something into
-      const fillIfEmpty = (id, value) => {
-        const el = document.getElementById(id);
-        if (el && !el.value && value) el.value = value;
-      };
-
-      fillIfEmpty('first-name', match.first_name);
-      fillIfEmpty('last-name', match.last_name);
-      fillIfEmpty('phone', match.phone);
-      fillIfEmpty('emergency-name', match.emergency_contact_name);
-      fillIfEmpty('emergency-phone', match.emergency_contact_phone);
-      if (match.emergency_contact_relationship) {
-        const relSelect = document.getElementById('emergency-relationship');
-        if (relSelect && !relSelect.value) relSelect.value = match.emergency_contact_relationship;
-      }
-      if (match.age_group) {
-        const ageSelect = document.getElementById('age-group');
-        if (ageSelect && !ageSelect.value) ageSelect.value = match.age_group;
-      }
-
-      banner.style.display = 'block';
-      banner.innerHTML = `👋 Welcome back${match.first_name ? ', ' + match.first_name : ''}! We've filled in your contact details from a previous registration — medical info still needs to be entered fresh each time.`;
-    } catch (error) {
-      console.error('Returning participant lookup failed:', error);
-    }
-  }
-
-  setupEventListeners(onSuccess) {
+  setupFormListeners(onSuccess) {
     document.getElementById('registration-form').addEventListener('submit', (e) => {
       e.preventDefault();
       this.handleSubmit(onSuccess);
     });
 
-    // Look up returning participants by email (debounced) to prefill contact details
-    const emailInput = document.getElementById('email');
-    emailInput?.addEventListener('blur', () => this.handleEmailLookup());
-    emailInput?.addEventListener('input', () => {
-      clearTimeout(this.lookupTimeout);
-      this.lookupTimeout = setTimeout(() => this.handleEmailLookup(), 900);
-    });
-
-    document.getElementById('reg-back-link')?.addEventListener('click', () => {
-      if (this.onBack) this.onBack();
+    document.getElementById('form-back-link')?.addEventListener('click', () => {
+      this.renderEmailGate();
     });
 
     // Setup global modal functions for policy/rules display
@@ -830,7 +1000,39 @@ export class ParticipantRegistration {
         padding: 0.9rem 1.1rem;
         border-radius: 8px;
         font-size: 0.9rem;
-        margin: -0.5rem 0 1.5rem 0;
+        margin: 0 0 1.5rem 0;
+      }
+
+      .gate-card {
+        max-width: 650px;
+      }
+
+      .gate-intro {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin: -0.5rem 0 0.5rem 0;
+      }
+
+      .confirm-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .confirm-actions .btn-secondary {
+        flex-shrink: 0;
+        white-space: nowrap;
+      }
+
+      .confirm-actions .btn-large {
+        flex: 1;
+      }
+
+      @media (max-width: 600px) {
+        .confirm-actions {
+          flex-direction: column-reverse;
+        }
       }
 
       .registration-background {
@@ -853,6 +1055,11 @@ export class ParticipantRegistration {
         grid-template-columns: 1fr 350px;
         gap: 2rem;
         align-items: start;
+      }
+
+      .registration-content-single {
+        display: block;
+        max-width: 650px;
       }
 
       .registration-card {
