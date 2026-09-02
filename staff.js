@@ -1444,4 +1444,5 @@ export class StaffPage {
 }
 
 // Global instance
-const staffPage = new StaffPage();
+window.staffPage = new StaffPage();
+const staffPage = window.staffPage;
