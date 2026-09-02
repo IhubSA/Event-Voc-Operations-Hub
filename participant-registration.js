@@ -1,6 +1,7 @@
 // Participant Registration Form
 // Public-facing form for participants to register for events
 import { supabase } from './supabase.js';
+import { escapeHtml, renderClubContactLine } from './public-registration.js';
 
 export class ParticipantRegistration {
   constructor() {
@@ -8,11 +9,13 @@ export class ParticipantRegistration {
     this.eventData = null;
     this.isSubmitting = false;
     this.lookupTimeout = null;
+    this.branding = null;
   }
 
-  async render(eventId, onSuccess, onBack) {
+  async render(eventId, onSuccess, onBack, branding) {
     this.eventId = eventId;
     this.onBack = onBack;
+    this.branding = branding || null;
 
     // Fetch event details
     try {
@@ -37,6 +40,7 @@ export class ParticipantRegistration {
         <div class="registration-background"></div>
 
         <div class="registration-content">
+          ${this.renderClubHeader()}
           ${onBack ? `<button type="button" class="btn-back-link" id="reg-back-link">← Back to races</button>` : ''}
           <div class="registration-card">
             <div class="registration-header">
@@ -277,6 +281,25 @@ export class ParticipantRegistration {
     container.innerHTML = registrationHtml;
     this.addStyles();
     this.setupEventListeners(onSuccess);
+  }
+
+  renderClubHeader() {
+    const b = this.branding;
+    if (!b) return '';
+
+    const logo = b.logo_url
+      ? `<img src="${escapeHtml(b.logo_url)}" alt="${escapeHtml(b.name || 'Club')} logo" class="club-brand-logo" />`
+      : `<div class="club-brand-logo club-brand-logo-placeholder">${escapeHtml((b.name || 'C').trim().charAt(0).toUpperCase() || 'C')}</div>`;
+
+    return `
+      <div class="club-brand-bar">
+        ${logo}
+        <div class="club-brand-info">
+          <span class="club-brand-name">${escapeHtml(b.name || 'Your Club')}</span>
+          ${renderClubContactLine(b)}
+        </div>
+      </div>
+    `;
   }
 
   async handleSubmit(onSuccess) {
@@ -705,6 +728,74 @@ export class ParticipantRegistration {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         padding: 2rem 1rem;
         font-family: inherit;
+      }
+
+      .club-brand-bar {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: rgba(255, 255, 255, 0.12);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+        backdrop-filter: blur(10px);
+      }
+
+      .club-brand-logo {
+        width: 52px;
+        height: 52px;
+        object-fit: contain;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 0.35rem;
+        flex-shrink: 0;
+      }
+
+      .club-brand-logo-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #fff;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      }
+
+      .club-brand-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        min-width: 0;
+      }
+
+      .club-brand-name {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #fff;
+      }
+
+      .pubreg-contact-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem 1rem;
+      }
+
+      .pubreg-contact-item {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      .pubreg-contact-item a {
+        color: #fff;
+        text-decoration: underline;
+      }
+
+      @media (max-width: 768px) {
+        .club-brand-bar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
       }
 
       .btn-back-link {

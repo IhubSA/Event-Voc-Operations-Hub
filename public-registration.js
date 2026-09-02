@@ -77,6 +77,7 @@ export class PublicRegistration {
         <div>
           <h1>${escapeHtml(b?.name || 'Event Registration')}</h1>
           ${b?.description ? `<p>${escapeHtml(b.description)}</p>` : ''}
+          ${renderClubContactLine(b)}
         </div>
       </header>
     `;
@@ -141,7 +142,7 @@ export class PublicRegistration {
         // Re-render the same single-event form for the next person
         this.openRegistration(eventId);
       }
-    }, onBack);
+    }, onBack, this.branding);
   }
 
   errorScreen(title, message) {
@@ -220,6 +221,27 @@ export class PublicRegistration {
         font-size: 0.95rem;
       }
 
+      .pubreg-contact-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 1.25rem;
+        margin-top: 0.6rem;
+      }
+
+      .pubreg-contact-item {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+      }
+
+      .pubreg-contact-item a {
+        color: var(--primary);
+        text-decoration: none;
+      }
+
+      .pubreg-contact-item a:hover {
+        text-decoration: underline;
+      }
+
       .pubreg-events h2 {
         color: var(--text-primary);
         font-size: 1.3rem;
@@ -284,7 +306,28 @@ export class PublicRegistration {
   }
 }
 
-function escapeHtml(str) {
+export function escapeHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+export function normalizeUrl(url) {
+  if (!url) return '#';
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
+// Shared by the event-picker header (this file) and the registration form
+// header (participant-registration.js) so both show the same club contact
+// details, formatted the same way.
+export function renderClubContactLine(b) {
+  if (!b) return '';
+  const addressParts = [b.address, b.city, b.state, b.postal_code, b.country].filter(Boolean);
+  const parts = [
+    b.phone ? `<span class="pubreg-contact-item">📞 ${escapeHtml(b.phone)}</span>` : '',
+    b.email ? `<span class="pubreg-contact-item">✉️ ${escapeHtml(b.email)}</span>` : '',
+    b.website ? `<span class="pubreg-contact-item">🌐 <a href="${escapeHtml(normalizeUrl(b.website))}" target="_blank" rel="noopener noreferrer">${escapeHtml(b.website)}</a></span>` : '',
+    addressParts.length ? `<span class="pubreg-contact-item">📍 ${escapeHtml(addressParts.join(', '))}</span>` : ''
+  ].filter(Boolean).join('');
+
+  return parts ? `<div class="pubreg-contact-line">${parts}</div>` : '';
 }
