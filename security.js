@@ -8,12 +8,14 @@ export class SecurityPage {
     this.currentEvent = null;
     this.securityIncidents = [];
     this.securityCheckpoints = [];
+    this.securityResources = [];
     this.securityProviders = [];
     this.selectedIncident = null;
     this.unsubscribe = null;
     this.securityCategoryId = null;
     this.overallThreatLevel = 'green';
     this.onOpenVendors = null;
+    this.editingResourceId = null;
   }
 
   async render(eventId, onBack, currentUser, onOpenClubSettings, onOpenVendors) {
@@ -60,6 +62,10 @@ export class SecurityPage {
               <div class="stat-value" id="checkpoints-count">0</div>
               <div class="stat-label">Checkpoints Active</div>
             </div>
+            <div class="stat-card">
+              <div class="stat-value" id="security-resources-count">0</div>
+              <div class="stat-label">Resources Available</div>
+            </div>
           </div>
         </div>
 
@@ -81,6 +87,15 @@ export class SecurityPage {
               <h3>Security Checkpoints</h3>
               <div class="checkpoints-list" id="checkpoints-container">
                 <div class="loading">Loading checkpoints...</div>
+              </div>
+            </div>
+            <div class="checkpoints-section">
+              <div class="resources-section-header">
+                <h3>Security Resources</h3>
+                <button type="button" class="btn btn-sm btn-primary" id="add-resource-btn">+ Add Resource</button>
+              </div>
+              <div class="checkpoints-list" id="security-resources-container">
+                <div class="loading">Loading resources...</div>
               </div>
             </div>
             <div class="checkpoints-section providers-section">
@@ -164,6 +179,64 @@ export class SecurityPage {
             </form>
           </div>
         </div>
+
+        <div class="new-incident-modal" id="resource-modal" style="display: none !important;">
+          <div class="modal-content">
+            <button class="modal-close" id="close-resource-modal">&times;</button>
+            <h2 id="resource-modal-title">Add Security Resource</h2>
+            <form id="resource-form">
+              <div class="form-group">
+                <label>Resource Type</label>
+                <select id="resource-type" required>
+                  <option value="">Select a type</option>
+                  <option value="Security Vehicle">Security Vehicle</option>
+                  <option value="Security Personnel">Security Personnel (Guards)</option>
+                  <option value="K9 Unit">K9 Unit</option>
+                  <option value="CCTV/Surveillance">CCTV / Surveillance Equipment</option>
+                  <option value="Communication Equipment">Communication Equipment</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Quantity</label>
+                  <input type="number" id="resource-quantity" min="1" value="1" required />
+                </div>
+                <div class="form-group">
+                  <label>Status</label>
+                  <select id="resource-status" required>
+                    <option value="available">Available</option>
+                    <option value="in-use">In Use</option>
+                    <option value="unavailable">Unavailable</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="resource-location" placeholder="e.g. Main Gate, Zone 3" />
+              </div>
+              <div class="form-group">
+                <label>Description / Notes</label>
+                <textarea id="resource-description" rows="2" placeholder="Any extra detail about this resource"></textarea>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Contact Person</label>
+                  <input type="text" id="resource-contact-person" />
+                </div>
+                <div class="form-group">
+                  <label>Contact Phone</label>
+                  <input type="tel" id="resource-contact-phone" />
+                </div>
+              </div>
+              <div id="resource-form-message" class="add-message"></div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancel-resource">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="save-resource-btn">Add Resource</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     `;
 
@@ -172,6 +245,7 @@ export class SecurityPage {
     // Load data
     await this.loadSecurityIncidents();
     await this.loadSecurityCheckpoints();
+    await this.loadSecurityResources();
     await this.loadSecurityProviders();
 
     // Setup event listeners
@@ -412,6 +486,190 @@ export class SecurityPage {
     document.getElementById('checkpoints-count').textContent = this.securityCheckpoints.length;
   }
 
+  // Security resources (vehicles, guard headcounts, K9 units, equipment
+  // etc.) -- separate from checkpoints, which track a physical post rather
+  // than the pool of people/vehicles/gear available to staff them.
+  async loadSecurityResources() {
+    try {
+      const { data, error } = await supabase
+        .from('security_resources')
+        .select('*')
+        .eq('event_id', this.currentEvent)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      this.securityResources = data || [];
+      this.renderSecurityResources();
+    } catch (error) {
+      console.error('Error loading security resources:', error);
+      const container = document.getElementById('security-resources-container');
+      if (container) container.innerHTML = `<div class="empty-state">Failed to load resources.</div>`;
+    }
+  }
+
+  renderSecurityResources() {
+    const container = document.getElementById('security-resources-container');
+    if (!container) return;
+
+    if (this.securityResources.length === 0) {
+      container.innerHTML = `<div class="empty-state">No resources logged yet. Click "+ Add Resource" to add vehicles, personnel, equipment etc.</div>`;
+    } else {
+      container.innerHTML = this.securityResources.map(resource => `
+        <div class="checkpoint-item">
+          <div class="resource-card-header">
+            <div class="checkpoint-status">${escapeHtmlSecurity(resource.resource_type)}<span class="resource-quantity">×${resource.quantity || 1}</span></div>
+            <div class="resource-card-actions">
+              <button class="btn btn-secondary" data-edit-resource="${resource.id}">Edit</button>
+              <button class="btn btn-danger" data-delete-resource="${resource.id}">Delete</button>
+            </div>
+          </div>
+          <div class="checkpoint-info">
+            ${resource.description ? `
+              <div class="info-row">
+                <span>${escapeHtmlSecurity(resource.description)}</span>
+              </div>
+            ` : ''}
+            <div class="info-row">
+              <span class="label">Location:</span>
+              <span>${escapeHtmlSecurity(resource.location || 'Unknown')}</span>
+            </div>
+            ${resource.contact_person ? `
+              <div class="info-row">
+                <span class="label">Contact:</span>
+                <span>${escapeHtmlSecurity(resource.contact_person)}${resource.contact_phone ? ` (${escapeHtmlSecurity(resource.contact_phone)})` : ''}</span>
+              </div>
+            ` : ''}
+            <div class="checkpoint-status-badge">
+              <span class="status-badge status-${resource.status}">${resource.status}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('[data-edit-resource]').forEach(btn => {
+        btn.addEventListener('click', () => this.openResourceModal(btn.dataset.editResource));
+      });
+      document.querySelectorAll('[data-delete-resource]').forEach(btn => {
+        btn.addEventListener('click', () => this.deleteResource(btn.dataset.deleteResource));
+      });
+    }
+
+    const availableQty = this.securityResources
+      .filter(r => r.status === 'available')
+      .reduce((sum, r) => sum + (r.quantity || 1), 0);
+    document.getElementById('security-resources-count').textContent = availableQty;
+  }
+
+  openResourceModal(resourceId) {
+    this.editingResourceId = resourceId;
+    const modal = document.getElementById('resource-modal');
+    const title = document.getElementById('resource-modal-title');
+    const saveBtn = document.getElementById('save-resource-btn');
+    const messageDiv = document.getElementById('resource-form-message');
+    const form = document.getElementById('resource-form');
+
+    form.reset();
+    messageDiv.textContent = '';
+    messageDiv.className = 'add-message';
+
+    if (resourceId) {
+      const resource = this.securityResources.find(r => r.id === resourceId);
+      if (!resource) return;
+
+      title.textContent = 'Edit Security Resource';
+      saveBtn.textContent = 'Save Changes';
+      document.getElementById('resource-type').value = resource.resource_type || '';
+      document.getElementById('resource-quantity').value = resource.quantity || 1;
+      document.getElementById('resource-status').value = resource.status || 'available';
+      document.getElementById('resource-location').value = resource.location || '';
+      document.getElementById('resource-description').value = resource.description || '';
+      document.getElementById('resource-contact-person').value = resource.contact_person || '';
+      document.getElementById('resource-contact-phone').value = resource.contact_phone || '';
+    } else {
+      title.textContent = 'Add Security Resource';
+      saveBtn.textContent = 'Add Resource';
+      document.getElementById('resource-quantity').value = 1;
+      document.getElementById('resource-status').value = 'available';
+    }
+
+    modal.style.display = 'flex';
+  }
+
+  async handleResourceSubmit() {
+    const messageDiv = document.getElementById('resource-form-message');
+    const saveBtn = document.getElementById('save-resource-btn');
+
+    messageDiv.textContent = '';
+    messageDiv.className = 'add-message';
+
+    const resourceType = document.getElementById('resource-type').value;
+    const quantity = parseInt(document.getElementById('resource-quantity').value, 10);
+
+    if (!resourceType || !quantity || quantity < 1) {
+      messageDiv.className = 'add-message error';
+      messageDiv.textContent = 'Please select a resource type and a valid quantity.';
+      return;
+    }
+
+    const data = {
+      event_id: this.currentEvent,
+      resource_type: resourceType,
+      quantity,
+      status: document.getElementById('resource-status').value,
+      location: document.getElementById('resource-location').value.trim() || null,
+      description: document.getElementById('resource-description').value.trim() || null,
+      contact_person: document.getElementById('resource-contact-person').value.trim() || null,
+      contact_phone: document.getElementById('resource-contact-phone').value.trim() || null
+    };
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    try {
+      if (this.editingResourceId) {
+        const { error } = await supabase
+          .from('security_resources')
+          .update(data)
+          .eq('id', this.editingResourceId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('security_resources')
+          .insert([data]);
+        if (error) throw error;
+      }
+
+      document.getElementById('resource-modal').style.display = 'none';
+      await this.loadSecurityResources();
+    } catch (error) {
+      console.error('Error saving security resource:', error);
+      messageDiv.className = 'add-message error';
+      messageDiv.textContent = error.message || 'Failed to save resource. Please try again.';
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = this.editingResourceId ? 'Save Changes' : 'Add Resource';
+    }
+  }
+
+  async deleteResource(resourceId) {
+    if (!confirm('Delete this security resource?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('security_resources')
+        .delete()
+        .eq('id', resourceId);
+
+      if (error) throw error;
+
+      await this.loadSecurityResources();
+    } catch (error) {
+      console.error('Error deleting security resource:', error);
+      alert('Failed to delete resource.');
+    }
+  }
+
   getThreatEmoji(level) {
     const emojis = {
       'green': '🟢',
@@ -577,6 +835,30 @@ export class SecurityPage {
         this.onOpenVendors('security');
       });
     }
+
+    // Add/Edit Resource modal
+    document.getElementById('add-resource-btn').addEventListener('click', () => {
+      this.openResourceModal(null);
+    });
+
+    document.getElementById('close-resource-modal').addEventListener('click', () => {
+      document.getElementById('resource-modal').style.display = 'none';
+    });
+
+    document.getElementById('cancel-resource').addEventListener('click', () => {
+      document.getElementById('resource-modal').style.display = 'none';
+    });
+
+    document.getElementById('resource-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'resource-modal') {
+        document.getElementById('resource-modal').style.display = 'none';
+      }
+    });
+
+    document.getElementById('resource-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleResourceSubmit();
+    });
 
     document.getElementById('close-modal').addEventListener('click', () => {
       document.getElementById('incident-modal').style.display = 'none';

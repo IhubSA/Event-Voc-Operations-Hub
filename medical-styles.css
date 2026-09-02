@@ -527,6 +527,89 @@
   width: 100%;
 }
 
+/* Header row for a sidebar section that has an action button (e.g.
+   "Medical Resources" + "+ Add Resource") -- overrides the plain
+   .resources-section h3 border/margin so the border sits under the whole
+   row instead of just the heading text. */
+.resources-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.resources-section-header h3 {
+  margin: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.resource-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.resource-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.resource-card-actions .btn {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+}
+
+.resource-quantity {
+  display: inline-block;
+  background: rgba(0, 102, 204, 0.12);
+  color: var(--primary);
+  border-radius: 6px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-left: 0.5rem;
+}
+
+/* Pairs two .form-group fields on one row (e.g. Quantity + Status) inside
+   the existing incident-style modal forms. */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.25rem;
+}
+
+.form-row .form-group {
+  margin-bottom: 0;
+}
+
+.add-message {
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  display: none;
+  font-size: 0.9rem;
+}
+
+.add-message.success {
+  display: block;
+  background: rgba(76, 175, 80, 0.1);
+  border: 2px solid var(--success);
+  color: var(--success);
+}
+
+.add-message.error {
+  display: block;
+  background: rgba(244, 67, 54, 0.1);
+  border: 2px solid var(--critical);
+  color: var(--critical);
+}
+
 /* Enhanced Metrics Container */
 .metrics-container {
   display: flex;

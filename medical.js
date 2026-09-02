@@ -13,6 +13,7 @@ export class MedicalPage {
     this.unsubscribe = null;
     this.medicalCategoryId = null;
     this.onOpenVendors = null;
+    this.editingResourceId = null;
   }
 
   async render(eventId, onBack, currentUser, onOpenClubSettings, onOpenVendors) {
@@ -73,7 +74,10 @@ export class MedicalPage {
 
           <div class="medical-sidebar">
             <div class="resources-section">
-              <h3>Medical Resources</h3>
+              <div class="resources-section-header">
+                <h3>Medical Resources</h3>
+                <button type="button" class="btn btn-sm btn-primary" id="add-resource-btn">+ Add Resource</button>
+              </div>
               <div class="resources-list" id="resources-container">
                 <div class="loading">Loading resources...</div>
               </div>
@@ -151,6 +155,66 @@ export class MedicalPage {
             </form>
           </div>
         </div>
+
+        <div class="new-incident-modal" id="resource-modal" style="display: none !important;">
+          <div class="modal-content">
+            <button class="modal-close" id="close-resource-modal">&times;</button>
+            <h2 id="resource-modal-title">Add Medical Resource</h2>
+            <form id="resource-form">
+              <div class="form-group">
+                <label>Resource Type</label>
+                <select id="resource-type" required>
+                  <option value="">Select a type</option>
+                  <option value="Ambulance">Ambulance</option>
+                  <option value="First Aid Vehicle">First Aid Vehicle</option>
+                  <option value="First Aid Post">First Aid Post / Station</option>
+                  <option value="Doctor">Doctor</option>
+                  <option value="Paramedic">Paramedic</option>
+                  <option value="Nurse">Nurse</option>
+                  <option value="Medical Equipment">Medical Equipment</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Quantity</label>
+                  <input type="number" id="resource-quantity" min="1" value="1" required />
+                </div>
+                <div class="form-group">
+                  <label>Status</label>
+                  <select id="resource-status" required>
+                    <option value="available">Available</option>
+                    <option value="in-use">In Use</option>
+                    <option value="unavailable">Unavailable</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="resource-location" placeholder="e.g. Main Gate, Zone 3" />
+              </div>
+              <div class="form-group">
+                <label>Description / Notes</label>
+                <textarea id="resource-description" rows="2" placeholder="Any extra detail about this resource"></textarea>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Contact Person</label>
+                  <input type="text" id="resource-contact-person" />
+                </div>
+                <div class="form-group">
+                  <label>Contact Phone</label>
+                  <input type="tel" id="resource-contact-phone" />
+                </div>
+              </div>
+              <div id="resource-form-message" class="add-message"></div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancel-resource">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="save-resource-btn">Add Resource</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     `;
 
@@ -224,11 +288,13 @@ export class MedicalPage {
 
   async loadMedicalResources() {
     try {
+      // Load every resource regardless of status -- staff need to see and
+      // manage in-use/unavailable ones too, not just what's free right now.
       const { data, error } = await supabase
         .from('medical_resources')
         .select('*')
         .eq('event_id', this.currentEvent)
-        .eq('status', 'available');
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
@@ -364,25 +430,33 @@ export class MedicalPage {
     const container = document.getElementById('resources-container');
 
     if (this.medicalResources.length === 0) {
-      container.innerHTML = `<div class="empty-state">No available resources</div>`;
+      container.innerHTML = `<div class="empty-state">No resources logged yet. Click "+ Add Resource" to add ambulances, personnel, equipment etc.</div>`;
       return;
     }
 
     container.innerHTML = this.medicalResources.map(resource => `
       <div class="resource-card">
-        <div class="resource-type">${resource.resource_type}</div>
-        <div class="resource-info">
-          <div class="info-row">
-            <span>${resource.description || 'N/A'}</span>
+        <div class="resource-card-header">
+          <div class="resource-type">${escapeHtmlMedical(resource.resource_type)}<span class="resource-quantity">×${resource.quantity || 1}</span></div>
+          <div class="resource-card-actions">
+            <button class="btn btn-secondary" data-edit-resource="${resource.id}">Edit</button>
+            <button class="btn btn-danger" data-delete-resource="${resource.id}">Delete</button>
           </div>
+        </div>
+        <div class="resource-info">
+          ${resource.description ? `
+            <div class="info-row">
+              <span>${escapeHtmlMedical(resource.description)}</span>
+            </div>
+          ` : ''}
           <div class="info-row">
             <span class="label">Location:</span>
-            <span>${resource.location || 'Unknown'}</span>
+            <span>${escapeHtmlMedical(resource.location || 'Unknown')}</span>
           </div>
           ${resource.contact_person ? `
             <div class="info-row">
               <span class="label">Contact:</span>
-              <span>${resource.contact_person}</span>
+              <span>${escapeHtmlMedical(resource.contact_person)}${resource.contact_phone ? ` (${escapeHtmlMedical(resource.contact_phone)})` : ''}</span>
             </div>
           ` : ''}
           <div class="resource-status">
@@ -392,8 +466,127 @@ export class MedicalPage {
       </div>
     `).join('');
 
-    // Update resources count
-    document.getElementById('resources-count').textContent = this.medicalResources.length;
+    document.querySelectorAll('[data-edit-resource]').forEach(btn => {
+      btn.addEventListener('click', () => this.openResourceModal(btn.dataset.editResource));
+    });
+    document.querySelectorAll('[data-delete-resource]').forEach(btn => {
+      btn.addEventListener('click', () => this.deleteResource(btn.dataset.deleteResource));
+    });
+
+    // "Resources Available" = total quantity of resources currently marked available
+    const availableQty = this.medicalResources
+      .filter(r => r.status === 'available')
+      .reduce((sum, r) => sum + (r.quantity || 1), 0);
+    document.getElementById('resources-count').textContent = availableQty;
+  }
+
+  openResourceModal(resourceId) {
+    this.editingResourceId = resourceId;
+    const modal = document.getElementById('resource-modal');
+    const title = document.getElementById('resource-modal-title');
+    const saveBtn = document.getElementById('save-resource-btn');
+    const messageDiv = document.getElementById('resource-form-message');
+    const form = document.getElementById('resource-form');
+
+    form.reset();
+    messageDiv.textContent = '';
+    messageDiv.className = 'add-message';
+
+    if (resourceId) {
+      const resource = this.medicalResources.find(r => r.id === resourceId);
+      if (!resource) return;
+
+      title.textContent = 'Edit Medical Resource';
+      saveBtn.textContent = 'Save Changes';
+      document.getElementById('resource-type').value = resource.resource_type || '';
+      document.getElementById('resource-quantity').value = resource.quantity || 1;
+      document.getElementById('resource-status').value = resource.status || 'available';
+      document.getElementById('resource-location').value = resource.location || '';
+      document.getElementById('resource-description').value = resource.description || '';
+      document.getElementById('resource-contact-person').value = resource.contact_person || '';
+      document.getElementById('resource-contact-phone').value = resource.contact_phone || '';
+    } else {
+      title.textContent = 'Add Medical Resource';
+      saveBtn.textContent = 'Add Resource';
+      document.getElementById('resource-quantity').value = 1;
+      document.getElementById('resource-status').value = 'available';
+    }
+
+    modal.style.display = 'flex';
+  }
+
+  async handleResourceSubmit() {
+    const messageDiv = document.getElementById('resource-form-message');
+    const saveBtn = document.getElementById('save-resource-btn');
+
+    messageDiv.textContent = '';
+    messageDiv.className = 'add-message';
+
+    const resourceType = document.getElementById('resource-type').value;
+    const quantity = parseInt(document.getElementById('resource-quantity').value, 10);
+
+    if (!resourceType || !quantity || quantity < 1) {
+      messageDiv.className = 'add-message error';
+      messageDiv.textContent = 'Please select a resource type and a valid quantity.';
+      return;
+    }
+
+    const data = {
+      event_id: this.currentEvent,
+      resource_type: resourceType,
+      quantity,
+      status: document.getElementById('resource-status').value,
+      location: document.getElementById('resource-location').value.trim() || null,
+      description: document.getElementById('resource-description').value.trim() || null,
+      contact_person: document.getElementById('resource-contact-person').value.trim() || null,
+      contact_phone: document.getElementById('resource-contact-phone').value.trim() || null
+    };
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    try {
+      if (this.editingResourceId) {
+        const { error } = await supabase
+          .from('medical_resources')
+          .update(data)
+          .eq('id', this.editingResourceId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('medical_resources')
+          .insert([data]);
+        if (error) throw error;
+      }
+
+      document.getElementById('resource-modal').style.display = 'none';
+      await this.loadMedicalResources();
+    } catch (error) {
+      console.error('Error saving medical resource:', error);
+      messageDiv.className = 'add-message error';
+      messageDiv.textContent = error.message || 'Failed to save resource. Please try again.';
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = this.editingResourceId ? 'Save Changes' : 'Add Resource';
+    }
+  }
+
+  async deleteResource(resourceId) {
+    if (!confirm('Delete this medical resource?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('medical_resources')
+        .delete()
+        .eq('id', resourceId);
+
+      if (error) throw error;
+
+      await this.loadMedicalResources();
+    } catch (error) {
+      console.error('Error deleting medical resource:', error);
+      alert('Failed to delete resource.');
+    }
   }
 
   updateStats() {
@@ -530,6 +723,30 @@ export class MedicalPage {
         this.onOpenVendors('medical');
       });
     }
+
+    // Add/Edit Resource modal
+    document.getElementById('add-resource-btn').addEventListener('click', () => {
+      this.openResourceModal(null);
+    });
+
+    document.getElementById('close-resource-modal').addEventListener('click', () => {
+      document.getElementById('resource-modal').style.display = 'none';
+    });
+
+    document.getElementById('cancel-resource').addEventListener('click', () => {
+      document.getElementById('resource-modal').style.display = 'none';
+    });
+
+    document.getElementById('resource-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'resource-modal') {
+        document.getElementById('resource-modal').style.display = 'none';
+      }
+    });
+
+    document.getElementById('resource-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleResourceSubmit();
+    });
 
     // Close modals
     document.getElementById('close-modal').addEventListener('click', () => {
