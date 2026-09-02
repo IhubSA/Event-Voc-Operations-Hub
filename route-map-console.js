@@ -778,26 +778,34 @@ export class RouteMapConsole {
     };
 
     try {
+      const routeData = {
+        event_id: this.eventId,
+        org_id: this.orgId,
+        name: routeName,
+        type: routeType,
+        waypoints: waypoints.length > 0 ? waypoints : null,
+        marshals: marshals.length > 0 ? marshals : null,
+        water_tables: waterTables.length > 0 ? waterTables : null,
+        medical_stations: medicalStations.length > 0 ? medicalStations : null,
+        security_vehicles: securityVehicles.length > 0 ? securityVehicles : null,
+        start_finish: Object.keys(startFinish).length > 0 ? startFinish : null,
+        status: 'active',
+        created_at: new Date().toISOString()
+      };
+
+      console.log('Saving route with data:', routeData);
+
       const { data, error } = await supabase
         .from('routes')
-        .insert({
-          event_id: this.eventId,
-          org_id: this.orgId,
-          name: routeName,
-          type: routeType,
-          waypoints: waypoints,
-          marshals: marshals,
-          water_tables: waterTables,
-          medical_stations: medicalStations,
-          security_vehicles: securityVehicles,
-          start_finish: startFinish,
-          status: 'active',
-          created_at: new Date().toISOString()
-        })
+        .insert(routeData)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
+      console.log('Route saved successfully:', data);
       this.showToast('Route saved successfully!', 'success');
       this.clearDrawing();
       document.getElementById('route-name-input').value = '';
