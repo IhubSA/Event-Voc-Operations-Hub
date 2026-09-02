@@ -31,19 +31,29 @@ export class IntegratedDashboard {
     const navbarHtml = navbar.render();
 
     // Create dashboard container
+    const isEventEnded = currentEvent.status === 'completed' || currentEvent.status === 'ended';
     const dashboardHtml = `
       ${navbarHtml}
-      <div class="integrated-dashboard">
+      <div class="integrated-dashboard ${isEventEnded ? 'event-ended' : ''}">
+        ${isEventEnded ? `
+          <div class="event-ended-banner">
+            <span>🏁 This event has been ended and is now archived</span>
+          </div>
+        ` : ''}
+
         <div class="dashboard-header">
           <div class="header-left">
-            <h1>${currentEvent.name}</h1>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <h1>${currentEvent.name}</h1>
+              ${isEventEnded ? `<span class="status-badge-ended">ENDED</span>` : ''}
+            </div>
             <div class="header-meta">
               <span>📍 ${currentEvent.location}</span>
               <span>📅 ${new Date(currentEvent.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
             </div>
           </div>
           <div class="header-buttons">
-            <button class="btn btn-secondary" id="settings-btn">⚙️ Event Settings</button>
+            <button class="btn btn-secondary" id="settings-btn" ${isEventEnded ? 'disabled' : ''}>⚙️ Event Settings</button>
             <button class="btn btn-secondary" id="back-btn">← Back to Events</button>
           </div>
         </div>
@@ -259,6 +269,36 @@ export class IntegratedDashboard {
         padding: 2rem;
       }
 
+      .integrated-dashboard.event-ended {
+        opacity: 0.85;
+      }
+
+      .event-ended-banner {
+        background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 82, 82, 0.1));
+        border: 2px solid #FF9800;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #FFB74D;
+        box-shadow: 0 4px 16px rgba(255, 152, 0, 0.15);
+      }
+
+      .status-badge-ended {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #FF9800, #FFB74D);
+        color: white;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+      }
+
       .dashboard-header {
         display: flex;
         justify-content: space-between;
@@ -293,6 +333,16 @@ export class IntegratedDashboard {
 
       .header-buttons .btn {
         white-space: nowrap;
+      }
+
+      .header-buttons .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .header-buttons .btn:disabled:hover {
+        transform: none;
+        box-shadow: var(--shadow-md);
       }
 
       .metrics-section {
