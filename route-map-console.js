@@ -1048,8 +1048,10 @@ export class RouteMapConsole {
           return `
             <div class="route-item">
               <div class="route-header">
-                <span class="route-name">${route.name}</span>
-                <span class="route-type" style="background-color: ${this.colors[route.type]}">${route.type.replace('_', ' ')}</span>
+                <div class="route-name-section">
+                  <span class="route-name">${route.name || 'Unnamed Route'}</span>
+                  <span class="route-type-small" style="background-color: ${this.colors[route.type]}">${route.type.replace('_', ' ')}</span>
+                </div>
               </div>
 
               <div class="route-toggles">
@@ -1608,22 +1610,33 @@ export class RouteMapConsole {
 
       .route-header {
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-start;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+      }
+
+      .route-name-section {
+        display: flex;
         align-items: center;
-        margin-bottom: 0.5rem;
+        gap: 0.5rem;
+        flex-wrap: wrap;
       }
 
       .route-name {
-        font-weight: 600;
-        font-size: 0.9rem;
+        font-weight: 700;
+        font-size: 1rem;
+        color: #222;
+        flex: 1;
+        min-width: 150px;
       }
 
-      .route-type {
+      .route-type-small {
         color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 3px;
-        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
         font-weight: 600;
+        white-space: nowrap;
       }
 
       .route-toggles {
