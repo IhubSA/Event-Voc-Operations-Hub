@@ -496,6 +496,37 @@
   border: 1px solid rgba(244, 67, 54, 0.3);
 }
 
+/* Vendor statuses (used by the Medical Service Providers list, sourced
+   from the Vendors module) */
+.status-invited {
+  background-color: rgba(158, 158, 158, 0.15);
+  color: #757575;
+  border: 1px solid rgba(158, 158, 158, 0.3);
+}
+
+.status-submitted {
+  background-color: rgba(33, 150, 243, 0.15);
+  color: #2196F3;
+  border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+.status-approved {
+  background-color: rgba(76, 175, 80, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status-rejected {
+  background-color: rgba(244, 67, 54, 0.15);
+  color: var(--critical);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.provider-manage-btn {
+  margin-top: 1.25rem;
+  width: 100%;
+}
+
 /* Enhanced Metrics Container */
 .metrics-container {
   display: flex;

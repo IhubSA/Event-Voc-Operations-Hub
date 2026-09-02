@@ -326,6 +326,21 @@ function onOpenClubSettings() {
   currentPage = clubSettings;
 }
 
+// Jump straight into the Vendors module, pre-filtered to one category --
+// used by the "Manage in Vendors" links inside Medical/Security so staff
+// can go straight from "we need to review our providers" to the right
+// filtered list instead of the unfiltered full vendors table.
+function goToVendorsForCategory(category) {
+  const vendorsPage = new VendorsPage();
+
+  if (currentPage) {
+    currentPage.destroy?.();
+  }
+
+  vendorsPage.render(currentEvent?.id || currentEvent, currentUser, () => showIntegratedDashboard(), onOpenClubSettings, category);
+  currentPage = vendorsPage;
+}
+
 function loadModule(moduleName) {
   const backToIntegratedDashboard = () => {
     showIntegratedDashboard();
@@ -341,7 +356,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    medicalPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard, currentUser, onOpenClubSettings);
+    medicalPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard, currentUser, onOpenClubSettings, goToVendorsForCategory);
     currentPage = medicalPage;
   } else if (moduleName === 'security') {
     const container = document.getElementById('app');
@@ -351,7 +366,7 @@ function loadModule(moduleName) {
       currentPage.destroy?.();
     }
 
-    securityPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard, currentUser, onOpenClubSettings);
+    securityPage.render(currentEvent?.id || currentEvent, backToIntegratedDashboard, currentUser, onOpenClubSettings, goToVendorsForCategory);
     currentPage = securityPage;
   } else if (moduleName === 'safety') {
     const container = document.getElementById('app');

@@ -8,15 +8,18 @@ export class SecurityPage {
     this.currentEvent = null;
     this.securityIncidents = [];
     this.securityCheckpoints = [];
+    this.securityProviders = [];
     this.selectedIncident = null;
     this.unsubscribe = null;
     this.securityCategoryId = null;
     this.overallThreatLevel = 'green';
+    this.onOpenVendors = null;
   }
 
-  async render(eventId, onBack, currentUser, onOpenClubSettings) {
+  async render(eventId, onBack, currentUser, onOpenClubSettings, onOpenVendors) {
     this.currentEvent = eventId;
     this.onBack = onBack;
+    this.onOpenVendors = onOpenVendors || null;
     const container = document.getElementById('app');
 
     // Fetch the Security incident category ID
@@ -79,6 +82,13 @@ export class SecurityPage {
               <div class="checkpoints-list" id="checkpoints-container">
                 <div class="loading">Loading checkpoints...</div>
               </div>
+            </div>
+            <div class="checkpoints-section providers-section">
+              <h3>Contracted Security Providers</h3>
+              <div class="checkpoints-list" id="security-providers-container">
+                <div class="loading">Loading providers...</div>
+              </div>
+              ${this.onOpenVendors ? '<button type="button" class="btn btn-sm btn-secondary provider-manage-btn" id="manage-security-vendors-btn">Manage in Vendors →</button>' : ''}
             </div>
             <div class="investigation-metrics">
               <h3>Investigation Status</h3>
@@ -162,6 +172,7 @@ export class SecurityPage {
     // Load data
     await this.loadSecurityIncidents();
     await this.loadSecurityCheckpoints();
+    await this.loadSecurityProviders();
 
     // Setup event listeners
     this.setupEventListeners();
@@ -235,6 +246,68 @@ export class SecurityPage {
     } catch (error) {
       console.error('Error loading security checkpoints:', error);
     }
+  }
+
+  // Security vendors (guarding/patrol companies etc.) registered through
+  // the Vendors module for this event -- approved ones are the actual
+  // contracted providers on site, so they belong here too.
+  async loadSecurityProviders() {
+    try {
+      const { data, error } = await supabase
+        .from('vendors')
+        .select('*')
+        .eq('event_id', this.currentEvent)
+        .eq('category', 'security')
+        .order('business_name', { ascending: true });
+
+      if (error) throw error;
+
+      this.securityProviders = data || [];
+      this.renderSecurityProviders();
+    } catch (error) {
+      console.error('Error loading security service providers:', error);
+      const container = document.getElementById('security-providers-container');
+      if (container) container.innerHTML = `<div class="empty-state">Failed to load service providers.</div>`;
+    }
+  }
+
+  renderSecurityProviders() {
+    const container = document.getElementById('security-providers-container');
+    if (!container) return;
+
+    if (this.securityProviders.length === 0) {
+      container.innerHTML = `<div class="empty-state">No security providers registered yet. Add one from the Vendors module.</div>`;
+      return;
+    }
+
+    container.innerHTML = this.securityProviders.map(vendor => `
+      <div class="checkpoint-item">
+        <div class="checkpoint-status">${escapeHtmlSecurity(vendor.business_name)}</div>
+        <div class="checkpoint-info">
+          ${vendor.contact_name ? `
+            <div class="info-row">
+              <span class="label">Contact:</span>
+              <span>${escapeHtmlSecurity(vendor.contact_name)}</span>
+            </div>
+          ` : ''}
+          ${vendor.contact_phone ? `
+            <div class="info-row">
+              <span class="label">Phone:</span>
+              <span>${escapeHtmlSecurity(vendor.contact_phone)}</span>
+            </div>
+          ` : ''}
+          ${vendor.contact_email ? `
+            <div class="info-row">
+              <span class="label">Email:</span>
+              <span>${escapeHtmlSecurity(vendor.contact_email)}</span>
+            </div>
+          ` : ''}
+          <div class="checkpoint-status-badge">
+            <span class="status-badge status-${vendor.status}">${vendor.status}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
   }
 
   calculateThreatLevel() {
@@ -497,6 +570,14 @@ export class SecurityPage {
       document.getElementById('new-incident-modal').style.display = 'flex';
     });
 
+    // Manage security providers in the Vendors module
+    const manageVendorsBtn = document.getElementById('manage-security-vendors-btn');
+    if (manageVendorsBtn && this.onOpenVendors) {
+      manageVendorsBtn.addEventListener('click', () => {
+        this.onOpenVendors('security');
+      });
+    }
+
     document.getElementById('close-modal').addEventListener('click', () => {
       document.getElementById('incident-modal').style.display = 'none';
     });
@@ -638,4 +719,9 @@ export class SecurityPage {
       this.unsubscribe.unsubscribe();
     }
   }
+}
+
+function escapeHtmlSecurity(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }

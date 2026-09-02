@@ -8,14 +8,17 @@ export class MedicalPage {
     this.currentEvent = null;
     this.medicalIncidents = [];
     this.medicalResources = [];
+    this.medicalProviders = [];
     this.selectedIncident = null;
     this.unsubscribe = null;
     this.medicalCategoryId = null;
+    this.onOpenVendors = null;
   }
 
-  async render(eventId, onBack, currentUser, onOpenClubSettings) {
+  async render(eventId, onBack, currentUser, onOpenClubSettings, onOpenVendors) {
     this.currentEvent = eventId;
     this.onBack = onBack;
+    this.onOpenVendors = onOpenVendors || null;
     const container = document.getElementById('app');
 
     // Fetch the Medical incident category ID
@@ -74,6 +77,13 @@ export class MedicalPage {
               <div class="resources-list" id="resources-container">
                 <div class="loading">Loading resources...</div>
               </div>
+            </div>
+            <div class="resources-section providers-section">
+              <h3>Medical Service Providers</h3>
+              <div class="resources-list" id="providers-container">
+                <div class="loading">Loading providers...</div>
+              </div>
+              ${this.onOpenVendors ? '<button type="button" class="btn btn-sm btn-secondary provider-manage-btn" id="manage-medical-vendors-btn">Manage in Vendors →</button>' : ''}
             </div>
             <div class="response-times-section">
               <h3>Response Metrics</h3>
@@ -149,6 +159,7 @@ export class MedicalPage {
     // Load data
     await this.loadMedicalIncidents();
     await this.loadMedicalResources();
+    await this.loadMedicalProviders();
 
     // Setup event listeners
     this.setupEventListeners();
@@ -226,6 +237,68 @@ export class MedicalPage {
     } catch (error) {
       console.error('Error loading medical resources:', error);
     }
+  }
+
+  // Medical vendors (ambulance services, doctors, first-aid providers etc.)
+  // registered through the Vendors module for this event -- approved ones
+  // are the actual service providers on site, so they belong here too.
+  async loadMedicalProviders() {
+    try {
+      const { data, error } = await supabase
+        .from('vendors')
+        .select('*')
+        .eq('event_id', this.currentEvent)
+        .eq('category', 'medical')
+        .order('business_name', { ascending: true });
+
+      if (error) throw error;
+
+      this.medicalProviders = data || [];
+      this.renderProviders();
+    } catch (error) {
+      console.error('Error loading medical service providers:', error);
+      const container = document.getElementById('providers-container');
+      if (container) container.innerHTML = `<div class="empty-state">Failed to load service providers.</div>`;
+    }
+  }
+
+  renderProviders() {
+    const container = document.getElementById('providers-container');
+    if (!container) return;
+
+    if (this.medicalProviders.length === 0) {
+      container.innerHTML = `<div class="empty-state">No medical service providers registered yet. Add one from the Vendors module.</div>`;
+      return;
+    }
+
+    container.innerHTML = this.medicalProviders.map(vendor => `
+      <div class="resource-card">
+        <div class="resource-type">${escapeHtmlMedical(vendor.business_name)}</div>
+        <div class="resource-info">
+          ${vendor.contact_name ? `
+            <div class="info-row">
+              <span class="label">Contact:</span>
+              <span>${escapeHtmlMedical(vendor.contact_name)}</span>
+            </div>
+          ` : ''}
+          ${vendor.contact_phone ? `
+            <div class="info-row">
+              <span class="label">Phone:</span>
+              <span>${escapeHtmlMedical(vendor.contact_phone)}</span>
+            </div>
+          ` : ''}
+          ${vendor.contact_email ? `
+            <div class="info-row">
+              <span class="label">Email:</span>
+              <span>${escapeHtmlMedical(vendor.contact_email)}</span>
+            </div>
+          ` : ''}
+          <div class="resource-status">
+            <span class="status-badge status-${vendor.status}">${vendor.status}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
   }
 
   renderIncidents() {
@@ -450,6 +523,14 @@ export class MedicalPage {
       document.getElementById('new-incident-modal').style.display = 'flex';
     });
 
+    // Manage medical service providers in the Vendors module
+    const manageVendorsBtn = document.getElementById('manage-medical-vendors-btn');
+    if (manageVendorsBtn && this.onOpenVendors) {
+      manageVendorsBtn.addEventListener('click', () => {
+        this.onOpenVendors('medical');
+      });
+    }
+
     // Close modals
     document.getElementById('close-modal').addEventListener('click', () => {
       document.getElementById('incident-modal').style.display = 'none';
@@ -603,4 +684,9 @@ export class MedicalPage {
       this.unsubscribe.unsubscribe();
     }
   }
+}
+
+function escapeHtmlMedical(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }

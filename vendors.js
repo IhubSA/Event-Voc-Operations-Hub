@@ -18,7 +18,7 @@ export class VendorsPage {
     this.currentVendorDocuments = [];
   }
 
-  async render(eventId, currentUser, onBack, onOpenClubSettings) {
+  async render(eventId, currentUser, onBack, onOpenClubSettings, initialCategoryFilter) {
     this.currentEvent = eventId;
     this.currentUser = currentUser;
     this.onBack = onBack;
@@ -172,6 +172,14 @@ export class VendorsPage {
     this.addStyles();
     await this.loadVendors();
     this.setupEventListeners();
+
+    if (initialCategoryFilter) {
+      const categorySelect = document.getElementById('vendor-category-filter');
+      if (categorySelect) {
+        categorySelect.value = initialCategoryFilter;
+        this.renderVendorsTable();
+      }
+    }
   }
 
   getInviteLink(vendorId) {
