@@ -3,6 +3,7 @@
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
 import { wrapWithShell } from './org-branding.js';
+import { icon } from './icons.js';
 
 export class ParticipantsPage {
   constructor() {
@@ -28,7 +29,7 @@ export class ParticipantsPage {
         <div class="participants-header">
           <div class="participants-header-top">
             <h1>Participants Management</h1>
-            <button class="btn btn-secondary btn-small" id="back-btn-participants">← Back to Dashboard</button>
+            <button class="btn btn-secondary btn-small" id="back-btn-participants">${icon('arrow-left')} Back to Dashboard</button>
           </div>
         </div>
 
@@ -48,9 +49,9 @@ export class ParticipantsPage {
             <select id="category-filter">
               <option value="">All Categories</option>
             </select>
-            <button class="btn btn-secondary" id="export-btn">📥 Export List</button>
-            <button class="btn btn-secondary" id="import-btn">📤 Import List</button>
-            <button class="btn btn-primary" id="add-participant-btn">➕ Add Participant</button>
+            <button class="btn btn-secondary" id="export-btn">${icon('download')} Export List</button>
+            <button class="btn btn-secondary" id="import-btn">${icon('upload')} Import List</button>
+            <button class="btn btn-primary" id="add-participant-btn">${icon('plus')} Add Participant</button>
           </div>
         </div>
 
@@ -269,7 +270,7 @@ export class ParticipantsPage {
             <div class="import-intro">
               <p>Upload a CSV file to register multiple participants at once. Each row needs at least a First Name, Last Name and Email — everything else is optional.</p>
               <p>Registration numbers (and bib numbers, if auto-assign is on) are generated automatically; any Registration #, Bib #, Status or acceptance columns in the file are ignored.</p>
-              <button type="button" class="btn btn-secondary btn-small" id="download-import-template-btn">⬇️ Download CSV Template</button>
+              <button type="button" class="btn btn-secondary btn-small" id="download-import-template-btn">${icon('download')} Download CSV Template</button>
             </div>
 
             <div class="import-file-row">
@@ -544,19 +545,19 @@ export class ParticipantsPage {
           ${participant.race_rules_accepted ? `
             <div class="detail-item">
               <span class="label">Race Rules Accepted:</span>
-              <span class="value">✓ Yes</span>
+              <span class="value">${icon('check')} Yes</span>
             </div>
           ` : ''}
           ${participant.terms_accepted ? `
             <div class="detail-item">
               <span class="label">Terms Accepted:</span>
-              <span class="value">✓ Yes</span>
+              <span class="value">${icon('check')} Yes</span>
             </div>
           ` : ''}
           ${participant.privacy_policy_accepted ? `
             <div class="detail-item">
               <span class="label">Privacy Policy Accepted:</span>
-              <span class="value">✓ Yes</span>
+              <span class="value">${icon('check')} Yes</span>
             </div>
           ` : ''}
           ${participant.accepted_at ? `
@@ -957,7 +958,7 @@ export class ParticipantsPage {
 
     resultsDiv.className = `import-results ${issues.length ? 'has-issues' : 'success'}`;
     resultsDiv.innerHTML = `
-      <p class="import-summary-line">${successCount ? '✓' : ''} ${successCount} participant${successCount === 1 ? '' : 's'} imported successfully.</p>
+      <p class="import-summary-line">${successCount} participant${successCount === 1 ? '' : 's'} imported successfully.</p>
       ${issues.length ? `<p>${skippedCount} row${skippedCount === 1 ? '' : 's'} skipped:</p><ul class="import-issues-list">${issues.map(msg => `<li>${escapeHtmlLocal(msg)}</li>`).join('')}</ul>` : ''}
     `;
 
@@ -1117,7 +1118,7 @@ export class ParticipantsPage {
 
       // Show success message
       messageDiv.className = 'add-message success';
-      messageDiv.textContent = `✓ Participant "${data.first_name} ${data.last_name}" added successfully with registration #${registrationNum}`;
+      messageDiv.textContent = `${icon('check')} Participant "${data.first_name} ${data.last_name}" added successfully with registration #${registrationNum}`;
 
       // Reset form
       form.reset();

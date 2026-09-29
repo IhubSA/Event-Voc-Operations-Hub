@@ -2,6 +2,8 @@
 // Central place that loads, caches and renders a club's white-label branding
 // (logo, colors, contact details) so every module page can show it consistently.
 import { supabase } from './supabase.js';
+import { icon } from './icons.js';
+import { renderEventNavHtml, wireEventNav, getEventContext } from './ui.js';
 
 let cachedBranding = null;
 let cachedOrgId = null;
@@ -121,10 +123,10 @@ export function renderSidebarHtml() {
   const addressParts = [b.address, b.city, b.state, b.postal_code, b.country].filter(Boolean);
 
   const rows = [
-    b.phone ? `<div class="org-sidebar-row"><span class="org-sidebar-icon">📞</span><span>${escapeHtml(b.phone)}</span></div>` : '',
-    b.email ? `<div class="org-sidebar-row"><span class="org-sidebar-icon">✉️</span><span>${escapeHtml(b.email)}</span></div>` : '',
-    b.website ? `<div class="org-sidebar-row"><span class="org-sidebar-icon">🌐</span><a href="${escapeHtml(normalizeUrl(b.website))}" target="_blank" rel="noopener noreferrer">${escapeHtml(b.website)}</a></div>` : '',
-    addressParts.length ? `<div class="org-sidebar-row"><span class="org-sidebar-icon">📍</span><span>${escapeHtml(addressParts.join(', '))}</span></div>` : ''
+    b.phone ? `<div class="org-sidebar-row"><span class="org-sidebar-icon">${icon('phone')}</span><span>${escapeHtml(b.phone)}</span></div>` : '',
+    b.email ? `<div class="org-sidebar-row"><span class="org-sidebar-icon">${icon('mail')}</span><span>${escapeHtml(b.email)}</span></div>` : '',
+    b.website ? `<div class="org-sidebar-row"><span class="org-sidebar-icon">${icon('globe')}</span><a href="${escapeHtml(normalizeUrl(b.website))}" target="_blank" rel="noopener noreferrer">${escapeHtml(b.website)}</a></div>` : '',
+    addressParts.length ? `<div class="org-sidebar-row"><span class="org-sidebar-icon">${icon('map-pin')}</span><span>${escapeHtml(addressParts.join(', '))}</span></div>` : ''
   ].filter(Boolean).join('');
 
   const regLink = canEditClubSettings() ? getRegistrationLink() : null;
@@ -133,9 +135,24 @@ export function renderSidebarHtml() {
       <h3>Participant Registration</h3>
       <p class="org-sidebar-reglink-hint">Share this link so participants can register themselves.</p>
       <input type="text" class="org-sidebar-reglink-input" id="sidebar-registration-link" value="${escapeHtml(regLink)}" readonly />
-      <button type="button" class="btn btn-secondary btn-sm btn-full" id="sidebar-copy-registration-link">📋 Copy Link</button>
+      <button type="button" class="btn btn-secondary btn-sm btn-full" id="sidebar-copy-registration-link">${icon('clipboard')} Copy Link</button>
     </div>
   ` : '';
+
+  // Inside an event the sidebar becomes the module navigator, with a compact
+  // club header; on the events list it shows the full club details card.
+  if (getEventContext().event) {
+    return `
+      <aside class="org-sidebar org-sidebar-event">
+        <div class="org-sidebar-brand org-sidebar-brand-compact">
+          ${logo}
+          <div><h2 class="org-sidebar-name">${escapeHtml(b.name || 'Your Club')}</h2>
+          ${b.description ? `<p class="org-sidebar-desc">${escapeHtml(b.description)}</p>` : ''}</div>
+        </div>
+        ${renderEventNavHtml()}
+      </aside>
+    `;
+  }
 
   return `
     <aside class="org-sidebar">
@@ -158,6 +175,7 @@ export function wrapWithShell(navbarHtml, bodyHtml) {
   // innerHTML), so defer wiring to the next tick -- same pattern navbar.js
   // uses for its own buttons.
   setTimeout(() => {
+    wireEventNav();
     const copyBtn = document.getElementById('sidebar-copy-registration-link');
     const linkInput = document.getElementById('sidebar-registration-link');
     if (copyBtn && linkInput) {
@@ -170,11 +188,11 @@ export function wrapWithShell(navbarHtml, bodyHtml) {
           linkInput.select();
           document.execCommand('copy');
         }
-        const original = copyBtn.textContent;
-        copyBtn.textContent = '✅ Copied!';
+        const original = copyBtn.innerHTML;
+        copyBtn.innerHTML = `${icon('check')} Copied!`;
         copyBtn.disabled = true;
         setTimeout(() => {
-          copyBtn.textContent = original;
+          copyBtn.innerHTML = original;
           copyBtn.disabled = false;
         }, 1800);
       });

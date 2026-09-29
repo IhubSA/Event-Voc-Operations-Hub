@@ -1,6 +1,7 @@
 // Staff Dashboard
 // Personal dashboard for staff members to check in/out, view assignments, and manage their profile
 import { supabase } from './supabase.js';
+import { icon } from './icons.js';
 
 export class StaffDashboard {
   constructor() {
@@ -24,7 +25,7 @@ export class StaffDashboard {
         <nav class="staff-navbar">
           <div class="navbar-content">
             <div class="navbar-left">
-              <div class="staff-badge">👥 Staff Portal</div>
+              <div class="staff-badge">${icon('users')} Staff Portal</div>
               <h1 class="navbar-title">Welcome, ${staffData.name}</h1>
             </div>
             <div class="navbar-right">
@@ -82,10 +83,10 @@ export class StaffDashboard {
 
               <div class="checkin-buttons">
                 <button class="btn btn-primary btn-large" id="checkin-btn">
-                  ✓ Check In
+                  ${icon('check')} Check In
                 </button>
                 <button class="btn btn-warning btn-large" id="checkout-btn">
-                  ✗ Check Out
+                  ${icon('x')} Check Out
                 </button>
               </div>
 
@@ -239,12 +240,12 @@ export class StaffDashboard {
 
     if (isCheckedIn) {
       statusDiv.className = 'status-indicator checked-in';
-      statusText.textContent = '✓ Currently Checked In';
+      statusText.textContent = 'Currently Checked In';
       checkinBtn.disabled = true;
       checkoutBtn.disabled = false;
     } else {
       statusDiv.className = 'status-indicator checked-out';
-      statusText.textContent = '✗ Currently Checked Out';
+      statusText.textContent = 'Currently Checked Out';
       checkinBtn.disabled = false;
       checkoutBtn.disabled = true;
     }
@@ -569,13 +570,13 @@ export class StaffDashboard {
       }
 
       .in-time::before {
-        content: '✓ Check In: ';
+        content: '${icon('check')} Check In: ';
         font-weight: 600;
         color: #4CAF50;
       }
 
       .out-time::before {
-        content: '✗ Check Out: ';
+        content: '${icon('x')} Check Out: ';
         font-weight: 600;
         color: #f44336;
       }

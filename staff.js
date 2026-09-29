@@ -2,6 +2,7 @@
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
 import { wrapWithShell } from './org-branding.js';
+import { icon } from './icons.js';
 
 export class StaffPage {
   constructor() {
@@ -30,12 +31,12 @@ export class StaffPage {
         <div class="staff-header">
           <div class="staff-header-top">
             <h1>Staff Management</h1>
-            <button class="btn btn-secondary btn-small" id="back-btn-staff">← Back to Dashboard</button>
+            <button class="btn btn-secondary btn-small" id="back-btn-staff">${icon('arrow-left')} Back to Dashboard</button>
           </div>
         </div>
 
         <div class="staff-controls">
-          <button class="btn btn-primary" id="add-staff-btn">+ Add Staff Member</button>
+          <button class="btn btn-primary" id="add-staff-btn">${icon('plus')} Add Staff Member</button>
           <div class="staff-filters">
             <select id="role-filter">
               <option value="">All Roles</option>
@@ -834,8 +835,8 @@ export class StaffPage {
         marshalLocationCards = this.marshalLocations.map(marshal => `
           <div class="staff-card marshal-location-card">
             <div class="staff-name">${marshal.name}</div>
-            <div class="staff-info">📍 Route: ${marshal.routeName}</div>
-            <div class="staff-info">📌 Position: ${marshal.lat.toFixed(4)}, ${marshal.lng.toFixed(4)}</div>
+            <div class="staff-info">${icon('map-pin')} Route: ${marshal.routeName}</div>
+            <div class="staff-info">${icon('pin')} Position: ${marshal.lat.toFixed(4)}, ${marshal.lng.toFixed(4)}</div>
             <div class="role-badge" style="background: linear-gradient(135deg, #9370DB, #B19CD9); margin-top: 0.75rem;">
               Position on Map
             </div>
@@ -863,9 +864,9 @@ export class StaffPage {
               return `
                 <div class="staff-card">
                   <div class="staff-name">${staff.name}</div>
-                  <div class="staff-info">📧 ${staff.email}</div>
-                  <div class="staff-info">📱 ${staff.phone}</div>
-                  ${staff.alternate_phone ? `<div class="staff-info">📞 ${staff.alternate_phone}</div>` : ''}
+                  <div class="staff-info">${icon('mail')} ${staff.email}</div>
+                  <div class="staff-info">${icon('smartphone')} ${staff.phone}</div>
+                  ${staff.alternate_phone ? `<div class="staff-info">${icon('phone')} ${staff.alternate_phone}</div>` : ''}
                   ${staff.id_number ? `<div class="staff-info">🆔 ${staff.id_number}</div>` : ''}
 
                   ${functionsHtml ? `<div class="staff-functions-list">${functionsHtml}</div>` : ''}
@@ -913,7 +914,7 @@ export class StaffPage {
         <div class="staff-name">${staff.name}</div>
         <div class="staff-info">${staff.staff_roles.map(r => r.role).join(', ')}</div>
 
-        <div class="checkin-status checked-in">✓ Ready to Check In</div>
+        <div class="checkin-status checked-in">${icon('check')} Ready to Check In</div>
 
         <div class="checkin-actions">
           <button class="btn btn-sm btn-success" data-checkin="${staff.id}">Check In</button>
@@ -939,7 +940,7 @@ export class StaffPage {
       container.innerHTML = `
         <div class="loading">
           <p>No assignments yet</p>
-          <button class="btn btn-primary" id="create-assignment-btn" style="margin-top: 1rem;">+ Create Assignment</button>
+          <button class="btn btn-primary" id="create-assignment-btn" style="margin-top: 1rem;">${icon('plus')} Create Assignment</button>
         </div>
       `;
       const createBtn = container.querySelector('#create-assignment-btn');
@@ -958,7 +959,7 @@ export class StaffPage {
       return `
         <div class="assignment-card">
           <div class="staff-name">${staff.name}</div>
-          <div class="staff-info">📧 ${staff.email}</div>
+          <div class="staff-info">${icon('mail')} ${staff.email}</div>
 
           <div class="assignment-details">
             <div class="assignment-title">${assignment.assignment}</div>
@@ -981,7 +982,7 @@ export class StaffPage {
 
     container.innerHTML = `
       <div style="margin-bottom: 1.5rem;">
-        <button class="btn btn-primary" id="create-assignment-btn">+ Create Assignment</button>
+        <button class="btn btn-primary" id="create-assignment-btn">${icon('plus')} Create Assignment</button>
       </div>
       <div class="assignments-grid">
         ${assignmentsHtml}

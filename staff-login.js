@@ -1,6 +1,7 @@
 // Staff Login Page
 // Allows staff members to sign in with their credentials
 import { supabase } from './supabase.js';
+import { icon } from './icons.js';
 
 export class StaffLoginPage {
   constructor() {
@@ -14,7 +15,7 @@ export class StaffLoginPage {
       <div class="staff-login-container">
         <div class="login-card">
           <div class="login-header">
-            <div class="login-logo">👥</div>
+            <div class="login-logo">${icon('users')}</div>
             <h1>Staff Check-In</h1>
             <p>Sign in to manage your assignments and check-in/out</p>
           </div>

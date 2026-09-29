@@ -1,10 +1,20 @@
 // Navbar Component
 import { getOrgBranding, canEditClubSettings } from './org-branding.js';
+import { icon } from './icons.js';
+import { supabase } from './supabase.js';
+import { renderCommandBar, wireCommandBar } from './ui.js';
 
 export class Navbar {
   constructor(currentUser, onLogout, onSwitchToAdmin, onOpenClubSettings) {
     this.currentUser = currentUser;
-    this.onLogout = onLogout;
+    // Several pages passed an empty function here, which left their Logout
+    // button doing nothing. Always fall back to a real sign-out; app.js's auth
+    // listener then returns the user to the landing page.
+    this.onLogout = async () => {
+      try { await onLogout?.(); } catch (e) { console.error(e); }
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) await supabase.auth.signOut();
+    };
     this.onSwitchToAdmin = onSwitchToAdmin;
     this.onOpenClubSettings = onOpenClubSettings;
   }
@@ -22,15 +32,13 @@ export class Navbar {
 
     const showSettingsBtn = this.onOpenClubSettings && canEditClubSettings();
     const settingsButton = showSettingsBtn
-      ? `<button class="btn btn-secondary btn-sm" id="club-settings-btn">⚙️ Club Settings</button>`
+      ? `<button class="btn btn-secondary btn-sm" id="club-settings-btn" title="Club settings">${icon('settings')}<span class="nav-btn-label">Club Settings</span></button>`
       : '';
-    const adminButton = this.onSwitchToAdmin ? `<button class="btn btn-primary btn-sm" id="switch-to-admin-btn">→ Admin Dashboard</button>` : '';
+    const adminButton = this.onSwitchToAdmin ? `<button class="btn btn-primary btn-sm" id="switch-to-admin-btn">${icon('shield')}<span class="nav-btn-label">Admin</span></button>` : '';
+    const initial = (userEmail || 'U').trim().charAt(0).toUpperCase();
 
     const html = `
-      <div class="voc-topbar">
-        <img src="./voc-logo.png" alt="VOC Logo" class="voc-topbar-logo" />
-        <span class="voc-topbar-title">Venue Operations Centre</span>
-      </div>
+      ${renderCommandBar()}
       <nav class="navbar">
         <div class="navbar-brand">
           <img src="${logoSrc}" alt="${brandTitle} Logo" class="navbar-logo" onerror="this.onerror=null;this.src='./voc-logo.png';" />
@@ -40,126 +48,20 @@ export class Navbar {
           </div>
         </div>
         <div class="navbar-end">
-          <span class="user-info">${userEmail}</span>
+          <span class="user-chip" title="${userEmail}"><span class="user-avatar">${initial}</span><span class="user-info">${userEmail}</span></span>
           ${settingsButton}
           ${adminButton}
-          <button class="btn btn-secondary btn-sm" id="logout-btn">Logout</button>
+          <button class="btn btn-secondary btn-sm" id="logout-btn" title="Sign out">${icon('log-out')}<span class="nav-btn-label">Logout</span></button>
         </div>
       </nav>
     `;
 
-    // Add navbar logo styles
-    const style = document.createElement('style');
-    style.textContent = `
-      .voc-topbar {
-        height: 32px;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0 1.5rem;
-        background: #0F1419;
-        border-bottom: 1px solid #334455;
-        position: sticky;
-        top: 0;
-        z-index: 101;
-      }
-
-      /* Stack the club navbar directly under the fixed 32px VOC system bar
-         (main.css gives .navbar its own position:sticky; top:0 -- this
-         override wins by source order since it's injected after that stylesheet) */
-      .navbar {
-        position: sticky;
-        top: 32px;
-      }
-
-      .voc-topbar-logo {
-        height: 16px;
-        width: auto;
-        object-fit: contain;
-      }
-
-      .voc-topbar-title {
-        font-size: 0.7rem;
-        font-weight: 700;
-        color: #78909C;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-      }
-
-      @media (max-width: 768px) {
-        .voc-topbar-title {
-          font-size: 0.6rem;
-        }
-      }
-
-      .navbar-brand {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        flex: 1;
-      }
-
-      .navbar-logo {
-        height: 45px;
-        width: auto;
-        max-width: 160px;
-        object-fit: contain;
-      }
-
-      .navbar-brand-text {
-        display: flex;
-        flex-direction: column;
-        gap: 0.1rem;
-      }
-
-      .navbar-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        letter-spacing: -0.3px;
-      }
-
-      .navbar-powered-by {
-        font-size: 0.7rem;
-        font-weight: 500;
-        color: var(--text-muted, #78909C);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .navbar-end {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-      }
-
-      .user-info {
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-      }
-
-      @media (max-width: 768px) {
-        .navbar-title {
-          display: none;
-        }
-
-        .navbar-powered-by {
-          display: none;
-        }
-
-        .navbar-logo {
-          height: 40px;
-        }
-
-        .user-info {
-          display: none;
-        }
-      }
-    `;
-    document.head.appendChild(style);
+    // Navbar/command-bar styling lives in voc-ui.css (loaded once by index.html)
+    // instead of a new <style> tag being appended on every page render.
 
     // Create a temporary container to add the event listener
     setTimeout(() => {
+      wireCommandBar();
       const logoutBtn = document.getElementById('logout-btn');
       if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {

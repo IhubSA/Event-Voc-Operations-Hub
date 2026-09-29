@@ -3,6 +3,7 @@
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
 import { wrapWithShell, getOrgId } from './org-branding.js';
+import { icon } from './icons.js';
 
 export class EventSettings {
   constructor() {
@@ -23,13 +24,13 @@ export class EventSettings {
     const html = `
       <div class="settings-container">
         <div class="settings-header">
-          <h1>⚙️ Event Settings</h1>
-          <button class="btn btn-secondary" id="back-settings-btn">← Back</button>
+          <h1>${icon('settings')} Event Settings</h1>
+          <button class="btn btn-secondary" id="back-settings-btn">${icon('arrow-left')} Back</button>
         </div>
 
         <div class="settings-content">
           <div class="settings-card">
-            <h2>🌐 Public Registration</h2>
+            <h2>${icon('globe')} Public Registration</h2>
             <p class="setting-description">Let participants sign themselves up for this race with a public link — no login required.</p>
 
             <div class="form-group checkbox-group">
@@ -41,7 +42,7 @@ export class EventSettings {
               <strong>Public link:</strong>
               <div class="reg-link-row">
                 <input type="text" id="registration-link-input" class="setting-input" readonly />
-                <button type="button" class="btn btn-secondary btn-sm" id="copy-registration-link-btn">📋 Copy</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="copy-registration-link-btn">${icon('clipboard')} Copy</button>
               </div>
               <p class="setting-description" style="margin-top:0.75rem;">This one link lists every race your club currently has open for registration — share it once and reuse it for future races.</p>
             </div>
@@ -91,9 +92,9 @@ export class EventSettings {
           </div>
 
           <div class="settings-actions">
-            <button class="btn btn-primary" id="save-settings-btn">💾 Save Settings</button>
-            <button class="btn btn-secondary" id="reset-counters-btn">🔄 Reset Counters</button>
-            <button class="btn btn-success" id="bulk-assign-btn">📋 Bulk Assign Bibs to Unassigned</button>
+            <button class="btn btn-primary" id="save-settings-btn">${icon('save')} Save Settings</button>
+            <button class="btn btn-secondary" id="reset-counters-btn">${icon('refresh')} Reset Counters</button>
+            <button class="btn btn-success" id="bulk-assign-btn">${icon('clipboard')} Bulk Assign Bibs to Unassigned</button>
           </div>
 
           <div id="settings-message" class="settings-message"></div>
@@ -111,7 +112,7 @@ export class EventSettings {
         </div>
 
         <div class="settings-danger-zone">
-          <h3>⚠️ Danger Zone</h3>
+          <h3>${icon('alert-triangle')} Danger Zone</h3>
           <p class="danger-description">These actions are irreversible. Please use with caution.</p>
 
           <div class="danger-actions">
@@ -120,7 +121,7 @@ export class EventSettings {
                 <h4>End Event</h4>
                 <p>Mark this event as completed. The event will be archived and no longer active.</p>
               </div>
-              <button class="btn btn-warning" id="end-event-btn">🏁 End Event</button>
+              <button class="btn btn-warning" id="end-event-btn">${icon('finish')} End Event</button>
             </div>
 
             <div class="danger-action">
@@ -128,7 +129,7 @@ export class EventSettings {
                 <h4>Delete Event</h4>
                 <p>Permanently delete this event and all associated data. This cannot be undone.</p>
               </div>
-              <button class="btn btn-danger" id="delete-event-btn">🗑️ Delete Event</button>
+              <button class="btn btn-danger" id="delete-event-btn">${icon('trash')} Delete Event</button>
             </div>
           </div>
         </div>
@@ -246,7 +247,7 @@ export class EventSettings {
       this.registrationOpen = isOpen;
       this.updateRegistrationLinkBox();
       this.showMessage(
-        isOpen ? '✓ Public registration is now open for this race!' : '✓ Public registration closed for this race.',
+        isOpen ? 'Public registration is now open for this race!' : 'Public registration closed for this race.',
         'success'
       );
     } catch (error) {
@@ -282,7 +283,7 @@ export class EventSettings {
 
       if (error) throw error;
 
-      this.showMessage('✓ Settings saved successfully!', 'success');
+      this.showMessage('Settings saved successfully!', 'success');
       this.updatePreviews();
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -309,7 +310,7 @@ export class EventSettings {
 
       if (error) throw error;
 
-      this.showMessage('✓ Counters reset successfully!', 'success');
+      this.showMessage('Counters reset successfully!', 'success');
       await this.loadSettings();
     } catch (error) {
       console.error('Error resetting counters:', error);
@@ -332,7 +333,7 @@ export class EventSettings {
       if (error) throw error;
 
       const count = data ? data.length : 0;
-      this.showMessage(`✓ Assigned bib numbers to ${count} participant${count !== 1 ? 's' : ''}!`, 'success');
+      this.showMessage(`${icon('check')} Assigned bib numbers to ${count} participant${count !== 1 ? 's' : ''}!`, 'success');
     } catch (error) {
       console.error('Error bulk assigning bibs:', error);
       this.showMessage(error.message || 'Failed to assign bib numbers', 'error');
@@ -360,7 +361,7 @@ export class EventSettings {
       const linkInput = document.getElementById('registration-link-input');
       linkInput.select();
       navigator.clipboard?.writeText(linkInput.value).then(() => {
-        this.showMessage('✓ Link copied to clipboard!', 'success');
+        this.showMessage('Link copied to clipboard!', 'success');
       }).catch(() => {
         this.showMessage('Could not copy automatically — please copy the link manually.', 'error');
       });
@@ -415,7 +416,7 @@ export class EventSettings {
 
       if (error) throw error;
 
-      this.showMessage('✓ Event ended successfully!', 'success');
+      this.showMessage('Event ended successfully!', 'success');
       setTimeout(() => {
         window.location.href = '/';
       }, 2000);
@@ -426,7 +427,7 @@ export class EventSettings {
   }
 
   async handleDeleteEvent() {
-    if (!confirm('⚠️ WARNING: This will permanently delete this event and all associated data. Are you absolutely sure? Type "DELETE" to confirm.')) {
+    if (!confirm('WARNING: This will permanently delete this event and all associated data. Are you absolutely sure? Type "DELETE" to confirm.')) {
       return;
     }
 
@@ -451,7 +452,7 @@ export class EventSettings {
 
       if (error) throw error;
 
-      this.showMessage('✓ Event deleted permanently!', 'success');
+      this.showMessage('Event deleted permanently!', 'success');
       setTimeout(() => {
         window.location.href = '/';
       }, 2000);

@@ -1,5 +1,6 @@
 // Login Page Component - VOC Branded
 import { AuthService } from './auth.js';
+import { icon } from './icons.js';
 
 export class LoginPage {
   constructor() {
@@ -31,21 +32,21 @@ export class LoginPage {
 
             <div class="login-features">
               <div class="feature-item">
-                <span class="feature-icon">🔒</span>
+                <span class="feature-icon">${icon('lock')}</span>
                 <div>
                   <h4>Security</h4>
                   <p>Enterprise-grade security for large-scale events</p>
                 </div>
               </div>
               <div class="feature-item">
-                <span class="feature-icon">📊</span>
+                <span class="feature-icon">${icon('bar-chart')}</span>
                 <div>
                   <h4>Real-Time Operations</h4>
                   <p>Monitor and manage events with live updates</p>
                 </div>
               </div>
               <div class="feature-item">
-                <span class="feature-icon">👥</span>
+                <span class="feature-icon">${icon('users')}</span>
                 <div>
                   <h4>Multi-Module Control</h4>
                   <p>Medical, Security, Safety & Communications</p>
@@ -65,7 +66,7 @@ export class LoginPage {
                 <div class="form-group">
                   <label for="email">Email Address</label>
                   <div class="input-wrapper">
-                    <span class="input-icon">✉️</span>
+                    <span class="input-icon">${icon('mail')}</span>
                     <input
                       type="email"
                       id="email"
@@ -80,7 +81,7 @@ export class LoginPage {
                 <div class="form-group">
                   <label for="password">Password</label>
                   <div class="input-wrapper">
-                    <span class="input-icon">🔐</span>
+                    <span class="input-icon">${icon('lock')}</span>
                     <input
                       type="password"
                       id="password"
@@ -89,7 +90,7 @@ export class LoginPage {
                       placeholder="Enter your password"
                       autocomplete="current-password"
                     />
-                    <button type="button" class="input-toggle" id="password-toggle">👁️</button>
+                    <button type="button" class="input-toggle" id="password-toggle">${icon('eye')}</button>
                   </div>
                 </div>
 
@@ -102,7 +103,7 @@ export class LoginPage {
 
                 <button type="submit" class="btn btn-primary btn-full" id="login-btn">
                   <span class="btn-text">Sign In</span>
-                  <span class="btn-spinner" style="display: none;">⏳</span>
+                  <span class="btn-spinner" style="display: none;">${icon('loader')}</span>
                 </button>
 
                 <div id="error-message" class="error-message"></div>
@@ -110,9 +111,9 @@ export class LoginPage {
 
               <div class="login-footer">
                 <div class="divider">
-                  <span>Demo Access</span>
+                  <span>Need access?</span>
                 </div>
-                <p class="demo-text">Demo credentials available for testing</p>
+                <p class="demo-text">${icon('shield-check')} Accounts are issued by your club administrator. Contact them if you can't sign in.</p>
               </div>
             </div>
           </div>
@@ -586,7 +587,7 @@ export class LoginPage {
       e.preventDefault();
       const isPassword = passwordInput.type === 'password';
       passwordInput.type = isPassword ? 'text' : 'password';
-      passwordToggle.textContent = isPassword ? '🙈' : '👁️';
+      passwordToggle.innerHTML = isPassword ? icon('eye-off') : icon('eye');
     });
 
     // Setup form submission

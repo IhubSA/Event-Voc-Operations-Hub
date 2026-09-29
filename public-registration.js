@@ -4,6 +4,7 @@
 // and hands off to ParticipantRegistration once a race is chosen.
 import { supabase } from './supabase.js';
 import { ParticipantRegistration } from './participant-registration.js';
+import { icon } from './icons.js';
 
 export class PublicRegistration {
   constructor() {
@@ -114,8 +115,8 @@ export class PublicRegistration {
             ${this.openEvents.map(ev => `
               <div class="pubreg-event-card" data-event-id="${ev.id}">
                 <h3>${escapeHtml(ev.name)}</h3>
-                <p class="pubreg-event-meta">📅 ${new Date(ev.start_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                ${ev.location ? `<p class="pubreg-event-meta">📍 ${escapeHtml(ev.location)}</p>` : ''}
+                <p class="pubreg-event-meta">${icon('calendar')} ${new Date(ev.start_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                ${ev.location ? `<p class="pubreg-event-meta">${icon('map-pin')} ${escapeHtml(ev.location)}</p>` : ''}
                 ${ev.description ? `<p class="pubreg-event-desc">${escapeHtml(ev.description)}</p>` : ''}
                 <button class="btn btn-primary pubreg-register-btn" data-event-id="${ev.id}">Register for this race</button>
               </div>
@@ -323,10 +324,10 @@ export function renderClubContactLine(b) {
   if (!b) return '';
   const addressParts = [b.address, b.city, b.state, b.postal_code, b.country].filter(Boolean);
   const parts = [
-    b.phone ? `<span class="pubreg-contact-item">📞 ${escapeHtml(b.phone)}</span>` : '',
-    b.email ? `<span class="pubreg-contact-item">✉️ ${escapeHtml(b.email)}</span>` : '',
-    b.website ? `<span class="pubreg-contact-item">🌐 <a href="${escapeHtml(normalizeUrl(b.website))}" target="_blank" rel="noopener noreferrer">${escapeHtml(b.website)}</a></span>` : '',
-    addressParts.length ? `<span class="pubreg-contact-item">📍 ${escapeHtml(addressParts.join(', '))}</span>` : ''
+    b.phone ? `<span class="pubreg-contact-item">${icon('phone')} ${escapeHtml(b.phone)}</span>` : '',
+    b.email ? `<span class="pubreg-contact-item">${icon('mail')} ${escapeHtml(b.email)}</span>` : '',
+    b.website ? `<span class="pubreg-contact-item">${icon('globe')} <a href="${escapeHtml(normalizeUrl(b.website))}" target="_blank" rel="noopener noreferrer">${escapeHtml(b.website)}</a></span>` : '',
+    addressParts.length ? `<span class="pubreg-contact-item">${icon('map-pin')} ${escapeHtml(addressParts.join(', '))}</span>` : ''
   ].filter(Boolean).join('');
 
   return parts ? `<div class="pubreg-contact-line">${parts}</div>` : '';

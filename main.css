@@ -576,25 +576,9 @@ textarea {
   }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  body {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg-primary: #F5F7FA;
-    --bg-secondary: #FFFFFF;
-    --bg-tertiary: #E8EDF2;
-    --text-primary: #1A2332;
-    --text-secondary: #546E7A;
-    --text-muted: #90A4AE;
-    --border-color: #CFD8DC;
-  }
-}
+/* Theme: dark by default; light mode is opt-in via the toggle (see voc-ui.css).
+   The old prefers-color-scheme block was removed because it produced a half-light,
+   half-dark UI on computers set to light mode. */
 
 /* ============================================================================
    MODULE-SPECIFIC STYLES

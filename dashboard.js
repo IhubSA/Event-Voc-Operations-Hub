@@ -3,6 +3,7 @@ import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
 import { wrapWithShell, canEditClubSettings, getOrgDisplayName } from './org-branding.js';
 import { AddEventModal } from './add-event-fixed.js';
+import { icon } from './icons.js';
 
 export class DashboardPage {
   constructor() {
@@ -83,11 +84,11 @@ export class DashboardPage {
 
     const canAddEvent = canEditClubSettings();
     const addEventButton = canAddEvent
-      ? `<button class="btn btn-primary" id="add-event-btn">+ Add Event</button>`
+      ? `<button class="btn btn-primary" id="add-event-btn">${icon('plus')} Add Event</button>`
       : '';
 
     const filterBanner = this.filterOrgId
-      ? `<div class="org-filter-banner">📅 Showing events for <strong>${escapeHtmlLocal(getOrgDisplayName())}</strong> only</div>`
+      ? `<div class="org-filter-banner">${icon('calendar')} Showing events for <strong>${escapeHtmlLocal(getOrgDisplayName())}</strong> only</div>`
       : '';
 
     if (this.events.length === 0) {
@@ -95,14 +96,14 @@ export class DashboardPage {
         ${filterBanner}
         <div class="dashboard-header">
           <div>
-            <h1>📅 Events</h1>
+            <h1>${icon('calendar')} Events</h1>
             <p>Select an event to manage</p>
           </div>
           ${addEventButton}
         </div>
         <div class="empty-state">
           <p>No events available${canAddEvent ? ' yet' : ''}</p>
-          ${canAddEvent ? `<p class="empty-state-hint">Click "+ Add Event" above to create your first one.</p>` : ''}
+          ${canAddEvent ? `<p class="empty-state-hint">Click "Add Event" above to create your first one.</p>` : ''}
         </div>
       `;
       this.addStyles();
@@ -110,73 +111,106 @@ export class DashboardPage {
       return;
     }
 
+    const counts = { all: this.events.length, live: 0, upcoming: 0, past: 0 };
+    this.events.forEach((e) => { counts[eventPhase(e).key]++; });
+
     dashboardContent.innerHTML = `
       ${filterBanner}
       <div class="dashboard-header">
         <div>
-          <h1>📅 Events</h1>
-          <p>Select an event to manage</p>
+          <h1>${icon('calendar')} Events</h1>
+          <p>Select an event to open its command centre</p>
         </div>
         ${addEventButton}
       </div>
 
+      <div class="events-toolbar">
+        <label class="events-search">${icon('search')}<input type="search" id="events-search" placeholder="Search events by name, code or location" /></label>
+        <div class="events-chips" role="tablist">
+          ${[['all', 'All'], ['live', 'Live now'], ['upcoming', 'Upcoming'], ['past', 'Past']].map(([k, l]) =>
+            `<button class="events-chip ${k === 'all' ? 'active' : ''}" data-phase="${k}">${l}<span>${counts[k]}</span></button>`).join('')}
+        </div>
+      </div>
+
       <div class="events-grid">
-        ${this.events.map(event => `
-          <div class="event-card" data-event-id="${event.id}">
+        ${this.events.map(event => {
+          const phase = eventPhase(event);
+          return `
+          <div class="event-card" data-event-id="${event.id}" data-phase="${phase.key}" data-search="${escapeHtmlLocal(`${event.name} ${event.code || ''} ${event.location || ''}`.toLowerCase())}" tabindex="0" role="button" aria-label="Open ${escapeHtmlLocal(event.name)}">
             <div class="event-header">
               <div>
-                <h3>${event.name}</h3>
-                <span class="event-code">${event.code}</span>
+                <h3>${escapeHtmlLocal(event.name)}</h3>
+                <span class="event-code">${escapeHtmlLocal(event.code || '')}</span>
               </div>
               <span class="event-status-badge status-${event.status || 'active'}">
                 ${(event.status || 'ACTIVE').toUpperCase()}
               </span>
             </div>
+            <div class="event-countdown phase-${phase.key}">${icon(phase.icon)} ${phase.label}</div>
             <div class="event-body">
               <div class="event-detail">
-                <span class="detail-icon">📍</span>
+                <span class="detail-icon">${icon('map-pin')}</span>
                 <div class="detail-content">
                   <span class="label">Location</span>
-                  <span class="value">${event.location || 'N/A'}</span>
+                  <span class="value">${escapeHtmlLocal(event.location || 'Not set')}</span>
                 </div>
               </div>
               <div class="event-detail">
-                <span class="detail-icon">👥</span>
+                <span class="detail-icon">${icon('users')}</span>
                 <div class="detail-content">
                   <span class="label">Expected Attendance</span>
-                  <span class="value">${event.expected_attendance ? event.expected_attendance.toLocaleString() : 'N/A'}</span>
+                  <span class="value">${event.expected_attendance ? event.expected_attendance.toLocaleString('en-ZA') : 'Not set'}</span>
                 </div>
               </div>
               <div class="event-detail">
-                <span class="detail-icon">📅</span>
+                <span class="detail-icon">${icon('calendar')}</span>
                 <div class="detail-content">
-                  <span class="label">Event Dates</span>
-                  <span class="value">${event.start_date} to ${event.end_date}</span>
+                  <span class="label">Event Date${event.end_date && event.end_date !== event.start_date ? 's' : ''}</span>
+                  <span class="value">${formatEventDates(event)}</span>
                 </div>
               </div>
             </div>
             <div class="event-actions">
-              <button class="btn btn-primary select-event">↪️ Select Event</button>
+              <button class="btn btn-primary select-event">Open Command Centre ${icon('arrow-right')}</button>
             </div>
-          </div>
-        `).join('')}
+          </div>`;
+        }).join('')}
       </div>
+      <div class="empty-state" id="events-no-match" style="display:none"><p>No events match your search.</p></div>
     `;
 
     this.addStyles();
     this.attachAddEventListener();
 
-    // Add event listeners
+    // Whole card is clickable (and keyboard accessible), not just the button
     document.querySelectorAll('.event-card').forEach(card => {
-      card.querySelector('.select-event').addEventListener('click', () => {
-        const eventId = card.dataset.eventId;
-        // Find the full event object from this.events
-        const event = this.events.find(e => e.id === eventId);
-        if (event) {
-          this.onEventSelected(event);
-        }
-      });
+      const open = () => {
+        const event = this.events.find(e => e.id === card.dataset.eventId);
+        if (event) this.onEventSelected(event);
+      };
+      card.addEventListener('click', open);
+      card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
     });
+
+    // Search + phase filter
+    let phaseFilter = 'all';
+    const applyFilter = () => {
+      const q = (document.getElementById('events-search')?.value || '').trim().toLowerCase();
+      let shown = 0;
+      document.querySelectorAll('.event-card').forEach((card) => {
+        const ok = (phaseFilter === 'all' || card.dataset.phase === phaseFilter) && (!q || card.dataset.search.includes(q));
+        card.style.display = ok ? '' : 'none';
+        if (ok) shown++;
+      });
+      document.getElementById('events-no-match').style.display = shown ? 'none' : '';
+    };
+    document.getElementById('events-search')?.addEventListener('input', applyFilter);
+    document.querySelectorAll('.events-chip').forEach((chip) => chip.addEventListener('click', () => {
+      document.querySelectorAll('.events-chip').forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      phaseFilter = chip.dataset.phase;
+      applyFilter();
+    }));
   }
 
   attachAddEventListener() {
@@ -468,6 +502,12 @@ export class DashboardPage {
         color: white;
         border-color: transparent;
         box-shadow: var(--shadow-md);
+      }
+
+      /* Only the card's action button should stretch -- this rule used to be a
+         global .btn-primary { flex: 1 }, which stretched primary buttons on
+         every page after the events list had been opened. */
+      .event-actions .btn-primary {
         flex: 1;
       }
 
@@ -567,4 +607,37 @@ export class DashboardPage {
 function escapeHtmlLocal(str) {
   if (str === null || str === undefined) return '';
   return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+
+// ---- Event date helpers ----
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(`${d}T00:00:00`);
+  return isNaN(dt) ? d : dt.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatEventDates(event) {
+  if (!event.start_date) return 'Not set';
+  if (!event.end_date || event.end_date === event.start_date) return fmtDate(event.start_date);
+  return `${fmtDate(event.start_date)} – ${fmtDate(event.end_date)}`;
+}
+
+// Where the event sits relative to today, for the countdown strip and filters
+function eventPhase(event) {
+  const status = String(event.status || '').toLowerCase();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const start = event.start_date ? new Date(`${event.start_date}T00:00:00`) : null;
+  const end = event.end_date ? new Date(`${event.end_date}T00:00:00`) : start;
+  if (['completed', 'ended', 'archived'].includes(status) || (end && end < today)) {
+    return { key: 'past', label: 'Event completed', icon: 'finish' };
+  }
+  if (start && start <= today && (!end || end >= today)) {
+    return { key: 'live', label: 'Live today', icon: 'activity' };
+  }
+  if (start) {
+    const days = Math.round((start - today) / 86400000);
+    return { key: 'upcoming', label: days === 1 ? 'Starts tomorrow' : `Starts in ${days} days`, icon: 'clock' };
+  }
+  return { key: 'upcoming', label: 'Date to be confirmed', icon: 'clock' };
 }

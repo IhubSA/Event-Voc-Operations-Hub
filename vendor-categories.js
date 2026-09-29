@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 // Vendor category definitions -- a fixed document checklist per category.
 // Shared by the staff-side Vendors module (vendors.js) and the public
 // vendor registration/upload page (vendor-registration.js) so both always
@@ -6,7 +7,7 @@
 export const VENDOR_CATEGORIES = {
   food: {
     label: 'Food Vendor',
-    icon: '🍔',
+    icon: 'utensils',
     documents: [
       { key: 'cert_acceptability', label: 'Certificate of Acceptability (Health)', required: true },
       { key: 'public_liability_insurance', label: 'Public Liability Insurance', required: true },
@@ -16,7 +17,7 @@ export const VENDOR_CATEGORIES = {
   },
   security: {
     label: 'Security',
-    icon: '🛡️',
+    icon: 'shield',
     documents: [
       { key: 'psira_registration', label: 'PSIRA Registration Certificate', required: true },
       { key: 'public_liability_insurance', label: 'Public Liability Insurance', required: true },
@@ -26,7 +27,7 @@ export const VENDOR_CATEGORIES = {
   },
   medical: {
     label: 'Medical / EMS',
-    icon: '🚑',
+    icon: 'ambulance',
     documents: [
       { key: 'hpcsa_ambulance_license', label: 'HPCSA Registration / Ambulance Operating License', required: true },
       { key: 'public_liability_insurance', label: 'Public Liability Insurance', required: true },
@@ -36,7 +37,7 @@ export const VENDOR_CATEGORIES = {
   },
   other: {
     label: 'Other Service Provider',
-    icon: '🏷️',
+    icon: 'tag',
     documents: [
       { key: 'public_liability_insurance', label: 'Public Liability Insurance', required: true },
       { key: 'id_copy', label: 'ID Copy of Vendor/Owner', required: true },
@@ -55,7 +56,7 @@ export function getCategoryLabel(category) {
 }
 
 export function getCategoryIcon(category) {
-  return getCategoryMeta(category).icon;
+  return icon(getCategoryMeta(category).icon);
 }
 
 // All required document keys for a category (used to decide whether a

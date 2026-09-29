@@ -2,6 +2,7 @@
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
 import { wrapWithShell } from './org-branding.js';
+import { icon } from './icons.js';
 
 export class SecurityPage {
   constructor() {
@@ -35,10 +36,10 @@ export class SecurityPage {
         <div class="security-header">
           <div class="security-header-top">
             <h1>Security Operations</h1>
-            <button class="btn btn-secondary btn-small" id="back-btn-security">← Back to Dashboard</button>
+            <button class="btn btn-secondary btn-small" id="back-btn-security">${icon('arrow-left')} Back to Dashboard</button>
           </div>
           <div class="threat-level-indicator" id="threat-indicator">
-            <div class="threat-badge threat-green">🟢 GREEN</div>
+            <div class="threat-badge threat-green">${icon('dot-green')} GREEN</div>
             <span>Overall Threat Level</span>
           </div>
           <div class="security-header-stats">
@@ -74,7 +75,7 @@ export class SecurityPage {
             <div class="incidents-section">
               <div class="section-header">
                 <h2>Security Incidents</h2>
-                <button class="btn btn-primary" id="new-incident-btn">+ New Incident</button>
+                <button class="btn btn-primary" id="new-incident-btn">${icon('plus')} New Incident</button>
               </div>
               <div class="security-incidents-list" id="incidents-container">
                 <div class="loading">Loading incidents...</div>
@@ -92,7 +93,7 @@ export class SecurityPage {
             <div class="checkpoints-section">
               <div class="resources-section-header">
                 <h3>Security Resources <span class="box-count-badge" id="security-resources-total-badge">0</span></h3>
-                <button type="button" class="btn btn-sm btn-primary" id="add-resource-btn">+ Add Resource</button>
+                <button type="button" class="btn btn-sm btn-primary" id="add-resource-btn">${icon('plus')} Add Resource</button>
               </div>
               <div class="checkpoints-list" id="security-resources-container">
                 <div class="loading">Loading resources...</div>
@@ -103,7 +104,7 @@ export class SecurityPage {
               <div class="checkpoints-list" id="security-providers-container">
                 <div class="loading">Loading providers...</div>
               </div>
-              ${this.onOpenVendors ? '<button type="button" class="btn btn-sm btn-secondary provider-manage-btn" id="manage-security-vendors-btn">Manage in Vendors →</button>' : ''}
+              ${this.onOpenVendors ? '<button type="button" class="btn btn-sm btn-secondary provider-manage-btn" id="manage-security-vendors-btn">Manage in Vendors</button>' : ''}
             </div>
             <div class="investigation-metrics">
               <h3>Investigation Status</h3>
@@ -148,10 +149,10 @@ export class SecurityPage {
               <div class="form-group">
                 <label>Threat Level</label>
                 <select id="threat-level" required>
-                  <option value="low">🟢 Low</option>
-                  <option value="medium">🟡 Medium</option>
-                  <option value="high">🟠 High</option>
-                  <option value="critical">🔴 Critical</option>
+                  <option value="low">${icon('dot-green')} Low</option>
+                  <option value="medium">${icon('dot-yellow')} Medium</option>
+                  <option value="high">${icon('dot-orange')} High</option>
+                  <option value="critical">${icon('dot-red')} Critical</option>
                 </select>
               </div>
               <div class="form-group">
@@ -674,12 +675,12 @@ export class SecurityPage {
 
   getThreatEmoji(level) {
     const emojis = {
-      'green': '🟢',
-      'yellow': '🟡',
-      'orange': '🟠',
-      'red': '🔴'
+      'green': icon('dot-green'),
+      'yellow': icon('dot-yellow'),
+      'orange': icon('dot-orange'),
+      'red': icon('dot-red')
     };
-    return emojis[level] || '🟢';
+    return emojis[level] || icon('dot-green');
   }
 
   updateStats() {

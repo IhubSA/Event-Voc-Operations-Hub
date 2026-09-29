@@ -8,6 +8,7 @@
 import { supabase } from './supabase.js';
 import { escapeHtml, normalizeUrl, renderClubContactLine } from './public-registration.js';
 import { VENDOR_CATEGORIES, getCategoryLabel, getCategoryIcon } from './vendor-categories.js';
+import { icon } from './icons.js';
 
 export class VendorRegistration {
   constructor() {
@@ -175,7 +176,7 @@ export class VendorRegistration {
         </div>
 
         <div class="vendorreg-card">
-          <h2>📄 Required Documents</h2>
+          <h2>${icon('file')} Required Documents</h2>
           <p class="vendorreg-doc-intro">Upload each document below. PDF, PNG or JPEG, up to 10MB. Re-uploading a document replaces the previous file and sends it back for review.</p>
           <div class="doc-checklist" id="vr-doc-checklist">
             ${this.renderDocChecklist()}
@@ -275,7 +276,7 @@ export class VendorRegistration {
       if (error) throw error;
 
       messageDiv.className = 'add-message success';
-      messageDiv.textContent = '✓ Details saved.';
+      messageDiv.textContent = 'Details saved.';
 
       // Refresh vendor info (status may now be "submitted") and re-render.
       const { data: rows } = await supabase.rpc('get_public_vendor_info', { p_vendor_id: this.vendorId });

@@ -6,6 +6,7 @@ import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
 import { wrapWithShell } from './org-branding.js';
 import { VENDOR_CATEGORIES, getCategoryLabel, getCategoryIcon, getRequiredDocumentKeys } from './vendor-categories.js';
+import { icon } from './icons.js';
 
 export class VendorsPage {
   constructor() {
@@ -29,15 +30,15 @@ export class VendorsPage {
     const navbarHtml = navbar.render();
 
     const categoryOptions = Object.entries(VENDOR_CATEGORIES)
-      .map(([key, meta]) => `<option value="${key}">${meta.icon} ${meta.label}</option>`)
+      .map(([key, meta]) => `<option value="${key}">${meta.label}</option>`)
       .join('');
 
     const vendorsHtml = `
       <div class="vendors-dashboard">
         <div class="vendors-header">
           <div class="vendors-header-top">
-            <h1>🏪 Vendors Management</h1>
-            <button class="btn btn-secondary btn-small" id="back-btn-vendors">← Back to Dashboard</button>
+            <h1>${icon('store')} Vendors Management</h1>
+            <button class="btn btn-secondary btn-small" id="back-btn-vendors">${icon('arrow-left')} Back to Dashboard</button>
           </div>
         </div>
 
@@ -57,7 +58,7 @@ export class VendorsPage {
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
             </select>
-            <button class="btn btn-primary" id="add-vendor-btn">➕ Add Vendor</button>
+            <button class="btn btn-primary" id="add-vendor-btn">${icon('plus')} Add Vendor</button>
           </div>
         </div>
 
@@ -146,7 +147,7 @@ export class VendorsPage {
             </form>
 
             <div id="vendor-link-result" class="vendor-link-result" style="display: none;">
-              <p class="vendor-link-success">✓ Vendor added! Send them this link to complete registration:</p>
+              <p class="vendor-link-success">${icon('check')} Vendor added! Send them this link to complete registration:</p>
               <div class="vendor-link-box">
                 <input type="text" id="vendor-link-input" readonly />
                 <button class="btn btn-secondary btn-small" id="copy-vendor-link-btn">Copy Link</button>
@@ -381,7 +382,7 @@ export class VendorsPage {
           <span class="status-badge ${statusClass} large">${vendor.status.toUpperCase()}</span>
           ${!allRequiredApproved ? '<span class="muted-small">Not all required documents are approved yet</span>' : ''}
         </div>
-        <div class="detail-item"><span class="label">Category:</span><span class="value">${meta.icon} ${meta.label}</span></div>
+        <div class="detail-item"><span class="label">Category:</span><span class="value">${icon(meta.icon)} ${meta.label}</span></div>
         <div class="detail-item"><span class="label">Contact Name:</span><span class="value">${escapeHtmlLocal(vendor.contact_name || '-')}</span></div>
         <div class="detail-item"><span class="label">Contact Email:</span><span class="value">${escapeHtmlLocal(vendor.contact_email || '-')}</span></div>
         <div class="detail-item"><span class="label">Contact Phone:</span><span class="value">${escapeHtmlLocal(vendor.contact_phone || '-')}</span></div>
@@ -551,7 +552,7 @@ export class VendorsPage {
     const done = () => {
       if (!triggerEl) return;
       const original = triggerEl.textContent;
-      triggerEl.textContent = '✅ Copied!';
+      triggerEl.textContent = 'Copied!';
       setTimeout(() => { triggerEl.textContent = original; }, 1500);
     };
 

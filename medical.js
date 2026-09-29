@@ -2,6 +2,7 @@
 import { supabase, supabaseApi } from './supabase.js';
 import { Navbar } from './navbar.js';
 import { wrapWithShell } from './org-branding.js';
+import { icon } from './icons.js';
 
 export class MedicalPage {
   constructor() {
@@ -33,7 +34,7 @@ export class MedicalPage {
         <div class="medical-header">
           <div class="medical-header-top">
             <h1>Medical Operations</h1>
-            <button class="btn btn-secondary btn-small" id="back-btn-medical">← Back to Dashboard</button>
+            <button class="btn btn-secondary btn-small" id="back-btn-medical">${icon('arrow-left')} Back to Dashboard</button>
           </div>
           <div class="medical-header-stats">
             <div class="stat-card critical">
@@ -64,7 +65,7 @@ export class MedicalPage {
             <div class="incidents-section">
               <div class="section-header">
                 <h2>Medical Incidents</h2>
-                <button class="btn btn-primary" id="new-incident-btn">+ New Incident</button>
+                <button class="btn btn-primary" id="new-incident-btn">${icon('plus')} New Incident</button>
               </div>
               <div class="medical-incidents-list" id="incidents-container">
                 <div class="loading">Loading incidents...</div>
@@ -76,7 +77,7 @@ export class MedicalPage {
             <div class="resources-section">
               <div class="resources-section-header">
                 <h3>Medical Resources <span class="box-count-badge" id="resources-total-badge">0</span></h3>
-                <button type="button" class="btn btn-sm btn-primary" id="add-resource-btn">+ Add Resource</button>
+                <button type="button" class="btn btn-sm btn-primary" id="add-resource-btn">${icon('plus')} Add Resource</button>
               </div>
               <div class="resources-list" id="resources-container">
                 <div class="loading">Loading resources...</div>
@@ -87,7 +88,7 @@ export class MedicalPage {
               <div class="resources-list" id="providers-container">
                 <div class="loading">Loading providers...</div>
               </div>
-              ${this.onOpenVendors ? '<button type="button" class="btn btn-sm btn-secondary provider-manage-btn" id="manage-medical-vendors-btn">Manage in Vendors →</button>' : ''}
+              ${this.onOpenVendors ? '<button type="button" class="btn btn-sm btn-secondary provider-manage-btn" id="manage-medical-vendors-btn">Manage in Vendors</button>' : ''}
             </div>
             <div class="response-times-section">
               <h3>Response Metrics</h3>

@@ -16,6 +16,7 @@ import { AdminDashboard } from './admin-dashboard.js';
 import { RouteMapConsole } from './route-map-console.js';
 import { ClubSettingsPage } from './club-settings.js';
 import { loadOrgBranding, clearOrgBranding } from './org-branding.js';
+import { setEventContext, clearEventContext, setActiveModule } from './ui.js';
 
 const authService = new AuthService();
 let currentUser = null;
@@ -168,6 +169,7 @@ function renderDashboard(filterOrgId) {
     }
 
     const dashboardPage = new DashboardPage();
+    clearEventContext();
 
     if (currentPage) {
       currentPage.destroy?.();
@@ -207,6 +209,7 @@ function renderAdminDashboard() {
     }
 
     const adminDashboard = new AdminDashboard();
+    clearEventContext();
 
     if (currentPage) {
       currentPage.destroy?.();
@@ -269,6 +272,7 @@ async function onLogout() {
     isAdmin = false;
     showedLanding = false;
     clearOrgBranding();
+    clearEventContext();
     renderLanding();
   } catch (error) {
     console.error('Logout error:', error);
@@ -282,11 +286,27 @@ function onLoginSuccess(user) {
 
 function onEventSelected(event) {
   currentEvent = event;
+  setEventContext(event, navigateTo);
   showIntegratedDashboard();
+}
+
+// Single entry point used by the sidebar, command palette and quick-report
+// button so users can jump straight between modules inside an event.
+function navigateTo(key) {
+  window.scrollTo({ top: 0 });
+  if (key === 'overview') {
+    showIntegratedDashboard();
+  } else if (key === 'dashboard') {
+    currentEvent = null;
+    renderDashboard();
+  } else {
+    loadModule(key);
+  }
 }
 
 function showIntegratedDashboard() {
   const integratedDashboard = new IntegratedDashboard();
+  setActiveModule('overview');
 
   if (currentPage) {
     currentPage.destroy?.();
@@ -337,6 +357,7 @@ function goToVendorsForCategory(category) {
     currentPage.destroy?.();
   }
 
+  setActiveModule('vendors');
   vendorsPage.render(currentEvent?.id || currentEvent, currentUser, () => showIntegratedDashboard(), onOpenClubSettings, category);
   currentPage = vendorsPage;
 }
@@ -345,6 +366,7 @@ function loadModule(moduleName) {
   const backToIntegratedDashboard = () => {
     showIntegratedDashboard();
   };
+  setActiveModule(moduleName);
 
   if (moduleName === 'dashboard') {
     renderDashboard();
@@ -429,7 +451,7 @@ function loadModule(moduleName) {
     routeMapConsole.render(currentEvent?.id || currentEvent, backToIntegratedDashboard, currentUser, onOpenClubSettings);
     currentPage = routeMapConsole;
   } else {
-    alert(`${moduleName} module coming soon!`);
+    alert(`The ${moduleName} module is coming soon.`);
   }
 }
 
@@ -448,6 +470,8 @@ authService.onAuthChange((user) => {
     isAdmin = false;
     showedLanding = false;
     clearOrgBranding();
+    clearEventContext();
+    document.getElementById('voc-fab')?.remove();
     renderLanding();
   }
 });

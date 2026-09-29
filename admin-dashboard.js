@@ -2,6 +2,7 @@
 // Manages users, organizations, and platform-wide settings
 
 import { supabase } from './supabase.js';
+import { icon } from './icons.js';
 
 export class AdminDashboard {
   constructor() {
@@ -16,32 +17,32 @@ export class AdminDashboard {
     this.onViewOrgEvents = onViewOrgEvents;
     const container = document.getElementById('app');
 
-    const switchOrgButton = onSwitchToOrg ? `<button class="btn btn-primary" id="switch-to-org-btn" style="margin-right: 1rem;">→ Go to Events</button>` : '';
+    const switchOrgButton = onSwitchToOrg ? `<button class="btn btn-primary" id="switch-to-org-btn" style="margin-right: 1rem;">${icon('arrow-right')} Go to Events</button>` : '';
 
     const adminHtml = `
       <div class="admin-container">
         <div class="admin-header">
           <div class="admin-title-section">
-            <h1>⚙️ Admin Dashboard</h1>
+            <h1>${icon('settings')} Admin Dashboard</h1>
             <p class="admin-subtitle">Manage organizations, users, and platform settings</p>
           </div>
           <div style="display: flex; gap: 0.8rem;">
             ${switchOrgButton}
-            <button class="btn btn-secondary" id="back-btn">← Back</button>
+            <button class="btn btn-secondary" id="back-btn">${icon('arrow-left')} Back</button>
           </div>
         </div>
 
         <div class="admin-nav">
           <button class="admin-nav-btn active" data-view="organizations">
-            <span class="nav-icon">🏢</span>
+            <span class="nav-icon">${icon('building')}</span>
             Organizations
           </button>
           <button class="admin-nav-btn" data-view="members">
-            <span class="nav-icon">👥</span>
+            <span class="nav-icon">${icon('users')}</span>
             Members
           </button>
           <button class="admin-nav-btn" data-view="admin-users">
-            <span class="nav-icon">🛡️</span>
+            <span class="nav-icon">${icon('shield')}</span>
             Admin Users
           </button>
         </div>
@@ -50,7 +51,7 @@ export class AdminDashboard {
           <div id="organizations-view" class="admin-view active">
             <div class="view-header">
               <h2>Organizations</h2>
-              <button class="btn btn-primary" id="create-org-btn">+ Create Organization</button>
+              <button class="btn btn-primary" id="create-org-btn">${icon('plus')} Create Organization</button>
             </div>
             <div id="organizations-list" class="admin-list">
               <div class="loading">Loading organizations...</div>
@@ -64,7 +65,7 @@ export class AdminDashboard {
                 <select id="member-org-filter" class="filter-select">
                   <option value="">Select organization...</option>
                 </select>
-                <button class="btn btn-primary" id="add-member-btn" style="display: none;">+ Add Member</button>
+                <button class="btn btn-primary" id="add-member-btn" style="display: none;">${icon('plus')} Add Member</button>
               </div>
             </div>
             <div id="members-list" class="admin-list">
@@ -75,7 +76,7 @@ export class AdminDashboard {
           <div id="admin-users-view" class="admin-view">
             <div class="view-header">
               <h2>Admin Users</h2>
-              <button class="btn btn-primary" id="add-admin-btn">+ Add Admin User</button>
+              <button class="btn btn-primary" id="add-admin-btn">${icon('plus')} Add Admin User</button>
             </div>
             <div id="admin-users-list" class="admin-list">
               <div class="loading">Loading admin users...</div>
@@ -433,7 +434,7 @@ export class AdminDashboard {
           <p><strong>Created:</strong> ${new Date(org.created_at).toLocaleDateString()}</p>
         </div>
         <div class="card-actions">
-          ${this.onViewOrgEvents ? `<button class="btn btn-small btn-primary" data-view-events-org="${org.id}">📅 View Events</button>` : ''}
+          ${this.onViewOrgEvents ? `<button class="btn btn-small btn-primary" data-view-events-org="${org.id}">${icon('calendar')} View Events</button>` : ''}
           <button class="btn btn-small" onclick="this.closest('.admin-card').dataset.edit='${org.id}'" data-edit-org="${org.id}">Edit</button>
           <button class="btn btn-small btn-danger" data-delete-org="${org.id}">Delete</button>
         </div>
@@ -518,7 +519,7 @@ export class AdminDashboard {
         return `
           <div class="admin-card">
             <div class="card-content">
-              <p><strong>👤 ${displayName}</strong></p>
+              <p><strong>${icon('user')} ${displayName}</strong></p>
               <p style="font-size: 0.9rem; color: var(--text-muted);">${email}</p>
               <p><span class="badge role-${member.role}">${member.role.toUpperCase()}</span></p>
             </div>

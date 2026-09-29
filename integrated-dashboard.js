@@ -2,6 +2,13 @@
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
 import { wrapWithShell } from './org-branding.js';
+import { icon } from './icons.js';
+import { computeOperationalStatus, generateSitrep, quickAction } from './ui.js';
+
+// Database values arrive in mixed case ('critical', 'Critical'); the dashboard
+// buckets are Title Case, so normalise before counting.
+const cap = (v, fallback) => { const s = String(v || fallback || '').toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); };
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 export class IntegratedDashboard {
   constructor() {
@@ -37,7 +44,7 @@ export class IntegratedDashboard {
       <div class="integrated-dashboard ${isEventEnded ? 'event-ended' : ''}">
         ${isEventEnded ? `
           <div class="event-ended-banner">
-            <span>🏁 This event has been ended and is now archived</span>
+            <span>${icon('finish')} This event has been ended and is now archived</span>
           </div>
         ` : ''}
 
@@ -48,20 +55,41 @@ export class IntegratedDashboard {
               ${isEventEnded ? `<span class="status-badge-ended">ENDED</span>` : ''}
             </div>
             <div class="header-meta">
-              <span>📍 ${currentEvent.location}</span>
-              <span>📅 ${new Date(currentEvent.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+              <span>${icon('map-pin')} ${currentEvent.location}</span>
+              <span>${icon('calendar')} ${new Date(currentEvent.start_date).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+              ${currentEvent.code ? `<span>${icon('tag')} ${esc(currentEvent.code)}</span>` : ''}
             </div>
           </div>
           <div class="header-buttons">
-            <button class="btn btn-secondary" id="settings-btn" ${isEventEnded ? 'disabled' : ''}>⚙️ Event Settings</button>
-            <button class="btn btn-secondary" id="back-btn">← Back to Events</button>
+            <button class="btn btn-secondary" id="settings-btn" ${isEventEnded ? 'disabled' : ''}>${icon('settings')} Event Settings</button>
+            <button class="btn btn-secondary" id="back-btn">${icon('arrow-left')} Back to Events</button>
+          </div>
+        </div>
+
+        <div class="ops-banner level-green" id="ops-banner">
+          <div class="ops-banner-level">
+            <div class="ops-banner-orb" id="ops-orb">${icon('shield-check')}</div>
+            <div>
+              <h2 id="ops-title">Checking operational status…</h2>
+              <p id="ops-sub">Live picture across medical, security and safety</p>
+            </div>
+          </div>
+          <div class="ops-banner-kpis">
+            <div class="ops-kpi"><b id="kpi-open">–</b><span>Open incidents</span></div>
+            <div class="ops-kpi"><b id="kpi-critical">–</b><span>Critical</span></div>
+            <div class="ops-kpi"><b id="kpi-onduty">–</b><span>Staff on duty</span></div>
+            <div class="ops-kpi"><b id="kpi-checked">–</b><span>Participants in</span></div>
+          </div>
+          <div class="ops-banner-actions">
+            ${isEventEnded ? '' : `<button class="btn btn-sm btn-danger" id="ops-report-btn">${icon('siren')} Report</button>`}
+            <button class="btn btn-sm btn-secondary" id="ops-sitrep-btn">${icon('printer')} SITREP</button>
           </div>
         </div>
 
         <div class="metrics-section">
           <div class="metric-card medical-card">
             <div class="metric-header">
-              <h3>🏥 Medical Operations</h3>
+              <h3>${icon('medical')} Medical Operations</h3>
               <span class="metric-count" id="medical-total">0</span>
             </div>
             <div class="triage-breakdown">
@@ -87,7 +115,7 @@ export class IntegratedDashboard {
 
           <div class="metric-card security-card">
             <div class="metric-header">
-              <h3>🔒 Security</h3>
+              <h3>${icon('lock')} Security</h3>
               <span class="metric-count" id="security-total">0</span>
             </div>
             <div class="threat-breakdown">
@@ -113,7 +141,7 @@ export class IntegratedDashboard {
 
           <div class="metric-card safety-card">
             <div class="metric-header">
-              <h3>⚠️ Safety Compliance</h3>
+              <h3>${icon('alert-triangle')} Safety Compliance</h3>
               <span class="compliance-score" id="compliance-score">100%</span>
             </div>
             <div class="hazard-breakdown">
@@ -139,7 +167,7 @@ export class IntegratedDashboard {
 
           <div class="metric-card staff-card">
             <div class="metric-header">
-              <h3>👥 Staff Management</h3>
+              <h3>${icon('users')} Staff Management</h3>
               <span class="metric-count" id="staff-total">0</span>
             </div>
             <div class="staff-breakdown">
@@ -165,7 +193,7 @@ export class IntegratedDashboard {
 
           <div class="metric-card participants-card">
             <div class="metric-header">
-              <h3>🏃 Participants</h3>
+              <h3>${icon('runner')} Participants</h3>
               <span class="metric-count" id="participants-total">0</span>
             </div>
             <div class="participants-breakdown">
@@ -187,7 +215,7 @@ export class IntegratedDashboard {
 
           <div class="metric-card vendors-card">
             <div class="metric-header">
-              <h3>🏪 Vendors</h3>
+              <h3>${icon('store')} Vendors</h3>
             </div>
             <p class="vendors-card-desc">Food, security, medical &amp; other service providers</p>
             <button class="btn btn-sm btn-primary" data-module="vendors">Manage</button>
@@ -197,7 +225,7 @@ export class IntegratedDashboard {
         <div class="routes-section">
           <div class="metric-card routes-card">
             <div class="metric-header">
-              <h3>🗺️ Route Mapping</h3>
+              <h3>${icon('map')} Route Mapping</h3>
               <span class="metric-count" id="routes-total">0</span>
             </div>
             <div class="routes-breakdown">
@@ -223,27 +251,27 @@ export class IntegratedDashboard {
 
           <div class="metric-card resources-card">
             <div class="metric-header">
-              <h3>📍 Route Resources</h3>
+              <h3>${icon('map-pin')} Route Resources</h3>
               <span class="metric-count" id="resources-total">0</span>
             </div>
             <div class="resources-breakdown">
               <div class="resource-item">
-                <span class="resource-emoji">👮</span>
+                <span class="resource-emoji">${icon('marshal')}</span>
                 <span class="resource-label">Marshals</span>
                 <span class="resource-count" id="resources-marshals">0</span>
               </div>
               <div class="resource-item">
-                <span class="resource-emoji">🚔</span>
+                <span class="resource-emoji">${icon('siren')}</span>
                 <span class="resource-label">Security</span>
                 <span class="resource-count" id="resources-security">0</span>
               </div>
               <div class="resource-item">
-                <span class="resource-emoji">💧</span>
+                <span class="resource-emoji">${icon('droplet')}</span>
                 <span class="resource-label">Water</span>
                 <span class="resource-count" id="resources-water">0</span>
               </div>
               <div class="resource-item">
-                <span class="resource-emoji">🏥</span>
+                <span class="resource-emoji">${icon('medical')}</span>
                 <span class="resource-label">Medical</span>
                 <span class="resource-count" id="resources-medical">0</span>
               </div>
@@ -253,12 +281,12 @@ export class IntegratedDashboard {
         </div>
 
         <div class="alerts-section" id="alerts-section" style="display: none;">
-          <h2>⚡ Critical Alerts</h2>
+          <h2>${icon('zap')} Critical Alerts</h2>
           <div class="alerts-list" id="alerts-list"></div>
         </div>
 
         <div class="timeline-section">
-          <h2>📊 Recent Activity</h2>
+          <h2>${icon('bar-chart')} Recent Activity</h2>
           <div class="unified-timeline" id="unified-timeline">
             <div class="timeline-empty">No recent activity</div>
           </div>
@@ -748,6 +776,7 @@ export class IntegratedDashboard {
       ]);
 
       this.updateMetrics();
+      this.updateOpsBanner();
       this.displayAlerts();
       this.displayTimeline();
       this.subscribeToChanges();
@@ -758,13 +787,20 @@ export class IntegratedDashboard {
 
   async loadMedicalIncidents() {
     try {
+      // Filter through the parent incident (same as the Medical module) --
+      // medical_incidents.event_id is often empty, which made this card show 0.
       const { data, error } = await supabase
         .from('medical_incidents')
-        .select('*')
-        .eq('event_id', this.currentEvent.id);
+        .select('*, incidents!inner(event_id, title, description, status, severity)')
+        .eq('incidents.event_id', this.currentEvent.id);
 
       if (error) throw error;
-      this.medicalIncidents = data || [];
+      this.medicalIncidents = (data || []).map((m) => ({
+        ...m,
+        title: m.incidents?.title,
+        description: m.incidents?.description || m.symptoms,
+        status: m.incidents?.status,
+      }));
     } catch (error) {
       console.error('Error loading medical incidents:', error);
       this.medicalIncidents = [];
@@ -773,13 +809,21 @@ export class IntegratedDashboard {
 
   async loadSecurityIncidents() {
     try {
+      // threat_level lives on the parent incident, not security_incidents --
+      // reading it from the wrong table showed "Threat: undefined".
       const { data, error } = await supabase
         .from('security_incidents')
-        .select('*')
-        .eq('event_id', this.currentEvent.id);
+        .select('*, incidents!inner(event_id, title, description, status, severity, threat_level)')
+        .eq('incidents.event_id', this.currentEvent.id);
 
       if (error) throw error;
-      this.securityIncidents = data || [];
+      this.securityIncidents = (data || []).map((s) => ({
+        ...s,
+        title: s.incidents?.title,
+        description: s.incidents?.description || s.suspect_description,
+        status: s.incidents?.status,
+        threat_level: s.incidents?.threat_level || s.threat_level,
+      }));
     } catch (error) {
       console.error('Error loading security incidents:', error);
       this.securityIncidents = [];
@@ -867,7 +911,7 @@ export class IntegratedDashboard {
     };
 
     this.medicalIncidents.forEach(incident => {
-      const level = incident.triage_level || 'Low';
+      const level = cap(incident.triage_level, 'low');
       if (medicalTriageMap.hasOwnProperty(level)) {
         medicalTriageMap[level]++;
       }
@@ -888,7 +932,7 @@ export class IntegratedDashboard {
     };
 
     this.securityIncidents.forEach(incident => {
-      const level = incident.threat_level || 'Green';
+      const level = cap(incident.threat_level, 'green');
       if (threatLevelMap.hasOwnProperty(level)) {
         threatLevelMap[level]++;
       }
@@ -909,7 +953,7 @@ export class IntegratedDashboard {
     };
 
     this.safetyHazards.forEach(hazard => {
-      const severity = hazard.severity || 'Low';
+      const severity = cap(hazard.severity, 'low');
       if (severityMap.hasOwnProperty(severity)) {
         severityMap[severity]++;
       }
@@ -941,11 +985,9 @@ export class IntegratedDashboard {
       }
 
       // Count checked in staff (has check_in records with check_in_time)
-      if (staff.staff_checkin && staff.staff_checkin.length > 0) {
-        const lastCheckin = staff.staff_checkin[staff.staff_checkin.length - 1];
-        if (lastCheckin.check_in_time && !lastCheckin.check_out_time) {
-          checkedIn++;
-        }
+      // On duty = has a check-in that hasn't been checked out (row order isn't guaranteed)
+      if ((staff.staff_checkin || []).some((c) => c.check_in_time && !c.check_out_time)) {
+        checkedIn++;
       }
     });
 
@@ -1020,27 +1062,48 @@ export class IntegratedDashboard {
     document.getElementById('resources-medical').textContent = totalMedical;
   }
 
+  async updateOpsBanner() {
+    const s = await computeOperationalStatus(this.currentEvent.id);
+    const banner = document.getElementById('ops-banner');
+    if (!banner) return;
+    const copy = {
+      green: ['All clear — operations normal', 'No open critical or high-severity items', 'shield-check'],
+      amber: ['Elevated — attention needed', `${s.high} high-severity item(s) open`, 'alert-triangle'],
+      red: ['Critical — immediate action required', `${s.critical} critical item(s) open`, 'alert-octagon'],
+    }[s.level];
+    banner.className = `ops-banner level-${s.level}`;
+    document.getElementById('ops-orb').innerHTML = icon(copy[2]);
+    document.getElementById('ops-title').textContent = copy[0];
+    document.getElementById('ops-sub').textContent = copy[1];
+    document.getElementById('kpi-open').textContent = s.openIncidents + s.hazards;
+    document.getElementById('kpi-critical').textContent = s.critical;
+    const onDuty = this.staffList.filter((st) => (st.staff_checkin || []).some((c) => c.check_in_time && !c.check_out_time)).length;
+    document.getElementById('kpi-onduty').textContent = `${onDuty}/${this.staffList.length}`;
+    const checked = this.participantsList.filter((p) => ['checked_in', 'completed', 'finished'].includes(String(p.status).toLowerCase())).length;
+    document.getElementById('kpi-checked').textContent = `${checked}/${this.participantsList.length}`;
+  }
+
   displayAlerts() {
     const criticalItems = [
-      ...this.medicalIncidents.filter(i => i.triage_level === 'Critical').map(i => ({
+      ...this.medicalIncidents.filter(i => cap(i.triage_level) === 'Critical').map(i => ({
         type: 'medical',
-        title: i.description || 'Critical Medical Incident',
+        title: i.title || i.description || 'Critical Medical Incident',
         detail: `Triage: ${i.triage_level}`,
-        icon: '🏥',
+        icon: 'medical',
         timestamp: i.created_at
       })),
-      ...this.securityIncidents.filter(i => i.threat_level === 'Red').map(i => ({
+      ...this.securityIncidents.filter(i => cap(i.threat_level) === 'Red').map(i => ({
         type: 'security',
-        title: i.description || 'Critical Security Incident',
+        title: i.title || i.description || 'Critical Security Incident',
         detail: `Threat Level: ${i.threat_level}`,
-        icon: '🔒',
+        icon: 'shield',
         timestamp: i.created_at
       })),
-      ...this.safetyHazards.filter(h => h.severity === 'Critical').map(h => ({
+      ...this.safetyHazards.filter(h => cap(h.severity) === 'Critical').map(h => ({
         type: 'safety',
-        title: h.hazard_description || 'Critical Hazard',
+        title: h.description || h.hazard_description || 'Critical Hazard',
         detail: `Severity: ${h.severity}`,
-        icon: '⚠️',
+        icon: 'alert-triangle',
         timestamp: h.created_at
       }))
     ];
@@ -1052,9 +1115,9 @@ export class IntegratedDashboard {
       alertsSection.style.display = 'block';
       alertsList.innerHTML = criticalItems.map(alert => `
         <div class="alert-item">
-          <div class="alert-icon">${alert.icon}</div>
+          <div class="alert-icon">${icon(alert.icon)}</div>
           <div class="alert-content">
-            <div class="alert-title">${alert.title}</div>
+            <div class="alert-title">${esc(alert.title)}</div>
             <div class="alert-detail">${alert.detail}</div>
           </div>
         </div>
@@ -1068,22 +1131,22 @@ export class IntegratedDashboard {
     const timelineItems = [
       ...this.medicalIncidents.map(i => ({
         type: 'medical',
-        icon: '🏥',
-        title: i.description || 'Medical Incident',
-        detail: `Triage: ${i.triage_level}`,
+        icon: 'medical',
+        title: i.title || i.description || 'Medical Incident',
+        detail: `Triage: ${cap(i.triage_level, 'unassessed')}${i.status ? ' · ' + cap(i.status) : ''}`,
         timestamp: i.created_at
       })),
       ...this.securityIncidents.map(i => ({
         type: 'security',
-        icon: '🔒',
-        title: i.description || 'Security Incident',
-        detail: `Threat: ${i.threat_level}`,
+        icon: 'shield',
+        title: i.title || i.description || 'Security Incident',
+        detail: `Threat level: ${cap(i.threat_level, 'not set')}${i.status ? ' · ' + cap(i.status) : ''}`,
         timestamp: i.created_at
       })),
       ...this.safetyHazards.map(h => ({
         type: 'safety',
-        icon: '⚠️',
-        title: h.hazard_description || 'Safety Hazard',
+        icon: 'alert-triangle',
+        title: h.description || h.hazard_description || 'Safety Hazard',
         detail: `Severity: ${h.severity}`,
         timestamp: h.created_at
       }))
@@ -1095,13 +1158,13 @@ export class IntegratedDashboard {
       timeline.innerHTML = '<div class="timeline-empty">No recent activity</div>';
     } else {
       timeline.innerHTML = timelineItems.map(item => {
-        const time = new Date(item.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        const date = new Date(item.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const time = new Date(item.timestamp).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Johannesburg' });
+        const date = new Date(item.timestamp).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', timeZone: 'Africa/Johannesburg' });
         return `
           <div class="timeline-item">
-            <div class="timeline-icon">${item.icon}</div>
+            <div class="timeline-icon">${icon(item.icon)}</div>
             <div class="timeline-content">
-              <div class="timeline-title">${item.title}</div>
+              <div class="timeline-title">${esc(item.title)}</div>
               <div class="timeline-detail">${item.detail}</div>
               <div class="timeline-time">${date} at ${time}</div>
             </div>
@@ -1144,6 +1207,9 @@ export class IntegratedDashboard {
 
   setupEventListeners() {
     // Settings button
+    document.getElementById('ops-sitrep-btn')?.addEventListener('click', () => generateSitrep());
+    document.getElementById('ops-report-btn')?.addEventListener('click', () => document.getElementById('fab-main')?.click());
+
     const settingsBtn = document.getElementById('settings-btn');
     if (settingsBtn) {
       settingsBtn.addEventListener('click', () => {

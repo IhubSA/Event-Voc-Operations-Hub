@@ -2,6 +2,7 @@
 // Lets an org owner/admin white-label their club: logo, brand colors and contact details.
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
+import { icon } from './icons.js';
 import {
   loadOrgBranding,
   getOrgBranding,
@@ -38,7 +39,7 @@ export class ClubSettingsPage {
           <div style="text-align: center; max-width: 400px;">
             <h1 style="margin: 0 0 1rem 0;">Access Denied</h1>
             <p style="color: #B0BEC5;">Only club owners and admins can edit Club Settings.</p>
-            <button class="btn btn-secondary" id="cs-denied-back">← Back</button>
+            <button class="btn btn-secondary" id="cs-denied-back">${icon('arrow-left')} Back</button>
           </div>
         </div>
       `;
@@ -55,20 +56,20 @@ export class ClubSettingsPage {
       <div class="club-settings-page">
         <div class="cs-header">
           <div>
-            <h1>⚙️ Club Settings</h1>
+            <h1>${icon('settings')} Club Settings</h1>
             <p>White-label your club's branding &mdash; your logo and details will appear across every module.</p>
           </div>
-          <button class="btn btn-secondary" id="cs-back-btn">← Back</button>
+          <button class="btn btn-secondary" id="cs-back-btn">${icon('arrow-left')} Back</button>
         </div>
 
         <div id="cs-message" class="cs-message" style="display: none;"></div>
 
         <div class="cs-card">
-          <h2>🌐 Public Registration Link</h2>
+          <h2>${icon('globe')} Public Registration Link</h2>
           <p class="cs-hint" style="margin:0 0 1rem 0;">Share this one link and it will always show whichever of your races currently have public self-registration switched on. Turn registration on or off per race from that race's Event Settings.</p>
           <div class="cs-color-input">
             <input type="text" id="cs-registration-link" class="cs-link-input" readonly value="${escapeAttr(this.registrationLink())}" />
-            <button type="button" class="btn btn-secondary btn-sm" id="cs-copy-registration-link">📋 Copy</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="cs-copy-registration-link">${icon('clipboard')} Copy</button>
           </div>
         </div>
 
@@ -82,7 +83,7 @@ export class ClubSettingsPage {
                   : `<div class="cs-logo-placeholder" id="cs-logo-img">${(org?.name || 'C').trim().charAt(0).toUpperCase() || 'C'}</div>`}
               </div>
               <div class="cs-logo-controls">
-                <label for="cs-logo-input" class="btn btn-secondary btn-sm">📤 Choose Logo Image</label>
+                <label for="cs-logo-input" class="btn btn-secondary btn-sm">${icon('upload')} Choose Logo Image</label>
                 <input type="file" id="cs-logo-input" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" style="display:none;" />
                 <p class="cs-hint">PNG, JPG, WEBP, SVG or GIF. Max 2MB. Displayed in the navigation bar and sidebar across all modules.</p>
               </div>
@@ -170,7 +171,7 @@ export class ClubSettingsPage {
 
           <div class="cs-actions">
             <button type="button" class="btn btn-secondary" id="cs-cancel-btn">Cancel</button>
-            <button type="submit" class="btn btn-primary" id="cs-save-btn">💾 Save Changes</button>
+            <button type="submit" class="btn btn-primary" id="cs-save-btn">${icon('save')} Save Changes</button>
           </div>
         </form>
       </div>
@@ -196,7 +197,7 @@ export class ClubSettingsPage {
       const input = document.getElementById('cs-registration-link');
       input.select();
       navigator.clipboard?.writeText(input.value).then(() => {
-        this.showMessage('✓ Registration link copied to clipboard!', 'success');
+        this.showMessage('Registration link copied to clipboard!', 'success');
       }).catch(() => {
         this.showMessage('Could not copy automatically — please copy the link manually.', 'error');
       });
@@ -291,18 +292,18 @@ export class ClubSettingsPage {
 
       setOrgBranding(updated);
       this.selectedLogoFile = null;
-      this.showMessage('✓ Club settings saved. Your branding is now live across all modules.', 'success');
+      this.showMessage('Club settings saved. Your branding is now live across all modules.', 'success');
 
       if (saveBtn) {
         saveBtn.disabled = false;
-        saveBtn.textContent = '💾 Save Changes';
+        saveBtn.textContent = 'Save Changes';
       }
     } catch (error) {
       console.error('Error saving club settings:', error);
       this.showMessage(`Failed to save: ${error.message}`, 'error');
       if (saveBtn) {
         saveBtn.disabled = false;
-        saveBtn.textContent = '💾 Save Changes';
+        saveBtn.textContent = 'Save Changes';
       }
     } finally {
       this.isSaving = false;

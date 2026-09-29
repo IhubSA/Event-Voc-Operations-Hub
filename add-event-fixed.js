@@ -1,6 +1,7 @@
 // Add Event Component
 import { supabase } from './supabase.js';
 import { getOrgId } from './org-branding.js';
+import { icon } from './icons.js';
 
 export class AddEventModal {
   constructor() {
@@ -26,7 +27,7 @@ export class AddEventModal {
         <div class="add-event-modal">
           <div class="modal-header">
             <h2>Create New Event</h2>
-            <button class="modal-close" id="modal-close">✕</button>
+            <button class="modal-close" id="modal-close">${icon('x')}</button>
           </div>
 
           <form id="add-event-form" class="add-event-form">
@@ -92,7 +93,7 @@ export class AddEventModal {
               </button>
               <button type="submit" class="btn btn-primary" id="submit-btn">
                 <span class="btn-text">Create Event</span>
-                <span class="btn-spinner" style="display: none;">⏳</span>
+                <span class="btn-spinner" style="display: none;">${icon('loader')}</span>
               </button>
             </div>
           </form>

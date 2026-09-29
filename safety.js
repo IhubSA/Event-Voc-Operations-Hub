@@ -4,6 +4,7 @@ import { RiskCategorization } from './risk-categorization.js';
 import { InspectionChecklists } from './inspection-checklists.js';
 import { Navbar } from './navbar.js';
 import { wrapWithShell } from './org-branding.js';
+import { icon } from './icons.js';
 
 export class SafetyPage {
   constructor() {
@@ -31,9 +32,9 @@ export class SafetyPage {
           <div class="safety-header-top">
             <h1>Safety & Compliance</h1>
             <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-              <button class="btn btn-primary btn-small" id="risk-cat-btn">🎯 Risk Categorization</button>
-              <button class="btn btn-primary btn-small" id="inspection-checklists-btn">📋 Inspection Checklists</button>
-              <button class="btn btn-secondary btn-small" id="back-btn-safety">← Back to Dashboard</button>
+              <button class="btn btn-primary btn-small" id="risk-cat-btn">${icon('target')} Risk Categorization</button>
+              <button class="btn btn-primary btn-small" id="inspection-checklists-btn">${icon('clipboard')} Inspection Checklists</button>
+              <button class="btn btn-secondary btn-small" id="back-btn-safety">${icon('arrow-left')} Back to Dashboard</button>
             </div>
           </div>
           <div class="compliance-score-indicator" id="compliance-indicator">
@@ -69,7 +70,7 @@ export class SafetyPage {
             <div class="hazards-section">
               <div class="section-header">
                 <h2>Identified Hazards</h2>
-                <button class="btn btn-primary" id="new-hazard-btn">+ Report Hazard</button>
+                <button class="btn btn-primary" id="new-hazard-btn">${icon('plus')} Report Hazard</button>
               </div>
               <div class="hazards-list" id="hazards-container">
                 <div class="loading">Loading hazards...</div>
@@ -79,7 +80,7 @@ export class SafetyPage {
             <div class="inspections-section">
               <div class="section-header">
                 <h2>Safety Inspections</h2>
-                <button class="btn btn-primary" id="new-inspection-btn">+ New Inspection</button>
+                <button class="btn btn-primary" id="new-inspection-btn">${icon('plus')} New Inspection</button>
               </div>
               <div class="inspections-list" id="inspections-container">
                 <div class="loading">Loading inspections...</div>
@@ -149,10 +150,10 @@ export class SafetyPage {
               <div class="form-group">
                 <label>Severity Level</label>
                 <select id="severity-level" required>
-                  <option value="critical">🔴 Critical</option>
-                  <option value="high">🟠 High</option>
-                  <option value="medium" selected>🟡 Medium</option>
-                  <option value="low">🟢 Low</option>
+                  <option value="critical">${icon('dot-red')} Critical</option>
+                  <option value="high">${icon('dot-orange')} High</option>
+                  <option value="medium" selected>${icon('dot-yellow')} Medium</option>
+                  <option value="low">${icon('dot-green')} Low</option>
                 </select>
               </div>
               <div class="form-group">
@@ -201,9 +202,9 @@ export class SafetyPage {
               <div class="form-group">
                 <label>Compliance Status</label>
                 <select id="compliance-status" required>
-                  <option value="pass">✅ Pass</option>
-                  <option value="fail">❌ Fail</option>
-                  <option value="conditional">⚠️ Conditional Pass</option>
+                  <option value="pass">${icon('check-circle')} Pass</option>
+                  <option value="fail">${icon('x-circle')} Fail</option>
+                  <option value="conditional">${icon('alert-triangle')} Conditional Pass</option>
                 </select>
               </div>
               <div class="form-group">
@@ -301,7 +302,7 @@ export class SafetyPage {
               <span class="risk-summary-score">${risk.risk_score ?? 0}%</span>
               <span class="risk-summary-label">${cat.toUpperCase()} RISK</span>
             </div>
-            <div class="summary-meta">${risk.status === 'submitted' ? '✓ Finalized' : '📝 Draft'} ${risk.assessment_date ? '· ' + new Date(risk.assessment_date).toLocaleDateString() : ''}</div>
+            <div class="summary-meta">${risk.status === 'submitted' ? icon('check-circle') + ' Finalized' : icon('file-edit') + ' Draft'} ${risk.assessment_date ? '· ' + new Date(risk.assessment_date).toLocaleDateString() : ''}</div>
           `;
         }
         document.getElementById('risk-cat-cta')?.addEventListener('click', () => this.openRiskCategorization());
@@ -420,7 +421,7 @@ export class SafetyPage {
         <div class="inspection-header">
           <div class="inspection-type">${inspection.inspection_type ? inspection.inspection_type.replace(/_/g, ' ').toUpperCase() : 'INSPECTION'}</div>
           <div class="pass-fail-badge pass-fail-${inspection.pass_fail || 'pending'}">
-            ${inspection.pass_fail === 'pass' ? '✅ PASS' : inspection.pass_fail === 'fail' ? '❌ FAIL' : '⚠️ CONDITIONAL'}
+            ${inspection.pass_fail === 'pass' ? icon('check-circle') + ' PASS' : inspection.pass_fail === 'fail' ? icon('x-circle') + ' FAIL' : icon('alert-triangle') + ' CONDITIONAL'}
           </div>
         </div>
 
@@ -457,12 +458,12 @@ export class SafetyPage {
 
   getSeverityEmoji(severity) {
     const emojis = {
-      'critical': '🔴',
-      'high': '🟠',
-      'medium': '🟡',
-      'low': '🟢'
+      'critical': icon('dot-red'),
+      'high': icon('dot-orange'),
+      'medium': icon('dot-yellow'),
+      'low': icon('dot-green')
     };
-    return emojis[severity] || '🟡';
+    return emojis[severity] || icon('dot-yellow');
   }
 
   updateStats() {

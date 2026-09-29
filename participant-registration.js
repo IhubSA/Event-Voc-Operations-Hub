@@ -2,6 +2,7 @@
 // Public-facing form for participants to register for events
 import { supabase } from './supabase.js';
 import { escapeHtml, renderClubContactLine } from './public-registration.js';
+import { icon } from './icons.js';
 
 export class ParticipantRegistration {
   constructor() {
@@ -47,14 +48,14 @@ export class ParticipantRegistration {
       <div class="event-info">
         <h1>${this.eventData.name}</h1>
         <p class="event-date">
-          📅 ${new Date(this.eventData.start_date).toLocaleDateString('en-US', {
+          ${icon('calendar')} ${new Date(this.eventData.start_date).toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric'
           })}
         </p>
-        <p class="event-location">📍 ${this.eventData.location}</p>
+        <p class="event-location">${icon('map-pin')} ${this.eventData.location}</p>
       </div>
     `;
   }
@@ -70,11 +71,11 @@ export class ParticipantRegistration {
 
         <div class="registration-content registration-content-single">
           ${this.renderClubHeader()}
-          ${this.onBack ? `<button type="button" class="btn-back-link" id="reg-back-link">← Back to races</button>` : ''}
+          ${this.onBack ? `<button type="button" class="btn-back-link" id="reg-back-link">${icon('arrow-left')} Back to races</button>` : ''}
           <div class="registration-card gate-card">
             <div class="registration-header">
               ${this.renderEventSummary()}
-              <div class="registration-badge">📝 Event Registration</div>
+              <div class="registration-badge">${icon('file-edit')} Event Registration</div>
             </div>
 
             <form id="email-gate-form" class="registration-form">
@@ -167,14 +168,14 @@ export class ParticipantRegistration {
 
         <div class="registration-content registration-content-single">
           ${this.renderClubHeader()}
-          <button type="button" class="btn-back-link" id="confirm-back-link">← Use a different email</button>
+          <button type="button" class="btn-back-link" id="confirm-back-link">${icon('arrow-left')} Use a different email</button>
           <div class="registration-card">
             <div class="registration-header">
               ${this.renderEventSummary()}
-              <div class="registration-badge">📝 Event Registration</div>
+              <div class="registration-badge">${icon('file-edit')} Event Registration</div>
             </div>
 
-            <div class="returning-banner">👋 Welcome back${p.first_name ? ', ' + escapeHtml(p.first_name) : ''}! We found your details from a previous registration — please confirm they're still correct. You'll still enter medical info fresh and pick this race's category next.</div>
+            <div class="returning-banner">${icon('hand')} Welcome back${p.first_name ? ', ' + escapeHtml(p.first_name) : ''}! We found your details from a previous registration — please confirm they're still correct. You'll still enter medical info fresh and pick this race's category next.</div>
 
             <form id="confirm-details-form" class="registration-form">
               <div class="form-section">
@@ -286,16 +287,16 @@ export class ParticipantRegistration {
 
         <div class="registration-content">
           ${this.renderClubHeader()}
-          <button type="button" class="btn-back-link" id="form-back-link">← Use a different email</button>
+          <button type="button" class="btn-back-link" id="form-back-link">${icon('arrow-left')} Use a different email</button>
           <div class="registration-card">
             <div class="registration-header">
               ${this.renderEventSummary()}
               <div class="registration-badge">
-                📝 Event Registration
+                ${icon('file-edit')} Event Registration
               </div>
             </div>
 
-            ${cameFromReturning ? `<div class="returning-banner">✓ Details confirmed from your previous registration. Please complete the sections below to finish registering.</div>` : ''}
+            ${cameFromReturning ? `<div class="returning-banner">${icon('check')} Details confirmed from your previous registration. Please complete the sections below to finish registering.</div>` : ''}
 
             <form id="registration-form" class="registration-form">
               <div class="form-section">
@@ -488,11 +489,11 @@ export class ParticipantRegistration {
           <div class="registration-info">
             <h3>What's Next?</h3>
             <ul>
-              <li>✓ Complete your registration</li>
-              <li>✓ Receive confirmation email with your registration number</li>
-              <li>✓ Check in at the event</li>
-              <li>✓ Receive your bib number</li>
-              <li>✓ Start the event!</li>
+              <li>${icon('check')} Complete your registration</li>
+              <li>${icon('check')} Receive confirmation email with your registration number</li>
+              <li>${icon('check')} Check in at the event</li>
+              <li>${icon('check')} Receive your bib number</li>
+              <li>${icon('check')} Start the event!</li>
             </ul>
           </div>
         </div>
@@ -584,7 +585,7 @@ export class ParticipantRegistration {
       messageDiv.className = 'submission-message success';
       messageDiv.innerHTML = `
         <div class="success-content">
-          <h3>✓ Registration Successful!</h3>
+          <h3>${icon('check')} Registration Successful!</h3>
           <p>Thank you for registering, ${firstName}!</p>
           <div class="registration-details">
             <p><strong>Registration Number:</strong> ${participant?.registration_number || ''}</p>

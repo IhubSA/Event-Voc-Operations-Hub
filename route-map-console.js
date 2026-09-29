@@ -3,6 +3,7 @@
 import { supabase } from './supabase.js';
 import { Navbar } from './navbar.js';
 import { wrapWithShell } from './org-branding.js';
+import { icon } from './icons.js';
 
 export class RouteMapConsole {
   constructor() {
@@ -112,34 +113,20 @@ export class RouteMapConsole {
   }
 
   // Create emoji marker icon for map markers
+  // Map marker: solid coloured disc with a white line icon. Keyed by the
+  // legacy emoji argument so every existing call site keeps working.
   createEmojiMarker(emoji, scale = 1.5) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const size = 40 * scale;
-    canvas.width = size;
-    canvas.height = size;
-
-    // Draw background circle
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw border
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Draw emoji
-    ctx.font = `${size * 0.6}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(emoji, size / 2, size / 2);
-
+    const spec = {
+      '💧': ['droplet', '#0EA5E9'], '🏥': ['medical', '#DC2626'], '🚔': ['siren', '#F59E0B'],
+      '👮': ['marshal', '#7C3AED'], '🚩': ['flag', '#16A34A'], '🏁': ['finish', '#111827']
+    }[emoji] || ['map-pin', '#0099FF'];
+    const size = Math.round(40 * scale);
+    const inner = icon(spec[0]).replace('class="ico "', '').replace('stroke="currentColor"', 'stroke="#ffffff"');
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="18" fill="${spec[1]}" stroke="#ffffff" stroke-width="2.5"/>
+      <g transform="translate(9 9) scale(0.92)">${inner.replace(/<svg[^>]*>/, '').replace('</svg>', '')}</g></svg>`;
     return {
-      url: canvas.toDataURL(),
+      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
       scaledSize: new google.maps.Size(size, size),
       origin: new google.maps.Point(0, 0),
       anchor: new google.maps.Point(size / 2, size / 2)
@@ -224,7 +211,7 @@ export class RouteMapConsole {
             <h1>Route Map Console</h1>
             <p class="route-map-subtitle">Create and manage event routes</p>
           </div>
-          <button class="btn btn-secondary" id="back-btn">← Back</button>
+          <button class="btn btn-secondary" id="back-btn">${icon('arrow-left')} Back</button>
         </div>
 
         <div class="route-map-controls-sticky">
@@ -243,21 +230,21 @@ export class RouteMapConsole {
               <input type="text" id="route-name-input" class="control-input" placeholder="e.g., North Entrance Route">
             </div>
             <div class="control-group">
-              <button class="btn btn-primary" id="start-drawing-btn">✎ Start Drawing</button>
+              <button class="btn btn-primary" id="start-drawing-btn">${icon('pencil')} Start Drawing</button>
               <button class="btn btn-secondary" id="clear-drawing-btn" disabled>Clear</button>
-              <button class="btn btn-success" id="save-route-btn" disabled>💾 Save</button>
+              <button class="btn btn-success" id="save-route-btn" disabled>${icon('save')} Save</button>
             </div>
             <div class="control-group">
-              <button class="btn btn-success" id="add-start-btn">🚩 Start</button>
-              <button class="btn btn-danger" id="add-finish-btn">🏁 Finish</button>
+              <button class="btn btn-success" id="add-start-btn">${icon('flag')} Start</button>
+              <button class="btn btn-danger" id="add-finish-btn">${icon('finish')} Finish</button>
             </div>
             <div class="control-group">
-              <button class="btn btn-info" id="add-medical-btn">🏥 Medical</button>
-              <button class="btn btn-warning" id="add-security-btn">🚔 Security</button>
+              <button class="btn btn-info" id="add-medical-btn">${icon('medical')} Medical</button>
+              <button class="btn btn-warning" id="add-security-btn">${icon('siren')} Security</button>
             </div>
             <div class="control-group">
-              <button class="btn btn-info" id="add-water-table-btn">💧 Water</button>
-              <button class="btn btn-info" id="add-marshal-btn">👮 Marshal</button>
+              <button class="btn btn-info" id="add-water-table-btn">${icon('droplet')} Water</button>
+              <button class="btn btn-info" id="add-marshal-btn">${icon('marshal')} Marshal</button>
             </div>
           </div>
         </div>
@@ -457,7 +444,7 @@ export class RouteMapConsole {
       document.getElementById('save-route-btn').disabled = false;
       this.clearAllMarkersAndPolylines();
     } else {
-      btn.textContent = '✎ Start Drawing Route';
+      btn.textContent = 'Start Drawing Route';
       btn.classList.remove('active');
       this.updateSaveButtonState();
     }
@@ -703,7 +690,7 @@ export class RouteMapConsole {
     document.getElementById('add-start-btn').classList.remove('active');
     this.enableOtherModes();
     this.updateSaveButtonState();
-    this.showToast('Start point set! 🚩', 'success');
+    this.showToast('Start point set!', 'success');
   }
 
   addFinishPoint(latLng) {
@@ -730,7 +717,7 @@ export class RouteMapConsole {
     document.getElementById('add-finish-btn').classList.remove('active');
     this.enableOtherModes();
     this.updateSaveButtonState();
-    this.showToast('Finish point set! 🏁', 'success');
+    this.showToast('Finish point set!', 'success');
   }
 
   addMedicalStation(latLng) {
@@ -1062,37 +1049,37 @@ export class RouteMapConsole {
                 ${hasWaypoints ? `
                   <label class="route-toggle">
                     <input type="checkbox" class="toggle-waypoints" data-route-id="${route.id}" ${visibility.waypoints ? 'checked' : ''} />
-                    <span>🛣️ Routes</span>
+                    <span>${icon('route')} Routes</span>
                   </label>
                 ` : ''}
                 ${hasMarshal ? `
                   <label class="route-toggle">
                     <input type="checkbox" class="toggle-marshals" data-route-id="${route.id}" ${visibility.marshals ? 'checked' : ''} />
-                    <span>👮 Marshals</span>
+                    <span>${icon('marshal')} Marshals</span>
                   </label>
                 ` : ''}
                 ${hasWater ? `
                   <label class="route-toggle">
                     <input type="checkbox" class="toggle-water" data-route-id="${route.id}" ${visibility.water ? 'checked' : ''} />
-                    <span>💧 Water</span>
+                    <span>${icon('droplet')} Water</span>
                   </label>
                 ` : ''}
                 ${hasMedical ? `
                   <label class="route-toggle">
                     <input type="checkbox" class="toggle-medical" data-route-id="${route.id}" ${visibility.medical ? 'checked' : ''} />
-                    <span>🏥 Medical</span>
+                    <span>${icon('medical')} Medical</span>
                   </label>
                 ` : ''}
                 ${hasSecurity ? `
                   <label class="route-toggle">
                     <input type="checkbox" class="toggle-security" data-route-id="${route.id}" ${visibility.security ? 'checked' : ''} />
-                    <span>🚔 Security</span>
+                    <span>${icon('siren')} Security</span>
                   </label>
                 ` : ''}
                 ${hasStartFinish ? `
                   <label class="route-toggle">
                     <input type="checkbox" class="toggle-startfinish" data-route-id="${route.id}" ${visibility.startFinish ? 'checked' : ''} />
-                    <span>🚩 Start/Finish</span>
+                    <span>${icon('flag')} Start/Finish</span>
                   </label>
                 ` : ''}
               </div>

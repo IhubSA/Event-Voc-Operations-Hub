@@ -2,6 +2,7 @@
 // Weighted risk scoring based on event safety & security best practice factors
 // (attendance, crowd dynamics, historic incidents, security coverage, environment, etc.)
 import { supabase } from './supabase.js';
+import { icon } from './icons.js';
 
 // Weight table — each factor contributes points toward a 0-151 raw score,
 // which is converted to a percentage and mapped to LOW / MEDIUM / HIGH.
@@ -46,8 +47,8 @@ export class RiskCategorization {
     container.innerHTML = `
       <div class="riskcat-container">
         <div class="riskcat-header">
-          <h1>🎯 Event Risk Categorization</h1>
-          <button class="btn btn-secondary" id="riskcat-back-btn">← Back to Safety & Compliance</button>
+          <h1>${icon('target')} Event Risk Categorization</h1>
+          <button class="btn btn-secondary" id="riskcat-back-btn">${icon('arrow-left')} Back to Safety & Compliance</button>
         </div>
 
         <div class="riskcat-layout">
@@ -182,8 +183,8 @@ export class RiskCategorization {
             </div>
 
             <div class="riskcat-actions">
-              <button type="button" class="btn btn-secondary" id="rc-save-draft">💾 Save as Draft</button>
-              <button type="submit" class="btn btn-primary" id="rc-submit">✅ Save &amp; Finalize Assessment</button>
+              <button type="button" class="btn btn-secondary" id="rc-save-draft">${icon('save')} Save as Draft</button>
+              <button type="submit" class="btn btn-primary" id="rc-submit">${icon('check-circle')} Save &amp; Finalize Assessment</button>
             </div>
           </form>
 
@@ -576,8 +577,8 @@ export class RiskCategorization {
 
       this.showToast(
         status === 'submitted'
-          ? `✓ Risk assessment finalized: ${result.category.toUpperCase()} RISK (${result.percentage}%)`
-          : '✓ Draft saved',
+          ? `${icon('check')} Risk assessment finalized: ${result.category.toUpperCase()} RISK (${result.percentage}%)`
+          : 'Draft saved',
         'success'
       );
     } catch (error) {

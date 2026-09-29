@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 // VOC Landing Page
 // Welcome/splash page shown before login
 // Exact design matching user specifications
@@ -33,23 +34,23 @@ export class LandingPage {
 
               <div class="operational-pillars">
                 <div class="pillar security">
-                  <div class="pillar-icon">🔒</div>
+                  <div class="pillar-icon">${icon('shield')}</div>
                   <div class="pillar-label">Security</div>
                 </div>
                 <div class="pillar medical">
-                  <div class="pillar-icon">✚</div>
+                  <div class="pillar-icon">${icon('medical')}</div>
                   <div class="pillar-label">Medical</div>
                 </div>
                 <div class="pillar safety">
-                  <div class="pillar-icon">⚠️</div>
+                  <div class="pillar-icon">${icon('alert-triangle')}</div>
                   <div class="pillar-label">Safety</div>
                 </div>
                 <div class="pillar communications">
-                  <div class="pillar-icon">📡</div>
+                  <div class="pillar-icon">${icon('radio')}</div>
                   <div class="pillar-label">Communications</div>
                 </div>
                 <div class="pillar operations">
-                  <div class="pillar-icon">⚙️</div>
+                  <div class="pillar-icon">${icon('settings')}</div>
                   <div class="pillar-label">Operations</div>
                 </div>
               </div>
@@ -62,12 +63,12 @@ export class LandingPage {
             <h3>About VOC</h3>
             <p>The Venue Operations Centre is an integrated platform for managing events with focus on security, medical response, safety compliance, communications, and operational efficiency.</p>
             <ul>
-              <li>📊 Real-time operational monitoring</li>
-              <li>🏥 Medical incident tracking</li>
-              <li>🔒 Security management</li>
-              <li>⚠️ Safety compliance</li>
-              <li>👥 Staff coordination</li>
-              <li>🏃 Participant management</li>
+              <li>${icon('bar-chart')} Real-time operational monitoring</li>
+              <li>${icon('medical')} Medical incident tracking</li>
+              <li>${icon('lock')} Security management</li>
+              <li>${icon('alert-triangle')} Safety compliance</li>
+              <li>${icon('users')} Staff coordination</li>
+              <li>${icon('runner')} Participant management</li>
             </ul>
           </div>
         </div>
@@ -295,7 +296,7 @@ export class LandingPage {
       }
 
       .landing-info li:before {
-        content: "✓";
+        content: "${icon('check')}";
         color: #0099FF;
         font-weight: 700;
         font-size: 1.1rem;

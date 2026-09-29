@@ -2,11 +2,12 @@
 // Template-driven checklists with live compliance scoring, critical-item gating,
 // and a saved history of completed inspections per event.
 import { supabase } from './supabase.js';
+import { icon } from './icons.js';
 
 export const CHECKLIST_TEMPLATES = {
   venue_structural: {
     label: 'Venue & Structural Safety',
-    icon: '🏗️',
+    icon: 'hard-hat',
     items: [
       { id: 'vs1', text: 'Structural integrity of stages, platforms & temporary structures verified', critical: true },
       { id: 'vs2', text: 'Marquees/tents properly anchored and rated for expected wind conditions', critical: true },
@@ -22,7 +23,7 @@ export const CHECKLIST_TEMPLATES = {
   },
   crowd_access_management: {
     label: 'Crowd & Access Management',
-    icon: '🚧',
+    icon: 'cone',
     items: [
       { id: 'ca1', text: 'Venue capacity limits defined and communicated to all staff', critical: true },
       { id: 'ca2', text: 'Entry and exit points clearly signed and adequately staffed', critical: true },
@@ -37,7 +38,7 @@ export const CHECKLIST_TEMPLATES = {
   },
   emergency_medical: {
     label: 'Emergency & Medical Preparedness',
-    icon: '🚑',
+    icon: 'ambulance',
     items: [
       { id: 'em1', text: 'Medical posts established per event medical plan', critical: true },
       { id: 'em2', text: 'Sufficient qualified medical personnel on site for expected attendance', critical: true },
@@ -52,7 +53,7 @@ export const CHECKLIST_TEMPLATES = {
   },
   vendor_health: {
     label: 'Vendor & Health Compliance',
-    icon: '🍽️',
+    icon: 'utensils',
     items: [
       { id: 'vh1', text: 'All food vendors hold valid Certificates of Acceptability', critical: true },
       { id: 'vh2', text: 'Liquor license obtained where alcohol is served', critical: true },
@@ -65,7 +66,7 @@ export const CHECKLIST_TEMPLATES = {
   },
   security_readiness: {
     label: 'Security Readiness',
-    icon: '🛡️',
+    icon: 'shield-check',
     items: [
       { id: 'sr1', text: 'Registered / compliant security service provider confirmed', critical: true },
       { id: 'sr2', text: 'Security personnel briefed on event-specific risks and procedures', critical: true },
@@ -121,7 +122,7 @@ export class InspectionChecklists {
 
     const templateCards = Object.entries(CHECKLIST_TEMPLATES).map(([key, tpl]) => `
       <button class="ic-template-card" data-template="${key}">
-        <span class="ic-template-icon">${tpl.icon}</span>
+        <span class="ic-template-icon">${icon(tpl.icon)}</span>
         <span class="ic-template-label">${tpl.label}</span>
         <span class="ic-template-count">${tpl.items.length} checkpoints</span>
       </button>
@@ -136,7 +137,7 @@ export class InspectionChecklists {
           const statusLabel = score >= 90 ? 'PASS' : score >= 70 ? 'CONDITIONAL' : 'FAIL';
           return `
             <div class="ic-history-card" data-id="${c.id}">
-              <div class="ic-history-icon">${tpl?.icon || '📋'}</div>
+              <div class="ic-history-icon">${icon(tpl?.icon || 'clipboard')}</div>
               <div class="ic-history-info">
                 <h4>${tpl?.label || c.checklist_type}</h4>
                 <p>${c.completion_date ? new Date(c.completion_date).toLocaleDateString() : new Date(c.created_at).toLocaleDateString()}</p>
@@ -153,8 +154,8 @@ export class InspectionChecklists {
     root.innerHTML = `
       <div class="ic-container">
         <div class="ic-header">
-          <h1>📋 Safety Inspection Checklists</h1>
-          <button class="btn btn-secondary" id="ic-back-btn">← Back to Safety & Compliance</button>
+          <h1>${icon('clipboard')} Safety Inspection Checklists</h1>
+          <button class="btn btn-secondary" id="ic-back-btn">${icon('arrow-left')} Back to Safety & Compliance</button>
         </div>
 
         <div class="ic-section">
@@ -209,8 +210,8 @@ export class InspectionChecklists {
     root.innerHTML = `
       <div class="ic-container">
         <div class="ic-header">
-          <h1>${tpl.icon} ${tpl.label}</h1>
-          <button class="btn btn-secondary" id="ic-form-back-btn">← Back to Checklists</button>
+          <h1>${icon(tpl.icon)} ${tpl.label}</h1>
+          <button class="btn btn-secondary" id="ic-form-back-btn">${icon('arrow-left')} Back to Checklists</button>
         </div>
 
         <div class="ic-form-layout">
@@ -224,9 +225,9 @@ export class InspectionChecklists {
                 </div>
                 <div class="ic-item-controls">
                   <div class="ic-status-buttons" data-item-id="${item.id}">
-                    <button type="button" class="ic-status-btn status-pass" data-status="pass">✅ Pass</button>
-                    <button type="button" class="ic-status-btn status-fail" data-status="fail">❌ Fail</button>
-                    <button type="button" class="ic-status-btn status-na" data-status="na">➖ N/A</button>
+                    <button type="button" class="ic-status-btn status-pass" data-status="pass">${icon('check-circle')} Pass</button>
+                    <button type="button" class="ic-status-btn status-fail" data-status="fail">${icon('x-circle')} Fail</button>
+                    <button type="button" class="ic-status-btn status-na" data-status="na">${icon('minus-circle')} N/A</button>
                   </div>
                   <input type="text" class="ic-item-notes" data-item-id="${item.id}" placeholder="Notes (optional)" value="${(this.currentItemState[item.id].notes || '').replace(/"/g, '&quot;')}" />
                 </div>
@@ -252,7 +253,7 @@ export class InspectionChecklists {
                 <label>Inspector Name</label>
                 <input type="text" id="ic-inspector" placeholder="Full name" />
               </div>
-              <button class="btn btn-primary btn-full" id="ic-save-btn">💾 Save Inspection</button>
+              <button class="btn btn-primary btn-full" id="ic-save-btn">${icon('save')} Save Inspection</button>
             </div>
           </div>
         </div>
@@ -354,10 +355,10 @@ export class InspectionChecklists {
 
     if (statsEl) {
       statsEl.innerHTML = `
-        <div class="ic-stat-row"><span>✅ Pass</span><strong>${passCount}</strong></div>
-        <div class="ic-stat-row"><span>❌ Fail</span><strong>${failCount}</strong></div>
-        <div class="ic-stat-row"><span>➖ N/A</span><strong>${naCount}</strong></div>
-        <div class="ic-stat-row"><span>⏳ Pending</span><strong>${pendingCount}</strong></div>
+        <div class="ic-stat-row"><span>${icon('check-circle')} Pass</span><strong>${passCount}</strong></div>
+        <div class="ic-stat-row"><span>${icon('x-circle')} Fail</span><strong>${failCount}</strong></div>
+        <div class="ic-stat-row"><span>${icon('minus-circle')} N/A</span><strong>${naCount}</strong></div>
+        <div class="ic-stat-row"><span>${icon('clock')} Pending</span><strong>${pendingCount}</strong></div>
       `;
     }
 
@@ -412,7 +413,7 @@ export class InspectionChecklists {
 
       if (error) throw error;
 
-      this.showToast(`✓ Inspection saved — ${this._lastScore}% compliant`, 'success');
+      this.showToast(`Inspection saved — ${this._lastScore}% compliant`, 'success');
       await this.loadChecklists();
       setTimeout(() => this.renderList(), 800);
     } catch (error) {
