@@ -150,10 +150,10 @@ export class SafetyPage {
               <div class="form-group">
                 <label>Severity Level</label>
                 <select id="severity-level" required>
-                  <option value="critical">${icon('dot-red')} Critical</option>
-                  <option value="high">${icon('dot-orange')} High</option>
-                  <option value="medium" selected>${icon('dot-yellow')} Medium</option>
-                  <option value="low">${icon('dot-green')} Low</option>
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="low">Low</option>
                 </select>
               </div>
               <div class="form-group">
@@ -202,9 +202,9 @@ export class SafetyPage {
               <div class="form-group">
                 <label>Compliance Status</label>
                 <select id="compliance-status" required>
-                  <option value="pass">${icon('check-circle')} Pass</option>
-                  <option value="fail">${icon('x-circle')} Fail</option>
-                  <option value="conditional">${icon('alert-triangle')} Conditional Pass</option>
+                  <option value="pass">Pass</option>
+                  <option value="fail">Fail</option>
+                  <option value="conditional">Conditional Pass</option>
                 </select>
               </div>
               <div class="form-group">

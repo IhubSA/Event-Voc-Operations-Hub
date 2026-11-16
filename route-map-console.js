@@ -1444,7 +1444,7 @@ export class RouteMapConsole {
         flex-direction: column;
       }
 
-      .route-map-header {
+      :is(.route-map-container, #edit-route-modal) .route-map-header {
         background: white;
         border-bottom: 1px solid #ddd;
         padding: 1.5rem;
@@ -1453,19 +1453,19 @@ export class RouteMapConsole {
         align-items: center;
       }
 
-      .route-map-title-section h1 {
+      :is(.route-map-container, #edit-route-modal) .route-map-title-section h1 {
         margin: 0;
         font-size: 1.8rem;
         color: #333;
       }
 
-      .route-map-subtitle {
+      :is(.route-map-container, #edit-route-modal) .route-map-subtitle {
         margin: 0.5rem 0 0 0;
         color: #666;
         font-size: 0.9rem;
       }
 
-      .route-map-controls-sticky {
+      :is(.route-map-container, #edit-route-modal) .route-map-controls-sticky {
         position: sticky;
         top: 0;
         background: white;
@@ -1475,7 +1475,7 @@ export class RouteMapConsole {
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       }
 
-      .controls-wrapper {
+      :is(.route-map-container, #edit-route-modal) .controls-wrapper {
         display: grid;
         grid-template-columns: 200px 250px 1fr;
         gap: 1rem;
@@ -1483,7 +1483,7 @@ export class RouteMapConsole {
         max-width: 1400px;
       }
 
-      .route-map-content {
+      :is(.route-map-container, #edit-route-modal) .route-map-content {
         flex: 1;
         display: grid;
         grid-template-columns: 1fr 280px;
@@ -1492,13 +1492,13 @@ export class RouteMapConsole {
         overflow: hidden;
       }
 
-      .route-map-main {
+      :is(.route-map-container, #edit-route-modal) .route-map-main {
         display: flex;
         flex-direction: column;
         gap: 1rem;
       }
 
-      .map-container {
+      :is(.route-map-container, #edit-route-modal) .map-container {
         flex: 1;
         background: white;
         border-radius: 8px;
@@ -1506,27 +1506,27 @@ export class RouteMapConsole {
         min-height: 600px;
       }
 
-      .control-group {
+      :is(.route-map-container, #edit-route-modal) .control-group {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
       }
 
-      .control-group:last-child {
+      :is(.route-map-container, #edit-route-modal) .control-group:last-child {
         display: flex;
         flex-direction: row;
         gap: 0.5rem;
         align-items: flex-end;
       }
 
-      .control-group label {
+      :is(.route-map-container, #edit-route-modal) .control-group label {
         font-size: 0.85rem;
         font-weight: 600;
         color: #333;
       }
 
-      .control-select,
-      .control-input {
+      :is(.route-map-container, #edit-route-modal) .control-select,
+      :is(.route-map-container, #edit-route-modal) .control-input {
         padding: 0.5rem;
         border: 1px solid #ddd;
         border-radius: 4px;
@@ -1535,85 +1535,85 @@ export class RouteMapConsole {
         background: white;
       }
 
-      .control-group button {
+      :is(.route-map-container, #edit-route-modal) .control-group button {
         flex: 1;
         min-width: 100px;
       }
 
-      .route-map-sidebar {
+      :is(.route-map-container, #edit-route-modal) .route-map-sidebar {
         display: flex;
         flex-direction: column;
         gap: 1rem;
       }
 
-      .sidebar-section {
+      :is(.route-map-container, #edit-route-modal) .sidebar-section {
         background: white;
         padding: 1rem;
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       }
 
-      .sidebar-section h3 {
+      :is(.route-map-container, #edit-route-modal) .sidebar-section h3 {
         margin: 0 0 1rem 0;
         font-size: 1rem;
         color: #333;
       }
 
-      .routes-legend {
+      :is(.route-map-container, #edit-route-modal) .routes-legend {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
       }
 
-      .legend-item {
+      :is(.route-map-container, #edit-route-modal) .legend-item {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         font-size: 0.9rem;
       }
 
-      .legend-color {
+      :is(.route-map-container, #edit-route-modal) .legend-color {
         width: 16px;
         height: 16px;
         border-radius: 50%;
         border: 1px solid #ccc;
       }
 
-      .routes-list,
-      .waypoints-list {
+      :is(.route-map-container, #edit-route-modal) .routes-list,
+      :is(.route-map-container, #edit-route-modal) .waypoints-list {
         max-height: 400px;
         overflow-y: auto;
       }
 
-      .routes-items,
-      .waypoints-items {
+      :is(.route-map-container, #edit-route-modal) .routes-items,
+      :is(.route-map-container, #edit-route-modal) .waypoints-items {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
       }
 
-      .route-item {
+      :is(.route-map-container, #edit-route-modal) .route-item {
         background: #f9f9f9;
         padding: 0.75rem;
         border-radius: 4px;
         border-left: 3px solid #0099FF;
       }
 
-      .route-header {
+      :is(.route-map-container, #edit-route-modal) .route-header {
         display: flex;
         justify-content: flex-start;
         align-items: flex-start;
         margin-bottom: 0.75rem;
       }
 
-      .route-name-section {
+      :is(.route-map-container, #edit-route-modal) .route-name-section {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         flex-wrap: wrap;
       }
 
-      .route-name {
+      :is(.route-map-container, #edit-route-modal) .route-name {
         font-weight: 700;
         font-size: 1rem;
         color: #222;
@@ -1621,7 +1621,7 @@ export class RouteMapConsole {
         min-width: 150px;
       }
 
-      .route-type-small {
+      :is(.route-map-container, #edit-route-modal) .route-type-small {
         color: white;
         padding: 0.3rem 0.6rem;
         border-radius: 4px;
@@ -1630,7 +1630,7 @@ export class RouteMapConsole {
         white-space: nowrap;
       }
 
-      .route-toggles {
+      :is(.route-map-container, #edit-route-modal) .route-toggles {
         display: flex;
         gap: 0.5rem;
         flex-wrap: wrap;
@@ -1638,7 +1638,7 @@ export class RouteMapConsole {
         padding: 0.5rem 0;
       }
 
-      .route-toggle {
+      :is(.route-map-container, #edit-route-modal) .route-toggle {
         display: flex;
         align-items: center;
         gap: 0.35rem;
@@ -1652,39 +1652,39 @@ export class RouteMapConsole {
         transition: all 0.2s ease;
       }
 
-      .route-toggle:hover {
+      :is(.route-map-container, #edit-route-modal) .route-toggle:hover {
         background: rgba(0, 153, 255, 0.15);
         border-color: rgba(0, 153, 255, 0.4);
       }
 
-      .route-toggle input[type="checkbox"] {
+      :is(.route-map-container, #edit-route-modal) .route-toggle input[type="checkbox"] {
         cursor: pointer;
         width: 14px;
         height: 14px;
       }
 
-      .route-toggle span {
+      :is(.route-map-container, #edit-route-modal) .route-toggle span {
         color: #333;
         font-weight: 500;
       }
 
-      .route-details {
+      :is(.route-map-container, #edit-route-modal) .route-details {
         display: flex;
         gap: 1rem;
         margin-bottom: 0.5rem;
       }
 
-      .route-details small {
+      :is(.route-map-container, #edit-route-modal) .route-details small {
         color: #666;
         font-size: 0.8rem;
       }
 
-      .route-actions {
+      :is(.route-map-container, #edit-route-modal) .route-actions {
         display: flex;
         gap: 0.25rem;
       }
 
-      .waypoint-item {
+      :is(.route-map-container, #edit-route-modal) .waypoint-item {
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -1694,7 +1694,7 @@ export class RouteMapConsole {
         font-size: 0.8rem;
       }
 
-      .waypoint-number {
+      :is(.route-map-container, #edit-route-modal) .waypoint-number {
         background: #0099FF;
         color: white;
         width: 20px;
@@ -1706,12 +1706,12 @@ export class RouteMapConsole {
         font-weight: bold;
       }
 
-      .waypoint-coords {
+      :is(.route-map-container, #edit-route-modal) .waypoint-coords {
         flex: 1;
         color: #666;
       }
 
-      .empty-state {
+      :is(.route-map-container, #edit-route-modal) .empty-state {
         color: #999;
         font-size: 0.9rem;
         text-align: center;
@@ -1719,7 +1719,7 @@ export class RouteMapConsole {
         margin: 0;
       }
 
-      .btn-small {
+      :is(.route-map-container, #edit-route-modal) .btn-small {
         padding: 0.4rem 0.6rem;
         font-size: 0.8rem;
         border: none;
@@ -1728,23 +1728,23 @@ export class RouteMapConsole {
         transition: all 0.2s;
       }
 
-      .btn-small.btn-primary {
+      :is(.route-map-container, #edit-route-modal) .btn-small.btn-primary {
         background: #0099FF;
         color: white;
       }
 
-      .btn-small.btn-secondary {
+      :is(.route-map-container, #edit-route-modal) .btn-small.btn-secondary {
         background: #f0f0f0;
         color: #333;
       }
 
-      .btn-small.btn-danger {
+      :is(.route-map-container, #edit-route-modal) .btn-small.btn-danger {
         background: #ff4444;
         color: white;
         padding: 0.2rem 0.4rem;
       }
 
-      .btn {
+      :is(.route-map-container, #edit-route-modal) .btn {
         padding: 0.6rem 1.2rem;
         font-size: 0.95rem;
         border: none;
@@ -1754,71 +1754,74 @@ export class RouteMapConsole {
         transition: all 0.2s;
       }
 
-      .btn-primary {
+      :is(.route-map-container, #edit-route-modal) .btn-primary {
         background: #0099FF;
         color: white;
       }
 
-      .btn-primary:hover {
+      :is(.route-map-container, #edit-route-modal) .btn-primary:hover {
         background: #0077cc;
       }
 
-      .btn-secondary {
+      :is(.route-map-container, #edit-route-modal) .btn-secondary {
         background: #f0f0f0;
         color: #333;
       }
 
-      .btn-secondary:hover {
+      :is(.route-map-container, #edit-route-modal) .btn-secondary:hover {
         background: #e0e0e0;
       }
 
-      .btn-success {
+      :is(.route-map-container, #edit-route-modal) .btn-success {
         background: #4caf50;
         color: white;
       }
 
-      .btn-success:hover {
+      :is(.route-map-container, #edit-route-modal) .btn-success:hover {
         background: #45a049;
       }
 
-      .btn-danger {
+      :is(.route-map-container, #edit-route-modal) .btn-danger {
         background: #f44336;
         color: white;
       }
 
-      .btn-danger:hover {
+      :is(.route-map-container, #edit-route-modal) .btn-danger:hover {
         background: #da190b;
       }
 
-      .btn-info {
+      :is(.route-map-container, #edit-route-modal) .btn-info {
         background: #17a2b8;
         color: white;
       }
 
-      .btn-info:hover {
+      :is(.route-map-container, #edit-route-modal) .btn-info:hover {
         background: #138496;
       }
 
-      .btn-warning {
+      :is(.route-map-container, #edit-route-modal) .btn-warning {
         background: #FF9800;
         color: white;
       }
 
-      .btn-warning:hover {
+      :is(.route-map-container, #edit-route-modal) .btn-warning:hover {
         background: #e68900;
       }
 
-      .btn:disabled {
+      :is(.route-map-container, #edit-route-modal) .btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
       }
 
-      .btn.active {
+      :is(.route-map-container, #edit-route-modal) .btn.active {
         box-shadow: 0 0 8px rgba(0,0,0,0.3);
         transform: scale(1.05);
       }
 
-      .modal {
+      /* All rules here are scoped to the Route Map page and its modal. They used to
+         be global (white modal background, dark form labels, button colours), so they
+         leaked into every other module once the Route Map had been opened. */
+      #edit-route-modal {
         display: none;
         position: fixed;
         top: 0;
@@ -1831,11 +1834,11 @@ export class RouteMapConsole {
         justify-content: center;
       }
 
-      .modal:not(.hidden) {
+      #edit-route-modal:not(.hidden) {
         display: flex;
       }
 
-      .modal-content {
+      #edit-route-modal .modal-content {
         background: white;
         border-radius: 8px;
         padding: 2rem;
@@ -1844,19 +1847,19 @@ export class RouteMapConsole {
         box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       }
 
-      .modal-header {
+      #edit-route-modal .modal-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 1.5rem;
       }
 
-      .modal-header h2 {
+      #edit-route-modal .modal-header h2 {
         margin: 0;
         font-size: 1.3rem;
       }
 
-      .modal-close {
+      #edit-route-modal .modal-close {
         background: none;
         border: none;
         font-size: 1.5rem;
@@ -1864,20 +1867,20 @@ export class RouteMapConsole {
         color: #999;
       }
 
-      .form-group {
+      #edit-route-modal .form-group {
         margin-bottom: 1rem;
       }
 
-      .form-group label {
+      #edit-route-modal .form-group label {
         display: block;
         margin-bottom: 0.5rem;
         font-weight: 600;
         color: #333;
       }
 
-      .form-group input,
-      .form-group textarea,
-      .form-group select {
+      #edit-route-modal .form-group input,
+      #edit-route-modal .form-group textarea,
+      #edit-route-modal .form-group select {
         width: 100%;
         padding: 0.75rem;
         border: 1px solid #ddd;
@@ -1886,7 +1889,7 @@ export class RouteMapConsole {
         font-size: 0.9rem;
       }
 
-      .form-actions {
+      #edit-route-modal .form-actions {
         display: flex;
         gap: 0.5rem;
         justify-content: flex-end;
@@ -1924,31 +1927,31 @@ export class RouteMapConsole {
       }
 
       @media (max-width: 1200px) {
-        .route-map-content {
+        :is(.route-map-container, #edit-route-modal) .route-map-content {
           grid-template-columns: 1fr;
         }
 
-        .controls-wrapper {
+        :is(.route-map-container, #edit-route-modal) .controls-wrapper {
           grid-template-columns: 150px 200px 1fr;
         }
       }
 
       @media (max-width: 768px) {
-        .route-map-header {
+        :is(.route-map-container, #edit-route-modal) .route-map-header {
           flex-direction: column;
           gap: 1rem;
           align-items: flex-start;
         }
 
-        .controls-wrapper {
+        :is(.route-map-container, #edit-route-modal) .controls-wrapper {
           grid-template-columns: 1fr;
         }
 
-        .route-map-content {
+        :is(.route-map-container, #edit-route-modal) .route-map-content {
           grid-template-columns: 1fr;
         }
 
-        .map-container {
+        :is(.route-map-container, #edit-route-modal) .map-container {
           min-height: 400px;
         }
       }

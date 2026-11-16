@@ -149,10 +149,10 @@ export class SecurityPage {
               <div class="form-group">
                 <label>Threat Level</label>
                 <select id="threat-level" required>
-                  <option value="low">${icon('dot-green')} Low</option>
-                  <option value="medium">${icon('dot-yellow')} Medium</option>
-                  <option value="high">${icon('dot-orange')} High</option>
-                  <option value="critical">${icon('dot-red')} Critical</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
                 </select>
               </div>
               <div class="form-group">

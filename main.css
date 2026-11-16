@@ -1121,7 +1121,10 @@ textarea {
 
 /* Enhanced Modals */
 .incident-detail-modal,
-.new-incident-modal {
+.new-incident-modal,
+.hazard-detail-modal,
+.new-hazard-modal,
+.new-inspection-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -1137,7 +1140,10 @@ textarea {
 }
 
 .incident-detail-modal[style*="display: flex"],
-.new-incident-modal[style*="display: flex"] {
+.new-incident-modal[style*="display: flex"],
+.hazard-detail-modal[style*="display: flex"],
+.new-hazard-modal[style*="display: flex"],
+.new-inspection-modal[style*="display: flex"] {
   display: flex !important;
 }
 
@@ -1180,7 +1186,9 @@ textarea {
 }
 
 .incident-detail h2,
-.new-incident-modal h2 {
+.new-incident-modal h2,
+.new-hazard-modal h2,
+.new-inspection-modal h2 {
   font-size: 2rem;
   margin: 0 0 2rem 0;
   color: var(--text-primary);
@@ -2100,7 +2108,10 @@ textarea {
 
 /* Enhanced Modals */
 .incident-detail-modal,
-.new-incident-modal {
+.new-incident-modal,
+.hazard-detail-modal,
+.new-hazard-modal,
+.new-inspection-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -2116,7 +2127,10 @@ textarea {
 }
 
 .incident-detail-modal[style*="display: flex"],
-.new-incident-modal[style*="display: flex"] {
+.new-incident-modal[style*="display: flex"],
+.hazard-detail-modal[style*="display: flex"],
+.new-hazard-modal[style*="display: flex"],
+.new-inspection-modal[style*="display: flex"] {
   display: flex !important;
 }
 
@@ -2159,7 +2173,9 @@ textarea {
 }
 
 .incident-detail h2,
-.new-incident-modal h2 {
+.new-incident-modal h2,
+.new-hazard-modal h2,
+.new-inspection-modal h2 {
   font-size: 2rem;
   margin: 0 0 2rem 0;
   color: var(--text-primary);
